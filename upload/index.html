@@ -1,0 +1,5114 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOH Bot — Tower of Hell Discord Bot</title>
+  <meta name="description"
+    content="The ultimate Tower of Hell Discord bot. XP calculations, grind planning, competitive tools, race mode and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ════════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════════ */
+    :root {
+      --bg: #09090d;
+      --surface: rgba(15, 15, 20, 0.8);
+      --surface2: rgba(20, 20, 28, 0.92);
+      --surface3: #22212c;
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(196, 181, 253, 0.26);
+      --indigo: #8b7cf6;
+      --indigo-dim: #6f63db;
+      --indigo-glow: rgba(139, 124, 246, 0.22);
+      --violet: #c4b5fd;
+      --white: #ffffff;
+      --text: #e5e7ef;
+      --muted: #c0c4d4;
+      --dim: #9096aa;
+      --font: 'Manrope', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Space Grotesk', sans-serif;
+      --radius: 12px;
+      --radius-lg: 24px;
+    }
+
+    /* ════════════════════════════════════════════
+   RESET
+════════════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top center, rgba(139, 124, 246, 0.17), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.08), transparent 22%),
+        radial-gradient(circle at 18% 22%, rgba(139, 124, 246, 0.12), transparent 26%),
+        linear-gradient(180deg, #0b0b10 0%, #09090d 42%, #08080c 100%);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: var(--font);
+      border: none;
+      background: none;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    /* noise grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 28%),
+        linear-gradient(transparent 0%, rgba(255, 255, 255, 0.015) 50%, transparent 100%);
+      opacity: 0.8;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    /* ════════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════════ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section {
+      padding: 80px 0;
+    }
+
+    .section-sm {
+      padding: 48px 0;
+    }
+
+    /* ════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: transparent;
+      border-bottom: none;
+      padding: 14px 18px 0;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 22px;
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      background: rgba(10, 10, 15, 0.34);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+      transition: transform 0.35s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .nav.scrolled .nav-inner {
+      background: rgba(10, 10, 15, 0.82);
+      border-color: rgba(196, 181, 253, 0.16);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.03em;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f7f7ff 0%, #c4b5fd 40%, #8b7cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #141419;
+      box-shadow: 0 0 25px rgba(139, 124, 246, 0.35);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.62);
+      transition: color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--white);
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+      color: var(--white);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(139, 124, 246, 0.95) 0%, rgba(181, 160, 255, 0.92) 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      box-shadow: 0 16px 34px rgba(139, 124, 246, 0.28);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #9b8dff 0%, #d2c5ff 100%);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 22px 42px rgba(139, 124, 246, 0.34);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-ghost {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--white);
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-ghost:hover {
+      transform: translateY(-2px);
+      border-color: rgba(196, 181, 253, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(196, 181, 253, 0.3);
+      color: var(--white);
+    }
+
+    /* mobile hamburger */
+    .hamburger {
+      display: none;
+      padding: 6px;
+      color: var(--white);
+    }
+
+    .mobile-menu {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 24px 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(5, 5, 5, 0.95);
+    }
+
+    .mobile-menu.open {
+      display: flex;
+    }
+
+    .mobile-menu .nav-link {
+      padding: 10px 14px;
+    }
+
+    /* ════════════════════════════════════════════
+   PAGES
+════════════════════════════════════════════ */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ════════════════════════════════════════════
+   HOME — HERO
+════════════════════════════════════════════ */
+    .hero {
+      padding: 150px 0 92px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+      background-size: 70px 70px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 90%);
+      opacity: 0.35;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1080px;
+      height: 680px;
+      background:
+        radial-gradient(circle at center, rgba(139, 124, 246, 0.22) 0%, rgba(139, 124, 246, 0.08) 28%, transparent 64%),
+        radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.14) 0%, transparent 32%);
+      pointer-events: none;
+      filter: blur(18px);
+    }
+
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(196, 181, 253, 0.22);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 12px;
+      color: var(--violet);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .hero h1 {
+      font-family: var(--display);
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--white);
+      margin-bottom: 22px;
+      letter-spacing: -0.05em;
+      text-wrap: balance;
+    }
+
+    .hero h1 span {
+      color: transparent;
+      background: linear-gradient(135deg, #b9abd6 0%, #ffffff 45%, #b9abd6 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      position: relative;
+      display: inline-block;
+      padding-inline: 3px;
+    }
+
+    .hero h1 span::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -8px;
+      height: 12px;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 2 12 Q 25 8, 48 10 T 85 11 T 125 10 T 165 12 T 198 10' stroke='%23b9abd6' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+      opacity: 0.95;
+    }
+
+    .hero-desc {
+      font-size: 17px;
+      color: rgba(229, 231, 239, 0.78);
+      line-height: 1.8;
+      max-width: 560px;
+      margin-bottom: 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat {
+      min-width: 138px;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .hero-stat-num {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .hero-stat-label {
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    /* discord mockup */
+    .mockup {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
+        rgba(11, 11, 16, 0.84);
+      border: 1px solid rgba(196, 181, 253, 0.12);
+      border-radius: 34px;
+      overflow: hidden;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.45);
+      position: relative;
+      transform: perspective(1400px) rotateY(-10deg) rotateX(5deg);
+      transform-style: preserve-3d;
+      transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+    }
+
+    .mockup::before {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at top right, rgba(196, 181, 253, 0.18), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 28%);
+      pointer-events: none;
+    }
+
+    .mockup:hover {
+      transform: perspective(1400px) rotateY(-6deg) rotateX(2deg) translateY(-6px);
+      border-color: rgba(196, 181, 253, 0.25);
+      box-shadow: 0 46px 110px rgba(0, 0, 0, 0.52);
+    }
+
+    .mockup-bar {
+      background: #1e1f22;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .mockup-content {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dc-msg {
+      display: flex;
+      gap: 12px;
+    }
+
+    .dc-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .dc-msg-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dc-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .dc-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--white);
+    }
+
+    .dc-badge {
+      background: var(--indigo);
+      color: #fff;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .dc-time {
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    .dc-text {
+      font-size: 14px;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .dc-embed {
+      background: var(--surface2);
+      border-left: 4px solid var(--indigo);
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin-top: 4px;
+    }
+
+    .dc-embed-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    .dc-fields {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .dc-field-name {
+      font-size: 11px;
+      color: var(--dim);
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .dc-field-val {
+      font-size: 13px;
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    /* ════════════════════════════════════════════
+   FEATURES
+════════════════════════════════════════════ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .feature-card {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 32%),
+        rgba(13, 13, 18, 0.76);
+      border: 1px solid rgba(196, 181, 253, 0.09);
+      border-radius: 34px;
+      padding: 30px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s, background 0.3s;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(196, 181, 253, 0.18), transparent 20%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    /* ── Leaderboard Styles ── */
+    .leaderboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .leaderboard-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .leaderboard-card:hover {
+      background: var(--surface3);
+      border-color: var(--indigo);
+    }
+
+    .lb-rank {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--dim);
+      width: 32px;
+      text-align: center;
+    }
+
+    .lb-rank.top-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+    .lb-rank.top-2 { color: #c0c0c0; }
+    .lb-rank.top-3 { color: #cd7f32; }
+
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name { font-weight: 700; color: var(--white); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-code { font-family: var(--mono); font-size: 11px; color: var(--indigo); }
+
+    .lb-stats { text-align: right; }
+    .lb-gain { font-size: 16px; font-weight: 700; color: #4ade80; }
+    .lb-streak { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+    /* ── Linking UI ── */
+    .link-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(88, 101, 242, 0.1);
+      border: 1px solid rgba(88, 101, 242, 0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--white);
+      margin-top: 12px;
+      transition: all 0.2s;
+    }
+
+    .link-badge:hover {
+      background: var(--indigo);
+      border-color: var(--indigo);
+      transform: translateY(-1px);
+    }
+
+    .feature-card:hover {
+      border-color: rgba(196, 181, 253, 0.25);
+      transform: translateY(-8px);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 36%),
+        rgba(16, 16, 22, 0.92);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(196, 181, 253, 0.18), rgba(139, 124, 246, 0.12));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .feature-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .feature-items {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .feature-item::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--indigo);
+      flex-shrink: 0;
+    }
+
+    /* ════════════════════════════════════════════
+   SECTION HEADER
+════════════════════════════════════════════ */
+    .section-header {
+      text-align: center;
+      margin-bottom: 52px;
+    }
+
+    .section-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--violet);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--display);
+      font-size: clamp(34px, 4.4vw, 46px);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      text-wrap: balance;
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--dim);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ════════════════════════════════════════════
+   COMMANDS PAGE
+════════════════════════════════════════════ */
+    .cmd-search-wrap {
+      position: relative;
+      max-width: 480px;
+      margin: 0 auto 40px;
+    }
+
+    .cmd-search {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--white);
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .cmd-search:focus {
+      border-color: var(--indigo);
+    }
+
+    .cmd-search::placeholder {
+      color: var(--dim);
+    }
+
+    .cmd-search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dim);
+      pointer-events: none;
+    }
+
+    .cmd-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .cmd-category-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--dim);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cmd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 8px;
+    }
+
+    .cmd-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.15s, background 0.15s;
+      cursor: default;
+    }
+
+    .cmd-card:hover {
+      border-color: var(--border2);
+      background: var(--surface2);
+    }
+
+    .cmd-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--violet);
+      font-weight: 600;
+      white-space: nowrap;
+      margin-bottom: 3px;
+    }
+
+    .cmd-desc {
+      font-size: 13px;
+      color: var(--dim);
+      line-height: 1.4;
+    }
+
+    .cmd-hidden {
+      display: none;
+    }
+
+    /* ════════════════════════════════════════════
+   RACE MODE PAGE
+════════════════════════════════════════════ */
+    .race-hero {
+      padding: 110px 0 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .race-glow-1 {
+      position: absolute;
+      top: 0;
+      left: 20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(88, 101, 242, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .race-glow-2 {
+      position: absolute;
+      top: 40px;
+      right: 15%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(167, 139, 250, 0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: #4ade80;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .35;
+        transform: scale(.65);
+      }
+    }
+
+    /* creds panel */
+    .creds-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .creds-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .creds-subtitle {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 20px;
+    }
+
+    .creds-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .field-label .safe-tag {
+      color: #4ade80;
+      text-transform: none;
+      font-weight: 500;
+    }
+
+    .race-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--white);
+      font-size: 13px;
+      font-family: var(--mono);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .race-input:focus {
+      border-color: var(--indigo);
+    }
+
+    .race-input::placeholder {
+      color: var(--dim);
+    }
+
+    /* race meta */
+    .race-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .race-title-text {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    .chip.live {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: #4ade80;
+    }
+
+    .chip.waiting {
+      background: rgba(234, 179, 8, 0.1);
+      border-color: rgba(234, 179, 8, 0.25);
+      color: #facc15;
+    }
+
+    .chip.done {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--dim);
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* timer */
+    .timer-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      margin-bottom: 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .timer-label {
+      font-size: 11px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .timer-value {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--indigo);
+      letter-spacing: 2px;
+    }
+
+    /* racer cards */
+    .racers-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .racer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      transition: border-color 0.3s;
+      animation: card-fade .4s ease both;
+    }
+
+    @keyframes card-fade {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .racer-card.p1 {
+      border-color: rgba(253, 224, 71, 0.2);
+    }
+
+    .racer-card.p2 {
+      border-color: rgba(203, 213, 225, 0.15);
+    }
+
+    .racer-card.p3 {
+      border-color: rgba(251, 146, 60, 0.15);
+    }
+
+    .racer-card.done {
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .racer-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .racer-medal {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 30px;
+      text-align: center;
+    }
+
+    .racer-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(88, 101, 242, 0.2);
+      border: 2px solid rgba(88, 101, 242, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: #818cf8;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .racer-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .racer-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .racer-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .racer-level {
+      font-size: 12px;
+      color: var(--dim);
+      font-family: var(--mono);
+    }
+
+    .done-badge {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: #4ade80;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .progress-wrap {
+      margin-bottom: 14px;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--dim);
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+
+    .progress-pct {
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #4338ca, #6366f1);
+      transition: width 0.7s cubic-bezier(.34, 1.4, .64, 1);
+      position: relative;
+    }
+
+    .progress-fill.complete {
+      background: linear-gradient(90deg, #15803d, #22c55e);
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2));
+    }
+
+    .stat-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--dim);
+      font-family: var(--mono);
+    }
+
+    .stat-pill b {
+      color: var(--white);
+    }
+
+    @keyframes flash {
+
+      0%,
+      100% {
+        box-shadow: none;
+      }
+
+      40% {
+        box-shadow: 0 0 20px rgba(88, 101, 242, .4);
+      }
+    }
+
+    .flash {
+      animation: flash .5s ease;
+    }
+
+    /* log feed */
+    .log-section {
+      margin-top: 40px;
+    }
+
+    .log-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--dim);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .log-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .log-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .06) transparent;
+    }
+
+    .log-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      animation: log-in .25s ease both;
+    }
+
+    @keyframes log-in {
+      from {
+        opacity: 0;
+        transform: translateX(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .log-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--dim);
+      white-space: nowrap;
+    }
+
+    .log-name {
+      font-weight: 600;
+      color: var(--violet);
+      white-space: nowrap;
+    }
+
+    .log-detail {
+      color: var(--dim);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .log-xp {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #4ade80;
+      white-space: nowrap;
+    }
+
+    /* empty / error states */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .state-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .state-text {
+      font-size: 14px;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .state-text code {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      color: var(--violet);
+    }
+
+    /* race picker */
+    .race-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .race-select-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .race-select-card:hover {
+      border-color: var(--indigo);
+      transform: translateY(-2px);
+      background: rgba(99, 102, 241, 0.03);
+    }
+
+    .rs-id {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--indigo);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .rs-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .rs-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    /* server picker */
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .server-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .server-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--indigo);
+      background: rgba(88, 101, 242, 0.05);
+    }
+
+    .server-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--indigo);
+      border: 1px solid var(--border);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .server-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .server-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .server-count {
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    /* ════════════════════════════════════════════
+   PRIVACY / TOS
+════════════════════════════════════════════ */
+    .legal-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+    }
+
+    /* ── Custom Modals ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 500px;
+      overflow: hidden;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .modal-close {
+      font-size: 24px;
+      color: var(--dim);
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .modal-close:hover {
+      color: var(--white);
+    }
+
+    @keyframes modalFloat {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Switch Toggle ── */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--surface3);
+      transition: .3s;
+      border-radius: 34px;
+      border: 1px solid var(--border);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--white);
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--indigo);
+      border-color: var(--indigo);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(16px);
+    }
+
+    .legal-content h1 {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .legal-meta {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 48px;
+    }
+
+    .legal-content h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--white);
+      margin: 36px 0 12px;
+    }
+
+    .legal-content p {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    .legal-content ul {
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+
+    .legal-content li {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 6px;
+    }
+
+    /* ════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════ */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--white);
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--dim);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: var(--dim);
+      transition: color .15s;
+    }
+
+    .footer-link:hover {
+      color: var(--white);
+    }
+
+    /* ════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup {
+        display: none;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .creds-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero {
+        padding: 100px 0 60px;
+      }
+
+      .section {
+        padding: 60px 0;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* ════════════════════════════════════════════
+   REVAMP STYLES (Animations & Premium Feel)
+════════════════════════════════════════════ */
+    /* Smooth scroll & Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border2);
+    }
+
+    /* Glassmorphism Navigation */
+    .nav {
+      background: rgba(5, 5, 5, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Subtle Hero Background Animation */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(88, 101, 242, 0.12), rgba(167, 139, 250, 0.04), transparent 60%);
+      animation: hero-spin 25s linear infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes hero-spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Typing Effect Cursor */
+    .typing-container span.cursor {
+      display: inline-block;
+      width: 3px;
+      background-color: var(--indigo);
+      animation: blink 1s step-end infinite;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* Feature Cards & Glassmorphism Hover */
+    .feature-card,
+    .cmd-card,
+    .racer-card,
+    .race-select-card {
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      background: rgba(10, 10, 10, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .feature-card:hover,
+    .cmd-card:hover,
+    .race-select-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(88, 101, 242, 0.4);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(88, 101, 242, 0.15);
+      background: rgba(17, 17, 17, 0.85);
+      z-index: 10;
+    }
+
+    /* Dynamic Primary Buttons */
+    .btn-primary {
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, var(--indigo) 0%, #7c3aed 100%);
+      box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+      transform: rotate(30deg) translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .btn-primary:hover::after {
+      transform: rotate(30deg) translateX(100%);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 25px rgba(167, 139, 250, 0.5);
+      transform: translateY(-2px) scale(1.03);
+    }
+
+    /* Scroll Reveal Classes */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px) scale(0.985);
+      transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .hero-inner > div:first-child,
+    .mockup {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+
+    .mockup {
+      transform: perspective(1400px) rotateY(-10deg) rotateX(5deg) translateY(24px);
+    }
+
+    body.loaded .hero-inner > div:first-child {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.loaded .mockup {
+      opacity: 1;
+      transform: perspective(1400px) rotateY(-10deg) rotateX(5deg) translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        padding: 12px 12px 0;
+      }
+
+      .nav-inner {
+        border-radius: 26px;
+        padding: 10px 16px;
+      }
+
+      .hero {
+        padding-top: 128px;
+      }
+
+      .hero h1 span::after {
+        bottom: -6px;
+      }
+
+      .mockup,
+      .mockup:hover,
+      body.loaded .mockup {
+        transform: translateY(0);
+      }
+    }
+
+    /* Scroll To Top Button */
+    #scrollTopBtn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: var(--surface2);
+      color: var(--white);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 99;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    #scrollTopBtn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    #scrollTopBtn:hover {
+      background: linear-gradient(135deg, var(--indigo) 0%, #7c3aed 100%);
+      border-color: var(--indigo);
+      transform: translateY(-5px) scale(1.1);
+      box-shadow: 0 8px 25px rgba(88, 101, 242, 0.4);
+    }
+
+    /* Gradient Text Selection */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--white) 0%, var(--violet) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ════════════════════════════════════════════
+   GRIND CALENDAR
+════════════════════════════════════════════ */
+    .cal-hero { padding: 110px 0 48px; position: relative; overflow: hidden; }
+    .cal-tabs { display: flex; gap: 6px; margin-bottom: 32px; }
+    .cal-tab { padding: 8px 18px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--dim); border: 1px solid var(--border); transition: all .2s; }
+    .cal-tab:hover { color: var(--white); border-color: var(--border2); }
+    .cal-tab.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+    .cal-view { display: none; }
+    .cal-view.active { display: block; }
+
+    /* create form */
+    .cal-form { max-width: 560px; margin: 0 auto; }
+    .cal-form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+    .cal-field { margin-bottom: 20px; }
+    .cal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .cal-input { width: 100%; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--white); font-size: 14px; font-family: var(--font); outline: none; transition: border-color .2s; }
+    .cal-input:focus { border-color: var(--indigo); }
+    .cal-input::placeholder { color: var(--dim); }
+    .cal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cal-hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+    /* toggle */
+    .cal-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .cal-toggle-label { font-size: 14px; color: var(--muted); }
+    .cal-toggle { position: relative; width: 44px; height: 24px; }
+    .cal-toggle input { opacity: 0; width: 0; height: 0; }
+    .cal-toggle-track { position: absolute; inset: 0; background: var(--surface3); border-radius: 12px; transition: background .2s; cursor: pointer; }
+    .cal-toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--dim); transition: all .2s; }
+    .cal-toggle input:checked + .cal-toggle-track { background: var(--indigo); }
+    .cal-toggle input:checked + .cal-toggle-track::after { transform: translateX(20px); background: #fff; }
+
+    /* calendar grid */
+    .cal-header-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+    .cal-progress-bar { width: 100%; height: 10px; border-radius: 5px; background: rgba(255,255,255,.06); margin: 16px 0 24px; overflow: hidden; }
+    .cal-progress-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #4338ca, #6366f1); transition: width .5s ease; }
+    .cal-progress-fill.done { background: linear-gradient(90deg, #15803d, #22c55e); }
+    .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .cal-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; transition: all .3s; position: relative; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }
+    .cal-day:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .cal-day-num { font-size: 11px; color: var(--dim); font-weight: 600; margin-bottom: 4px; }
+    .cal-day-date { font-size: 10px; color: rgba(255,255,255,.2); margin-bottom: 6px; }
+    .cal-day-target { font-size: 16px; font-weight: 700; color: var(--white); font-family: var(--mono); }
+    .cal-day-sub { font-size: 10px; color: var(--dim); margin-top: 2px; }
+    .cal-day.today { border-color: var(--indigo); box-shadow: 0 0 20px var(--indigo-glow); background: rgba(88,101,242,.05); }
+    .cal-day.completed { border-color: rgba(34,197,94,.25); background: rgba(34,197,94,.04); }
+    .cal-day.completed .cal-day-target { color: #4ade80; }
+    .cal-day.missed { border-color: rgba(239,68,68,.2); background: rgba(239,68,68,.03); opacity: .7; }
+    .cal-day.missed .cal-day-target { color: #f87171; text-decoration: line-through; }
+    .cal-day.future { opacity: .5; }
+    .cal-day-check { position: absolute; top: 6px; right: 6px; font-size: 14px; }
+    .cal-day-btn { margin-top: 6px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--indigo); color: #fff; transition: all .2s; }
+    .cal-day-btn:hover { background: #6470f3; transform: scale(1.05); }
+
+    /* rest day styles */
+    .cal-day.rest { border-color: rgba(167, 139, 250, 0.2); background: rgba(167, 139, 250, 0.03); opacity: 0.8; }
+    .cal-day.rest .cal-day-target { color: var(--violet); }
+    .cal-day.rest .cal-day-sub { color: var(--violet); font-weight: 600; }
+
+    /* blazing (surpassed) styles */
+    .cal-day.blazing { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); box-shadow: 0 0 15px rgba(245, 158, 11, 0.1); }
+    .cal-day.blazing .cal-day-target { color: #fbbf24; }
+    .cal-day.blazing::after { content: '🔥'; position: absolute; top: 6px; left: 6px; font-size: 12px; }
+    .cal-day.pinned::before { content: '📌'; position: absolute; top: 6px; right: 6px; font-size: 10px; opacity: 0.7; }
+
+    /* stats bar */
+    .cal-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .cal-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .cal-stat-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .cal-stat-value { font-size: 18px; font-weight: 700; color: var(--white); }
+    .cal-stat-value.highlight { color: var(--indigo); }
+    .cal-stat-value.streak-hot { color: #f59e0b; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); animation: streak-pulse 2s infinite; }
+
+    @keyframes streak-pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .cal-status-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; margin-top: 8px; }
+    .cal-status-tag.ahead { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .cal-status-tag.behind { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .cal-status-tag.on-track { background: rgba(99, 102, 241, 0.1); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); }
+
+    /* unlock bar */
+    .cal-unlock { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .cal-unlock input { flex: 1; min-width: 200px; }
+    .cal-unlock-status { font-size: 12px; color: var(--dim); }
+    .cal-unlock-status.ok { color: #4ade80; }
+
+    /* public directory */
+    .cal-pub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .cal-pub-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; cursor: pointer; transition: all .3s; }
+    .cal-pub-card:hover { border-color: var(--indigo); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+    .cal-pub-name { font-weight: 600; font-size: 16px; color: var(--white); margin-bottom: 4px; }
+    .cal-pub-code { font-family: var(--mono); font-size: 11px; color: var(--indigo); margin-bottom: 12px; }
+    .cal-pub-progress { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; margin-bottom: 10px; }
+    .cal-pub-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4338ca, #6366f1); }
+    .cal-pub-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--dim); }
+
+    /* modal */
+    .cal-modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .cal-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; max-width: 420px; width: 100%; animation: card-fade .3s ease; }
+    .cal-modal h3 { font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 16px; }
+    .cal-modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* lookup bar */
+    .cal-lookup { max-width: 480px; margin: 0 auto 40px; display: flex; gap: 10px; }
+    .cal-lookup input { flex: 1; }
+
+    /* alert */
+    .cal-alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+    .cal-alert.error { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #f87171; }
+    .cal-alert.success { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); color: #4ade80; }
+
+    @media (max-width: 600px) {
+      .cal-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+      .cal-row { grid-template-columns: 1fr; }
+      .cal-tabs { flex-wrap: wrap; }
+    }
+
+    /* ════════════════════════════════════════════
+    REDESIGN: PREMIUM CALENDAR STYLES
+    ════════════════════════════════════════════ */
+    .cal-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin: 40px 0 60px;
+    }
+
+    .cal-feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cal-feature-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--indigo);
+      transform: translateY(-4px);
+    }
+
+    .cal-feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--indigo-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--violet);
+    }
+
+    .cal-feature-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--white);
+    }
+
+    .cal-feature-desc {
+      font-size: 13.5px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    /* Example Calendar Mockup */
+    .cal-example-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-top: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+
+    .cal-example-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .cal-example-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--indigo);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .cal-example-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .cal-ex-day {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      min-height: 70px;
+    }
+
+    .cal-ex-day.done {
+      background: rgba(34, 197, 94, 0.05);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .cal-ex-day.today {
+      background: var(--indigo-glow);
+      border-color: var(--indigo);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+      transform: scale(1.05);
+      z-index: 2;
+    }
+
+    .cal-ex-label-small {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--dim);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .cal-ex-value {
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--white);
+    }
+
+    .cal-ex-day.done .cal-ex-value { color: #4ade80; }
+    .cal-ex-day.today .cal-ex-value { color: var(--indigo); }
+
+    .cal-stats-mini {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .cal-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cal-stat-label {
+      font-size: 10px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .cal-stat-val {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--white);
+    }
+
+    .cal-progress-bar-wrap {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 10px;
+      margin-top: 24px;
+      overflow: hidden;
+    }
+
+    .cal-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--violet) 100%);
+      width: 42%;
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--indigo-glow);
+    }
+
+    .cal-badge-noaccount {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* ════════════════════════════════════════════
+    ENHANCE: ANALYTICS & TIMER
+    ════════════════════════════════════════════ */
+    .cal-analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+    .cal-chart-card { 
+      background: var(--surface); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius-lg); 
+      padding: 24px; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .cal-chart-container { 
+      position: relative; 
+      height: 300px; 
+      width: 100%; 
+    }
+    .cal-chart-title { font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    
+    .grind-timer-card { 
+      background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(167, 139, 250, 0.05));
+      border: 1px solid var(--indigo-dim);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      animation: card-fade 0.4s ease;
+    }
+    .timer-display { font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--white); text-shadow: 0 0 20px var(--indigo-glow); }
+    .timer-controls { display: flex; gap: 12px; }
+    .timer-info { flex: 1; }
+    .timer-title { font-size: 13px; font-weight: 700; color: var(--indigo); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .timer-desc { font-size: 12px; color: var(--dim); }
+
+    .session-log { margin-top: 40px; }
+    .session-item { 
+      background: var(--surface2); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius); 
+      padding: 12px 16px; 
+      margin-bottom: 10px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      font-size: 13px;
+    }
+    .session-meta { display: flex; flex-direction: column; gap: 2px; }
+    .session-date { font-size: 11px; color: var(--dim); }
+    .session-gain { font-weight: 700; color: #4ade80; }
+
+    @media (max-width: 900px) {
+      .cal-analytics-grid { grid-template-columns: 1fr; }
+      .grind-timer-card { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="ambient-canvas" id="ambientCanvas" aria-hidden="true"></canvas>
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════
+     NAV
+══════════════════════════════════════════ -->
+    <nav class="nav" id="nav">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo" onclick="goto('home')">
+          <div class="nav-logo-icon">T</div>
+          TOH Bot
+        </a>
+        <div class="nav-links">
+          <button class="nav-link active" id="nl-home" onclick="goto('home')">Home</button>
+          <button class="nav-link" id="nl-commands" onclick="goto('commands')">Commands</button>
+          <button class="nav-link" id="nl-race" onclick="goto('race')">Race Mode</button>
+          <button class="nav-link" id="nl-calendar" onclick="goto('calendar')">Grind Calendar</button>
+          <button class="nav-link" id="nl-privacy" onclick="goto('privacy')">Privacy</button>
+          <a class="nav-link" href="/leaderboard" style="display:inline-flex;align-items:center;gap:5px">🏆 Leaderboard</a>
+        </div>
+        <div class="nav-actions">
+          <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
+            target="_blank" class="btn-primary" id="addBtn">
+            Add to Discord
+          </a>
+        </div>
+        <button class="hamburger" id="hamburger" onclick="toggleMobile()">
+          <svg id="hamIcon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="closeIcon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24" style="display:none">
+            <path d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="mobile-menu" id="mobileMenu">
+        <button class="nav-link" onclick="goto('home');toggleMobile()">Home</button>
+        <button class="nav-link" onclick="goto('commands');toggleMobile()">Commands</button>
+        <button class="nav-link" onclick="goto('race');toggleMobile()">Race Mode</button>
+        <button class="nav-link" onclick="goto('calendar');toggleMobile()">Grind Calendar</button>
+        <button class="nav-link" onclick="goto('privacy');toggleMobile()">Privacy</button>
+        <a class="nav-link" href="/leaderboard" style="display:inline-flex;align-items:center;gap:5px">🏆 Leaderboard</a>
+        <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
+          target="_blank" class="btn-primary" style="width:fit-content;margin-top:4px">Add to Discord</a>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════ -->
+    <div class="page active" id="page-home">
+
+      <!-- hero -->
+      <section class="hero">
+        <div class="hero-glow"></div>
+        <div class="container">
+          <div class="hero-inner">
+            <div>
+              <div class="hero-eyebrow">
+                <span>🔥</span> Tower of Hell Discord Bot
+              </div>
+              <h1>Elevate your<br><span>TOH grind</span></h1>
+              <p class="hero-desc">
+                Advanced XP calculations, grind planning, competitive tools and live race mode — built for the Tower of
+                Hell community.
+              </p>
+              <div class="hero-actions">
+                <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
+                  target="_blank" class="btn-primary" style="padding:12px 24px;font-size:15px">
+                  Add to Discord
+                </a>
+                <button class="btn-ghost" onclick="goto('commands')">View Commands</button>
+              </div>
+              <div class="hero-stats">
+                <div class="hero-stat">
+                  <div class="hero-stat-num">35+</div>
+                  <div class="hero-stat-label">Commands</div>
+                </div>
+                <div class="hero-stat">
+                  <div class="hero-stat-num">100%</div>
+                  <div class="hero-stat-label">Accurate formulas</div>
+                </div>
+                <div class="hero-stat">
+                  <div class="hero-stat-num">Free</div>
+                  <div class="hero-stat-label">Always</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Discord mockup -->
+            <div class="mockup">
+              <div class="mockup-bar">
+                <div class="mockup-dot" style="background:#ed6a5a"></div>
+                <div class="mockup-dot" style="background:#f5ac45;margin-left:6px"></div>
+                <div class="mockup-dot" style="background:#62c655;margin-left:6px"></div>
+                <span style="margin-left:12px;font-size:12px;color:var(--dim)"># toh-bot</span>
+              </div>
+              <div class="mockup-content">
+                <div class="dc-msg">
+                  <div class="dc-avatar" style="background:#313338;color:var(--text)">S</div>
+                  <div class="dc-msg-body">
+                    <div class="dc-author">
+                      <span class="dc-name">siebeman</span>
+                      <span class="dc-time">Today at 5:01 PM</span>
+                    </div>
+                    <div class="dc-text">/levelinfo level: 80</div>
+                  </div>
+                </div>
+                <div class="dc-msg">
+                  <div class="dc-avatar" style="background:#5865f2;color:#fff;font-size:12px">T</div>
+                  <div class="dc-msg-body">
+                    <div class="dc-author">
+                      <span class="dc-name">TOH Bot</span>
+                      <span class="dc-badge">BOT</span>
+                      <span class="dc-time">Today at 5:01 PM</span>
+                    </div>
+                    <div class="dc-embed">
+                      <div class="dc-embed-title">📊 Level 80 Info</div>
+                      <div class="dc-fields">
+                        <div>
+                          <div class="dc-field-name">Total XP to reach this level</div>
+                          <div class="dc-field-val">324.0K</div>
+                        </div>
+                        <div>
+                          <div class="dc-field-name">XP for next level</div>
+                          <div class="dc-field-val">8,100</div>
+                        </div>
+                        <div>
+                          <div class="dc-field-name">Skill points</div>
+                          <div class="dc-field-val">80/80 ✅</div>
+                        </div>
+                        <div>
+                          <div class="dc-field-name">Pro Towers Needed</div>
+                          <div class="dc-field-val">1,296</div>
+                        </div>
+                        <div>
+                          <div class="dc-field-name">Noob Towers</div>
+                          <div class="dc-field-val">3,240</div>
+                        </div>
+                        <div>
+                          <div class="dc-field-name">Est. Hours</div>
+                          <div class="dc-field-val">54h</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- features -->
+      <section class="section">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-eyebrow">Features</div>
+            <div class="section-title">Everything you need for the grind</div>
+            <div class="section-subtitle">Precise calculations, planning tools, and community features — all based on
+              official ToH formulas.</div>
+          </div>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <div class="feature-title">XP Calculations</div>
+              <div class="feature-desc">Precise XP breakdowns using official quadratic formulas from the Tower of Hell
+                wiki.</div>
+              <div class="feature-items">
+                <div class="feature-item">Level Breakdown — XP, towers, and skill points</div>
+                <div class="feature-item">Partial XP — Calculate section-based gains</div>
+                <div class="feature-item">XP Converter — noob ↔ pro ↔ raw XP</div>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📅</div>
+              <div class="feature-title">Grind Planning</div>
+              <div class="feature-desc">Plan your journey to level 1,000,000 with daily targets and milestone
+                projections.</div>
+              <div class="feature-items">
+                <div class="feature-item">Daily Targets — Towers needed by deadline</div>
+                <div class="feature-item">Milestones — Next 10 round-number levels</div>
+                <div class="feature-item">Efficiency — Noob vs Pro strategies</div>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🏁</div>
+              <div class="feature-title">Competitive Tools</div>
+              <div class="feature-desc">Race against friends, calculate catch-up times, and compare grinding efficiency.
+              </div>
+              <div class="feature-items">
+                <div class="feature-item">Player Races — Who hits the goal first?</div>
+                <div class="feature-item">Catchup Logic — Time to overtake a leader</div>
+                <div class="feature-item">Live Race Mode — Real-time progress tracking</div>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⏱️</div>
+              <div class="feature-title">Session Tracking</div>
+              <div class="feature-desc">Summarize your daily achievements and estimate real-world time spent in the
+                tower.</div>
+              <div class="feature-items">
+                <div class="feature-item">Session Summary — XP gained today</div>
+                <div class="feature-item">Time Estimates — Real-world grind hours</div>
+                <div class="feature-item">Grind Graph — Visual 7-day chart</div>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">😄</div>
+              <div class="feature-title">Fun &amp; Social</div>
+              <div class="feature-desc">Engage your community with roasts, facts, and addiction tier summaries.</div>
+              <div class="feature-items">
+                <div class="feature-item">Level Roasts — Get hyped or roasted</div>
+                <div class="feature-item">Addiction Tier — Your life in Tower of Hell</div>
+                <div class="feature-item">Tower Facts — Random XP knowledge</div>
+              </div>
+            </div>
+            <div class="feature-card"
+              style="background:linear-gradient(135deg,rgba(88,101,242,0.08),rgba(167,139,250,0.05));border-color:rgba(88,101,242,0.2)">
+              <div class="feature-icon" style="background:rgba(88,101,242,0.2)">🔥</div>
+              <div class="feature-title">100% Accurate</div>
+              <div class="feature-desc">Every formula verified against the official Tower of Hell wiki. No
+                approximations — exact quadratic XP math.</div>
+              <div class="feature-items">
+                <div class="feature-item">y = 50(x² + x) — exact total XP</div>
+                <div class="feature-item">Partial XP: floor(MaxXP × (m/n)²)</div>
+                <div class="feature-item">Day-by-day simulation for accuracy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <div class="divider"></div>
+      <section class="section-sm" style="text-align:center">
+        <div class="container">
+          <div
+            style="font-size:13px;color:var(--dim);margin-bottom:16px;text-transform:uppercase;letter-spacing:2px;font-weight:600">
+            Get Started</div>
+          <div
+            style="font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--white);margin-bottom:12px;letter-spacing:-0.02em">
+            Ready to optimize your grind?</div>
+          <div style="font-size:16px;color:var(--dim);margin-bottom:28px">Free. No setup. Just add to your server and
+            start using slash commands.</div>
+          <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
+            target="_blank" class="btn-primary" style="padding:14px 32px;font-size:16px;display:inline-flex">
+            Add TOH Bot to Discord
+          </a>
+        </div>
+      </section>
+
+    </div><!-- /page-home -->
+
+    <!-- ══════════════════════════════════════════
+     COMMANDS PAGE
+══════════════════════════════════════════ -->
+    <div class="page" id="page-commands">
+      <div style="padding-top:80px">
+        <div class="container">
+          <div class="section-header" style="padding-top:48px">
+            <div class="section-eyebrow">Slash Commands</div>
+            <div class="section-title">All Commands</div>
+            <div class="section-subtitle">A comprehensive list of all 35+ commands. Type / in Discord to use them.</div>
+          </div>
+
+          <div class="cmd-search-wrap">
+            <svg class="cmd-search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input class="cmd-search" type="text" placeholder="Search commands…" id="cmdSearch"
+              oninput="filterCmds(this.value)">
+          </div>
+
+          <div class="cmd-categories" id="cmdCategories">
+
+            <div class="cmd-category" data-cat="xp">
+              <div class="cmd-category-title">📊 XP &amp; Level Info</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/levelinfo</div>
+                    <div class="cmd-desc">Show XP details, towers needed, and skill points for any level.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/progress</div>
+                    <div class="cmd-desc">Calculate towers needed to reach a target level from your current XP.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/towers</div>
+                    <div class="cmd-desc">See how many total towers it took to reach a specific level.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/xpcalc</div>
+                    <div class="cmd-desc">Convert a raw XP amount into its equivalent Tower of Hell level.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/compare</div>
+                    <div class="cmd-desc">Calculate the XP and tower gap between two different levels.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/partialxp</div>
+                    <div class="cmd-desc">Calculate XP earned for completing part of a tower using official formulas.
+                    </div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/skillpoints</div>
+                    <div class="cmd-desc">Check your skill tree progress and see how many towers to max it.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/levelcap</div>
+                    <div class="cmd-desc">View interesting stats about reaching the level 1,000,000 cap.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/xprate</div>
+                    <div class="cmd-desc">Generate an XP cost chart across a specific level range.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/convert</div>
+                    <div class="cmd-desc">Convert between XP, noob towers, and pro towers.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/nextlevel</div>
+                    <div class="cmd-desc">Quick view of exactly what you need for your very next level.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-category" data-cat="grind">
+              <div class="cmd-category-title">📅 Grind Planning</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/grind</div>
+                    <div class="cmd-desc">Plan your daily grind with milestones and time estimates.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/efficiency</div>
+                    <div class="cmd-desc">Compare noob vs pro vs mixed grinding strategies side by side.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/milestone</div>
+                    <div class="cmd-desc">See the next 10 round-number levels and how many towers away they are.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/dailytarget</div>
+                    <div class="cmd-desc">Towers/levels per day needed to hit a level by a deadline.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/xpgoal</div>
+                    <div class="cmd-desc">How many towers do you need to gain a target amount of XP or levels?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/xpperday</div>
+                    <div class="cmd-desc">How much do you need to grind per day to reach a level in set days?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/projection</div>
+                    <div class="cmd-desc">Are you on pace to hit your goal by your deadline?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-category" data-cat="competitive">
+              <div class="cmd-category-title">🏁 Competitive</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/race</div>
+                    <div class="cmd-desc">Compare two players racing to a target level.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/catchup</div>
+                    <div class="cmd-desc">Calculate how long it will take to catch up to another player.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/overtake</div>
+                    <div class="cmd-desc">If you're behind but grinding faster — when do you overtake them?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/breakeven</div>
+                    <div class="cmd-desc">When does your total XP equal a player who has a head start?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/compare_players</div>
+                    <div class="cmd-desc">Dramatically compare your level to another player's.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/podium</div>
+                    <div class="cmd-desc">Rank three players on a podium with XP gap stats.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/howfar</div>
+                    <div class="cmd-desc">Dramatically show the grind gap between two players in time and effort.</div>
+                  </div>
+                </div>
+                <div class="cmd-card" style="border-color:rgba(88,101,242,0.25)">
+                  <div>
+                    <div class="cmd-name">/race_create</div>
+                    <div class="cmd-desc">🆕 Create a live race in Discord. Players join and log wins in real-time.
+                    </div>
+                  </div>
+                </div>
+                <div class="cmd-card" style="border-color:rgba(88,101,242,0.25)">
+                  <div>
+                    <div class="cmd-name">/race_join</div>
+                    <div class="cmd-desc">🆕 Join an active race and snapshot your current level as the starting line.
+                    </div>
+                  </div>
+                </div>
+                <div class="cmd-card" style="border-color:rgba(88,101,242,0.25)">
+                  <div>
+                    <div class="cmd-name">/log</div>
+                    <div class="cmd-desc">🆕 Log tower wins during a race — updates the live website instantly.</div>
+                  </div>
+                </div>
+                <div class="cmd-card" style="border-color:rgba(88,101,242,0.25)">
+                  <div>
+                    <div class="cmd-name">/race_status</div>
+                    <div class="cmd-desc">🆕 Show live standings for the current race in Discord.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-category" data-cat="time">
+              <div class="cmd-category-title">⏱️ Time &amp; Stats</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/howlong</div>
+                    <div class="cmd-desc">Estimate real-world time spent grinding or calculate your actual rate.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/howaddicted</div>
+                    <div class="cmd-desc">A full 'your life in Tower of Hell' summary and addiction tier.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/whatif</div>
+                    <div class="cmd-desc">See what level you would be if you had started on a specific date.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/towerstoday</div>
+                    <div class="cmd-desc">Session summary: see what you achieved from start to end level.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/seasonal</div>
+                    <div class="cmd-desc">Monthly grind review with rating and verdict.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/grindgraph</div>
+                    <div class="cmd-desc">Real graph of your level progress over 3–30 days.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/towermath</div>
+                    <div class="cmd-desc">What does your level mean in increasingly absurd real-world comparisons?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-category" data-cat="fun">
+              <div class="cmd-category-title">😄 Fun &amp; Social</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/roast</div>
+                    <div class="cmd-desc">Get absolutely roasted based on your Tower of Hell level. 500+ responses.
+                    </div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/hype</div>
+                    <div class="cmd-desc">Get hyped up based on your level. Pure motivation, no caveats.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/shouldigrind</div>
+                    <div class="cmd-desc">The most important question: should you grind right now?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/towerfact</div>
+                    <div class="cmd-desc">Get a random Tower of Hell XP fact from the official wiki.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/tohquote</div>
+                    <div class="cmd-desc">Random Tower of Hell wisdom to fuel or haunt your grind.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/equivalent</div>
+                    <div class="cmd-desc">What is your Tower of Hell level equivalent to in real-world terms?</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/flex</div>
+                    <div class="cmd-desc">Generate a shareable level card image with your stats.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-category" data-cat="misc">
+              <div class="cmd-category-title">🔧 Misc</div>
+              <div class="cmd-grid">
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/ping</div>
+                    <div class="cmd-desc">Check the bot's latency and connection quality.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/tohhelp</div>
+                    <div class="cmd-desc">List all Tower of Hell bot commands and official formulas.</div>
+                  </div>
+                </div>
+                <div class="cmd-card">
+                  <div>
+                    <div class="cmd-name">/remindme</div>
+                    <div class="cmd-desc">Set a grind reminder — bot DMs you after the specified time.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /cmd-categories -->
+        </div>
+      </div>
+    </div><!-- /page-commands -->
+
+    <!-- ══════════════════════════════════════════
+     RACE MODE PAGE
+══════════════════════════════════════════ -->
+    <div class="page" id="page-race">
+
+      <div class="race-hero">
+        <div class="race-glow-1"></div>
+        <div class="race-glow-2"></div>
+        <div class="container">
+          <div class="live-badge">
+            <div class="live-dot" id="liveDot"></div>
+            <span id="connStatus">Not connected</span>
+          </div>
+          <h1
+            style="font-size:clamp(32px,5vw,52px);font-weight:700;color:var(--white);letter-spacing:-0.02em;margin-bottom:10px">
+            Race Mode <span style="color:var(--indigo)">Live</span>
+          </h1>
+          <p style="font-size:16px;color:var(--dim);max-width:520px">
+            Watch players race in real-time. Every tower logged in Discord instantly moves the progress bar.
+          </p>
+        </div>
+      </div>
+
+      <div class="container" style="padding-bottom:80px">
+
+        <!-- creds -->
+        <div class="creds-panel" id="credsPanel" style="display:none">
+          <div class="creds-title">Connect to your race database</div>
+          <div class="creds-subtitle">Enter your Supabase credentials to watch live. These are saved in your browser
+            session.</div>
+          <div class="creds-grid">
+            <div>
+              <label class="field-label">Supabase URL</label>
+              <input id="sbUrl" class="race-input" type="text" placeholder="https://xxxx.supabase.co"
+                autocomplete="off">
+            </div>
+            <div>
+              <label class="field-label">Anon Key <span class="safe-tag">— public, safe to enter</span></label>
+              <input id="sbKey" class="race-input" type="password" placeholder="eyJhbGciOi…" autocomplete="off">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="raceConnect()" style="margin-top:4px">Connect →</button>
+          <div
+            style="margin-top:14px;padding:12px 16px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:10px;font-size:13px;color:var(--dim)">
+            <b style="color:#4ade80">✓ Security note:</b> Only use the <b>anon</b> key here — it's designed to be
+            public. Never paste your <b>service_role</b> key (that one stays in your bot's .env file).
+          </div>
+        </div>
+
+        <!-- race meta -->
+        <div id="raceMeta" style="display:none">
+          <div class="race-meta-row">
+            <div>
+              <div class="race-title-text" id="raceNameEl">—</div>
+              <div class="chips-row" style="margin-top:8px" id="raceChips"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div id="timerWrap" style="display:none">
+                <div class="timer-box">
+                  <div>
+                    <div class="timer-label">Elapsed</div>
+                    <div class="timer-value" id="timerEl">00:00</div>
+                  </div>
+                </div>
+              </div>
+              <button onclick="goBackToRaces()"
+                style="font-size:12px;color:var(--dim);padding:8px 14px;border:1px solid var(--border);border-radius:8px;transition:all .2s">←
+                Back</button>
+            </div>
+          </div>
+          <div class="racers-stack" id="racersStack"></div>
+        </div>
+
+        <!-- empty state -->
+        <div id="raceEmpty" style="display:none" class="state-box">
+          <div class="state-icon">🏁</div>
+          <div class="state-title">No Active Race</div>
+          <div class="state-text">
+            Start a race in Discord with <code>/race_create</code>, have players join with <code>/race_join</code>,
+            then come back here to watch live.
+          </div>
+        </div>
+
+        <!-- server picker state -->
+        <div id="serverPicker" style="display:none" class="state-box">
+          <div class="state-title" style="margin-bottom:24px">Choose a Server</div>
+          <div id="serverPickerList" class="server-grid"></div>
+        </div>
+
+        <!-- picker state -->
+        <div id="racePicker" style="display:none" class="state-box">
+          <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px">
+            <button onclick="renderServerPicker()"
+              style="font-size:12px; color:var(--dim); padding:6px 12px; border:1px solid var(--border); border-radius:8px; transition:all .2s">←
+              Servers</button>
+            <div class="state-title" style="margin:0" id="racePickerTitle">Choose a Race</div>
+          </div>
+          <div id="racePickerList" class="race-grid"></div>
+        </div>
+
+        <!-- error state -->
+        <div id="raceError"
+          style="display:none;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:16px;padding:32px;text-align:center;margin-top:16px">
+          <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+          <div style="font-weight:600;color:var(--white);margin-bottom:6px" id="errTitleEl">Error</div>
+          <div style="font-size:14px;color:var(--dim)" id="errMsgEl"></div>
+        </div>
+
+        <!-- log section -->
+        <div id="logSectionEl" style="display:none" class="log-section">
+          <div class="log-section-title">Activity Log</div>
+          <div class="log-scroll" id="logFeedEl"></div>
+        </div>
+
+      </div>
+    </div><!-- /page-race -->
+
+    <!-- ══════════════════════════════════════════
+     GRIND CALENDAR PAGE
+══════════════════════════════════════════ -->
+    <div class="page" id="page-calendar">
+      <!-- ── NEW HERO ── -->
+      <section class="hero" style="padding-bottom: 20px; overflow: visible;">
+        <div class="hero-glow"></div>
+        <div class="container">
+          <div class="hero-inner">
+            <div class="reveal active">
+              <div class="hero-eyebrow"><span>📅</span> Grind Planning System</div>
+              <h1 style="font-size:clamp(36px, 5vw, 64px)">Plan Your <br><span>Legacy.</span></h1>
+              <p class="hero-desc">
+                The most advanced tracking system for Tower of Hell. Set goals, calculate daily targets, and track your climb to Level 1,000,000.
+                <span class="cal-badge-noaccount">No Account Required</span>
+              </p>
+              
+              <div class="cal-feature-grid">
+                <div class="cal-feature-card">
+                  <div class="cal-feature-icon">🛡️</div>
+                  <div class="cal-feature-title">Privacy First</div>
+                  <div class="cal-feature-desc">No signup, no emails, no data tracking. Your grind is yours alone, secured by a unique access code.</div>
+                </div>
+                <div class="cal-feature-card">
+                  <div class="cal-feature-icon">📈</div>
+                  <div class="cal-feature-title">Dynamic Scaling</div>
+                  <div class="cal-feature-desc">Fell behind? The system automatically adjusts your daily targets to keep you on track for your goal.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Example Visualization -->
+            <div class="reveal active" style="transition-delay: 0.2s;">
+              <div class="cal-example-wrap">
+                <div class="cal-example-header">
+                  <div class="cal-example-label">Live Example: Level 500 → 600 Sprint</div>
+                  <div class="chip live"><div class="live-dot"></div> On Track</div>
+                </div>
+                
+                <div class="cal-stats-mini">
+                  <div class="cal-stat-item">
+                    <div class="cal-stat-label">Current Level</div>
+                    <div class="cal-stat-val">542</div>
+                  </div>
+                  <div class="cal-stat-item">
+                    <div class="cal-stat-label">Daily Target</div>
+                    <div class="cal-stat-val">540</div>
+                  </div>
+                  <div class="cal-stat-item">
+                    <div class="cal-stat-label">Grind Streak</div>
+                    <div class="cal-stat-val">12 Days</div>
+                  </div>
+                </div>
+
+                <div class="cal-example-grid">
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 1</div>
+                    <div class="cal-ex-value">500</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 2</div>
+                    <div class="cal-ex-value">504</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 3</div>
+                    <div class="cal-ex-value">508</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 4</div>
+                    <div class="cal-ex-value">512</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 5</div>
+                    <div class="cal-ex-value">516</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 6</div>
+                    <div class="cal-ex-value">520</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 7</div>
+                    <div class="cal-ex-value">525</div>
+                  </div>
+                  <div class="cal-ex-day done">
+                    <div class="cal-ex-label-small">Day 8</div>
+                    <div class="cal-ex-value">532</div>
+                  </div>
+                  <div class="cal-ex-day today">
+                    <div class="cal-ex-label-small">Today</div>
+                    <div class="cal-ex-value">542</div>
+                  </div>
+                  <div class="cal-ex-day">
+                    <div class="cal-ex-label-small">Day 10</div>
+                    <div class="cal-ex-value">...</div>
+                  </div>
+                </div>
+
+                <div class="cal-progress-bar-wrap">
+                  <div class="cal-progress-bar-fill" style="width: 42%;"></div>
+                </div>
+                <div style="margin-top:12px; display:flex; justify-content:space-between; font-size:10px; color:var(--dim); font-weight:700; text-transform:uppercase;">
+                  <span>Lvl 500</span>
+                  <span>Progress to Lvl 600</span>
+                  <span>600</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="container" style="padding-bottom:80px">
+
+        <div class="cal-tabs">
+          <button class="cal-tab active" onclick="calTab('create')" id="ct-create">📝 Create</button>
+          <button class="cal-tab" onclick="calTab('view')" id="ct-view">📅 My Calendar</button>
+          <button class="cal-tab" onclick="calTab('stats')" id="ct-stats">📊 Stats</button>
+          <button class="cal-tab" onclick="calTab('public')" id="ct-public">🌍 Public</button>
+        </div>
+
+        <!-- ── CREATE VIEW ── -->
+        <div class="cal-view active" id="calv-create">
+          <div class="cal-form">
+            <div class="cal-form-card">
+              <div id="calCreateAlert"></div>
+              <div class="cal-field">
+                <label>Calendar URL Code</label>
+                <input class="cal-input" type="text" id="calCode" placeholder="e.g. my-epic-grind" maxlength="40" autocomplete="off">
+                <div class="cal-hint">This will be your shareable URL: <u>toh-bot.com/#calendar/code</u></div>
+              </div>
+              <div class="cal-field">
+                <label>Display Name</label>
+                <input class="cal-input" type="text" id="calName" placeholder="e.g. Level 1000 Challenge" maxlength="30" autocomplete="off">
+                <div class="cal-hint">Shown publicly if you share your calendar. Profanity filtered.</div>
+              </div>
+              <div class="cal-row">
+                <div class="cal-field">
+                  <label>Current Level</label>
+                  <input class="cal-input" type="number" id="calCurLvl" placeholder="80" min="1" max="999999">
+                </div>
+                <div class="cal-field">
+                  <label>Goal Level</label>
+                  <input class="cal-input" type="number" id="calGoalLvl" placeholder="200" min="2" max="1000000">
+                </div>
+              </div>
+              <div class="cal-field">
+                <label>Days to reach goal</label>
+                <input class="cal-input" type="number" id="calDays" placeholder="30" min="1" max="365">
+              </div>
+              <div class="cal-field">
+                <label>Privacy Key (Secret)</label>
+                <input class="cal-input" type="password" id="calSecret" placeholder="Minimum 6 characters" minlength="6" autocomplete="new-password">
+                <div class="cal-hint">Your key to edit this calendar. We don't store it — if you lose it, the calendar cannot be modified.</div>
+              </div>
+              <div class="cal-toggle-row">
+                <span class="cal-toggle-label">Make calendar public</span>
+                <label class="cal-toggle">
+                  <input type="checkbox" id="calPublic">
+                  <span class="cal-toggle-track"></span>
+                </label>
+              </div>
+              <button class="btn-primary" onclick="calCreate()" style="width:100%;justify-content:center;margin-top:8px" id="calCreateBtn">Create Calendar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VIEW CALENDAR ── -->
+        <div class="cal-view" id="calv-view">
+          <div class="cal-lookup">
+            <input class="cal-input" type="text" id="calLookup" placeholder="Enter your calendar URL code (e.g. my-grind)" autocomplete="off">
+            <button class="btn-primary" onclick="calLoad()" id="calLoadBtn">Load</button>
+          </div>
+          <div id="grindTimerRoot"></div>
+          <div id="calViewContent"></div>
+        </div>
+
+        <!-- ── ANALYTICS VIEW ── -->
+        <div class="cal-view" id="calv-stats">
+            <div id="calStatsPrompt" class="state-box">
+                <div class="state-icon">📊</div>
+                <div class="state-title">No Calendar Loaded</div>
+                <div class="state-text">Load your calendar in the "My Calendar" tab first to view analytics.</div>
+            </div>
+            <div id="calStatsContent" style="display:none">
+                <div class="cal-analytics-grid">
+                    <div class="cal-chart-card">
+                        <div class="cal-chart-title">📈 Level Progress</div>
+                        <div class="cal-chart-container">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="cal-chart-card">
+                        <div class="cal-chart-title">⚡ Daily XP Gain</div>
+                        <div class="cal-chart-container">
+                            <canvas id="gainChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cal-stats-row" style="margin-top:20px">
+                  <div class="cal-stat-card">
+                    <div class="cal-stat-label">⚡ Session Efficiency</div>
+                    <div id="statAvgEfficiency" class="cal-stat-value">0 XP/Hr</div>
+                  </div>
+                  <div class="cal-stat-card">
+                    <div class="cal-stat-label">🏆 Best Efficiency</div>
+                    <div id="statBestEfficiency" class="cal-stat-value">0 XP/Hr</div>
+                  </div>
+                </div>
+                <div class="session-log">
+                    <h3 style="color:var(--white); font-size:16px; margin-bottom:16px">Recent Sessions</h3>
+                    <div id="sessionHistory"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PUBLIC DIRECTORY ── -->
+        <div class="cal-view" id="calv-public">
+          <div id="calPubLeaderboard" style="margin-bottom:32px">
+            <h3 style="font-size:18px; color:var(--white); margin-bottom:12px">🏆 Global Leaderboard (Last 7 Days)</h3>
+            <div id="leaderboardList" class="leaderboard-grid">
+              <div class="state-box"><div class="state-icon">🔄</div><div class="state-text">Loading legends…</div></div>
+            </div>
+          </div>
+
+          <div id="calPubContent">
+            <div style="margin-bottom:16px">
+              <h3 style="font-size:18px; color:var(--white); margin-bottom:4px">🌍 Community Grinds</h3>
+              <p style="font-size:14px; color:var(--dim)">Explore public calendars from the TOH community.</p>
+            </div>
+            <div class="state-box"><div class="state-icon">🔄</div><div class="state-text">Loading public calendars…</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /page-calendar -->
+
+    <!-- modal container -->
+    <div id="calModalRoot"></div>
+
+    <!-- ══════════════════════════════════════════
+     PRIVACY PAGE
+══════════════════════════════════════════ -->
+    <div class="page" id="page-privacy">
+      <div class="legal-content">
+        <h1>Privacy Policy</h1>
+        <p class="legal-meta">Last updated: January 2025</p>
+        <p>Your privacy is important to us. This policy explains what data we collect and how we use it.</p>
+
+        <h2>What we collect</h2>
+        <p>TOH Bot is a Discord bot. When you use slash commands, Discord sends us the command input you provide (such
+          as level numbers or dates). We do not store this data — commands are processed and the response is returned
+          immediately.</p>
+        <ul>
+          <li>We do not store your Discord user ID, username, or profile information</li>
+          <li>We do not log command history or track usage patterns</li>
+          <li>We do not share any data with third parties</li>
+        </ul>
+
+        <h2>Race Mode</h2>
+        <p>If you use the Race Mode feature and connect to a Supabase database, the following data is stored in <em>your
+            own</em> Supabase project:</p>
+        <ul>
+          <li>Your Discord display name and user ID (used to identify you on the leaderboard)</li>
+          <li>Your Tower of Hell level data that you manually log</li>
+          <li>Your profile avatar URL from Discord</li>
+        </ul>
+        <p>This data is stored in a database you own and control. We have no access to it. You can delete it at any time
+          through your Supabase dashboard.</p>
+
+        <h2>Accuracy disclaimer</h2>
+        <p>Tower of Hell is created by YXceptional Studios. This bot is unofficial and is not affiliated with or
+          endorsed by YXceptional Studios. Formula data is sourced from the Tower of Hell wiki and we strive for
+          accuracy, but we do not guarantee it.</p>
+
+        <h2>Contact</h2>
+        <p>This bot is made by siebeman. For questions, reach out on Discord.</p>
+      </div>
+    </div><!-- /page-privacy -->
+
+    <!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-logo">
+            <div class="nav-logo-icon">T</div>
+            TOH Bot
+          </div>
+          <div class="footer-text">Made by siebeman — not affiliated with YXceptional Studios</div>
+          <div class="footer-links">
+            <button class="footer-link" onclick="goto('commands')">Commands</button>
+            <button class="footer-link" onclick="goto('race')">Race Mode</button>
+            <button class="footer-link" onclick="goto('calendar')">Grind Calendar</button>
+            <button class="footer-link" onclick="goto('privacy')">Privacy</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /content -->
+
+  <script>
+    // ════════════════════════════════════════════════
+    //  NAVIGATION
+    // ════════════════════════════════════════════════
+    const PAGES = ['home', 'commands', 'race', 'calendar', 'privacy'];
+
+    function goto(page) {
+      PAGES.forEach(p => {
+        document.getElementById(`page-${p}`)?.classList.toggle('active', p === page);
+        document.getElementById(`nl-${p}`)?.classList.toggle('active', p === page);
+      });
+      window.scrollTo(0, 0);
+      if (page === 'race') tryAutoConnect();
+    }
+
+    function toggleMobile() {
+      const m = document.getElementById('mobileMenu');
+      const h = document.getElementById('hamIcon');
+      const x = document.getElementById('closeIcon');
+      const open = m.classList.toggle('open');
+      h.style.display = open ? 'none' : '';
+      x.style.display = open ? '' : 'none';
+    }
+
+    // handle hash routing
+    function routeFromHash() {
+      const h = location.hash.replace('#', '');
+      if (PAGES.includes(h)) goto(h);
+    }
+    window.addEventListener('hashchange', routeFromHash);
+    routeFromHash();
+
+    // ════════════════════════════════════════════════
+    //  COMMAND SEARCH
+    // ════════════════════════════════════════════════
+    function filterCmds(q) {
+      q = q.toLowerCase().trim();
+      document.querySelectorAll('.cmd-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+      document.querySelectorAll('.cmd-category').forEach(cat => {
+        const visible = [...cat.querySelectorAll('.cmd-card')].some(c => c.style.display !== 'none');
+        cat.style.display = visible ? '' : 'none';
+      });
+    }
+
+    // ════════════════════════════════════════════════
+    //  RACE MODE STATE
+    // ════════════════════════════════════════════════
+    // ════════════════════════════════════════════════
+    //  CONFIGURATION (AUTOMATIC CONNECT)
+    // ════════════════════════════════════════════════
+    const DEFAULT_URL = 'https://anmczmzyvlvmmzfkbqvk.supabase.co';
+    const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFubWN6bXp5dmx2bW16ZmticXZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjYxNjIsImV4cCI6MjA4OTk0MjE2Mn0.5erfLnL39TrSwgTFYctHACIC1SQPDW4SvRHp6HudtXI';
+
+    let sb = null, raceId = null, raceData = null;
+    let racesList = []; // stores all active/waiting races
+    let racersList = []; // stores all racers for active races
+
+
+    let racers = {}, startedAt = null;
+    let timerInterval = null, rtSub = null;
+
+    // ── helpers ────────────────────────────────────
+    function lvlFromXP(xp) {
+      return Math.min(Math.floor((-1 + Math.sqrt(Math.max(0, 1 + 4 * xp / 50))) / 2), 1000000);
+    }
+    function fmtXP(xp) {
+      xp = Number(xp) || 0;
+      if (xp >= 1e9) return `${(xp / 1e9).toFixed(2)}B`;
+      if (xp >= 1e6) return `${(xp / 1e6).toFixed(2)}M`;
+      if (xp >= 1e3) return `${(xp / 1e3).toFixed(1)}K`;
+      return String(xp);
+    }
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function fmtTime(s) {
+      s = Number(s) || 0;
+      const m = Math.floor(s / 60);
+      const ss = (s % 60).toFixed(1);
+      return m > 0 ? `${m}M${ss}S`.replace('.0', '') : `${ss}S`.replace('.0', '');
+    }
+
+    function rShow(id) { const el = document.getElementById(id); if (el) el.style.display = ''; }
+    function rHide(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+    function setConn(text, live) {
+      const el = document.getElementById('connStatus');
+      const dot = document.getElementById('liveDot');
+      if (el) el.textContent = text;
+      if (dot) {
+        dot.style.background = live ? '#4ade80' : 'rgba(255,255,255,0.2)';
+        dot.style.animation = live ? '' : 'none';
+      }
+    }
+
+    // ── connect ───────────────────────────────────
+    async function raceConnect() {
+      const url = document.getElementById('sbUrl').value.trim();
+      const key = document.getElementById('sbKey').value.trim();
+      if (!url || !key) { alert('Enter both Supabase URL and anon key.'); return; }
+      sessionStorage.setItem('sb_url', url);
+      sessionStorage.setItem('sb_key', key);
+      setConn('Connecting…', false);
+      try {
+        sb = supabase.createClient(url, key);
+        await loadRace();
+      } catch (e) { showRaceErr('Connection failed', e.message); }
+    }
+
+    function tryAutoConnect() {
+      const url = sessionStorage.getItem('sb_url') || DEFAULT_URL;
+      const key = sessionStorage.getItem('sb_key') || DEFAULT_KEY;
+      if (url && key && !sb) {
+        if (document.getElementById('sbUrl')) document.getElementById('sbUrl').value = url;
+        if (document.getElementById('sbKey')) document.getElementById('sbKey').value = key;
+        raceConnect();
+      }
+    }
+
+
+    function raceDisconnect() {
+      if (rtSub && sb) sb.removeChannel(rtSub);
+      if (timerInterval) clearInterval(timerInterval);
+      sb = null; raceId = null; raceData = null; racers = {}; startedAt = null;
+      rShow('credsPanel'); rHide('raceMeta'); rHide('raceEmpty'); rHide('raceError'); rHide('logSectionEl'); rHide('timerWrap'); rHide('serverPicker'); rHide('racePicker');
+      setConn('Not connected', false);
+    }
+
+    function goBackToRaces() {
+      if (rtSub && sb) sb.removeChannel(rtSub);
+      if (timerInterval) clearInterval(timerInterval);
+      raceId = null; raceData = null; racers = {}; startedAt = null;
+      const url = new URL(window.location);
+      url.searchParams.delete('id');
+      window.history.pushState({}, '', url);
+      renderServerPicker();
+    }
+
+    // ── load race ──────────────────────────────────
+    async function loadRace() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetShortId = urlParams.get('id');
+
+      // Fetch races
+      const { data: rd, error: re } = await sb.from('races')
+        .select('*').in('status', ['waiting', 'active'])
+        .order('created_at', { ascending: false });
+
+      if (re) { showRaceErr('Query failed', re.message); return; }
+      racesList = rd || [];
+
+      if (!racesList.length) {
+        rHide('credsPanel'); rShow('raceEmpty'); rHide('raceMeta'); rHide('logSectionEl'); rHide('racePicker'); rHide('serverPicker');
+        setConn('Connected — no active race', false);
+        return;
+      }
+
+      // Fetch all racers for these races to show counts
+      const rIds = racesList.map(r => r.id);
+      const { data: rc, error: rce } = await sb.from('racers').select('race_id').in('race_id', rIds);
+      racersList = rc || [];
+
+      // If a specific ID is requested, load it directly
+      if (targetShortId) {
+        const target = racesList.find(r => r.short_id === targetShortId);
+        if (target) { await selectRace(target.id); return; }
+      }
+
+      // Group races by server
+      renderServerPicker();
+    }
+
+    function renderServerPicker() {
+      rHide('credsPanel'); rHide('raceEmpty'); rHide('raceMeta'); rHide('logSectionEl'); rHide('racePicker');
+      rShow('serverPicker');
+
+      const list = document.getElementById('serverPickerList');
+      list.innerHTML = '';
+
+      // Get unique servers
+      const servers = {};
+      racesList.forEach(r => {
+        const gId = r.guild_id || 'unknown';
+        const gName = r.guild_name || 'Unknown Server';
+        const gIcon = r.guild_icon || '';
+
+        if (!servers[gId]) {
+          servers[gId] = {
+            name: gName,
+            icon: gIcon,
+            raceCount: 0,
+            userCount: 0,
+            id: gId
+          };
+        }
+        servers[gId].raceCount++;
+
+        // Count racers for this specific race
+        const userCount = racersList.filter(user => user.race_id === r.id).length;
+        servers[gId].userCount += userCount;
+      });
+
+      const sortedServers = Object.values(servers).sort((a, b) => b.raceCount - a.raceCount);
+
+      sortedServers.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'server-card';
+
+        let iconStyle = '';
+        let iconContent = esc(s.name.charAt(0).toUpperCase());
+        if (s.icon) {
+          iconStyle = `style="background-image: url('${s.icon}')"`;
+          iconContent = '';
+        }
+
+        card.innerHTML = `
+      <div class="server-icon" ${iconStyle}>${iconContent}</div>
+      <div class="server-info">
+        <div class="server-name">${esc(s.name)}</div>
+        <div class="server-count">
+          ${s.raceCount} race${s.raceCount !== 1 ? 's' : ''} • ${s.userCount} active player${s.userCount !== 1 ? 's' : ''}
+        </div>
+      </div>
+    `;
+        card.onclick = () => renderRacePicker(s.id);
+        list.appendChild(card);
+      });
+
+      setConn('Select a server', true);
+    }
+
+    function renderRacePicker(guildId) {
+      rHide('credsPanel'); rHide('raceEmpty'); rHide('raceMeta'); rHide('logSectionEl'); rHide('serverPicker');
+      rShow('racePicker');
+
+      const list = document.getElementById('racePickerList');
+      list.innerHTML = '';
+
+      const filteredRaces = racesList.filter(r => (r.guild_id || 'unknown') === guildId);
+      const serverName = filteredRaces[0]?.guild_name || 'Unknown Server';
+
+      document.getElementById('racePickerTitle').textContent = `Races in ${serverName}`;
+
+      filteredRaces.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'race-select-card';
+        card.innerHTML = `
+      <div class="rs-id">${esc(r.short_id)}</div>
+      <div class="rs-name">${esc(r.name)}</div>
+      <div class="rs-footer">
+        <span>${r.status.toUpperCase()}</span>
+        <span>${r.goal_type === 'average' ? 'Average Mode' : 'Standard Mode'}</span>
+      </div>
+    `;
+        card.onclick = () => selectRace(r.id);
+        list.appendChild(card);
+      });
+      setConn(`Select a race in ${serverName}`, true);
+    }
+
+    async function selectRace(id) {
+      raceData = racesList.find(r => r.id === id);
+      if (!raceData) return;
+      raceId = raceData.id;
+
+      // Update URL without reloading
+      const url = new URL(window.location);
+      url.searchParams.set('id', raceData.short_id);
+      window.history.pushState({}, '', url);
+
+      rHide('credsPanel'); rHide('raceEmpty'); rHide('raceError'); rHide('racePicker'); rHide('serverPicker');
+      rShow('raceMeta'); rShow('logSectionEl');
+      renderRaceMeta();
+      await loadRacers();
+      await loadLogs();
+      subscribeRT();
+      setConn('Live', true);
+    }
+
+
+    // ── meta ───────────────────────────────────────
+    function renderRaceMeta() {
+      const r = raceData;
+      document.getElementById('raceNameEl').textContent = r.name;
+      const sc = r.status === 'active' ? 'live' : r.status === 'waiting' ? 'waiting' : 'done';
+      const sl = r.status === 'active' ? '● LIVE' : r.status === 'waiting' ? '⏳ WAITING' : '■ DONE';
+
+      let goalText = "";
+      if (r.goal_type === 'average') {
+        goalText = `Goal: 5 towers (Average Time)`;
+      } else {
+        goalText = `Goal: +${Number(r.goal_amount).toLocaleString()} levels`;
+      }
+
+      document.getElementById('raceChips').innerHTML = `
+    <div class="chip ${sc}">${sl}</div>
+    <div class="chip" title="ID: ${r.short_id}">ID: <b>${r.short_id}</b></div>
+    <div class="chip">${goalText}</div>
+  `;
+      if (r.status === 'active' && r.started_at) {
+        startedAt = new Date(r.started_at);
+        rShow('timerWrap');
+        startTimer();
+      }
+    }
+
+    // ── timer ──────────────────────────────────────
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!startedAt) return;
+        const s = Math.floor((Date.now() - startedAt.getTime()) / 1000);
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+        document.getElementById('timerEl').textContent =
+          h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+            : `${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // ── racers ─────────────────────────────────────
+    async function loadRacers() {
+      const { data } = await sb.from('racers').select('*').eq('race_id', raceId);
+      racers = {};
+      (data || []).forEach(r => racers[r.user_id] = r);
+      renderRacers();
+    }
+
+    function renderRacers() {
+      const isAvg = raceData.goal_type === 'average';
+
+      // Sorting: 
+      // Standard -> by XP Gained (desc)
+      // Average  -> by Current Average (asc, but effectively desc progress)
+      const sorted = Object.values(racers).sort((a, b) => {
+        if (isAvg) {
+          if (a.finished !== b.finished) return b.finished - a.finished; // finished first
+          return (Number(a.current_average) || 99999) - (Number(b.current_average) || 99999);
+        }
+        return (Number(b.current_xp) - Number(b.start_xp)) - (Number(a.current_xp) - Number(a.start_xp));
+      });
+
+      const medals = ['🥇', '🥈', '🥉'];
+      const placeClass = ['p1', 'p2', 'p3'];
+      const stack = document.getElementById('racersStack');
+
+      sorted.forEach((r, i) => {
+        const xpGained = Number(r.current_xp) - Number(r.start_xp);
+        const goalXP = Number(r.goal_xp) || 1;
+
+        // In Average mode, progress is measured by logs count (max 5)
+        // We'll approximate it here or use a dedicated count if we had it.
+        // For now, if current_average exists but not finished, they've logged at least some.
+        // But better yet, we'll just show the average time.
+
+        let pct = 0;
+        if (isAvg) {
+          // In Average mode, we don't have a clean "pct" unless we count logs.
+          // For the bar, let's just use finished status for now or assume 0% until done.
+          pct = r.finished ? 100 : 0;
+        } else {
+          pct = Math.min(xpGained / goalXP * 100, 100);
+        }
+
+        const curLvl = lvlFromXP(Number(r.current_xp));
+        const done = r.finished;
+        const eta = isAvg ? (r.finished ? 'Finished' : 'Racing...') : calcETA(r);
+
+        let card = document.getElementById(`rc-${r.user_id}`);
+        if (card) {
+          card.className = `racer-card ${placeClass[i] || ''} ${done ? 'done' : ''}`;
+          card.querySelector('.rc-bar').style.width = `${pct}%`;
+          card.querySelector('.rc-pct').textContent = isAvg ? (done ? '100%' : 'In Progress') : `${pct.toFixed(1)}%`;
+
+          const valEl = card.querySelector('.rc-val-label');
+          if (isAvg) {
+            valEl.innerHTML = `Avg Time: <b class="rc-avg">${r.current_average ? fmtTime(r.current_average) : '—'}</b>`;
+          } else {
+            valEl.innerHTML = `XP: <b class="rc-xpg">${fmtXP(xpGained)}</b> / <span class="rc-xpgoal">${fmtXP(goalXP)}</span>`;
+          }
+
+          card.querySelector('.rc-lvl').textContent = `Level ${curLvl.toLocaleString()}`;
+          card.querySelector('.rc-eta').textContent = eta;
+          stack.appendChild(card);
+        } else {
+          card = document.createElement('div');
+          card.id = `rc-${r.user_id}`;
+          card.className = `racer-card ${placeClass[i] || ''} ${done ? 'done' : ''}`;
+
+          const valHtml = isAvg
+            ? `Avg Time: <b class="rc-avg">${r.current_average ? fmtTime(r.current_average) : '—'}</b>`
+            : `XP: <b class="rc-xpg">${fmtXP(xpGained)}</b> / <span class="rc-xpgoal">${fmtXP(goalXP)}</span>`;
+
+          card.innerHTML = `
+        <div class="racer-header">
+          <div class="racer-medal">${medals[i] || (i + 1)}</div>
+          <div class="racer-avatar">${esc((r.display_name || '?').charAt(0).toUpperCase())}</div>
+          <div class="racer-info">
+            <div class="racer-name">${esc(r.display_name)}</div>
+            <div class="racer-level rc-lvl">Level ${curLvl.toLocaleString()}</div>
+          </div>
+          ${done ? '<div class="done-badge">✓ Done</div>' : ''}
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-labels">
+            <span class="rc-val-label">${valHtml}</span>
+            <span class="progress-pct rc-pct">${isAvg ? (done ? '100%' : '') : pct.toFixed(1) + '%'}</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill rc-bar ${done ? 'complete' : ''}" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div class="stat-pills">
+          <div class="stat-pill">Start: <b>${Number(r.start_level).toLocaleString()}</b></div>
+          <div class="stat-pill">ETA: <b class="rc-eta">${eta}</b></div>
+        </div>
+      `;
+          stack.appendChild(card);
+        }
+      });
+    }
+
+    function calcETA(r) {
+      const xpGained = Number(r.current_xp) - Number(r.start_xp);
+      const left = Number(r.goal_xp) - xpGained;
+      if (left <= 0) return 'Done!';
+      if (!startedAt) return '—';
+      const elapsed = (Date.now() - startedAt.getTime()) / 60000;
+      if (elapsed < 0.5 || xpGained <= 0) return '…';
+      const mins = Math.ceil(left / (xpGained / elapsed));
+      return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `~${mins}m`;
+    }
+
+    function flashCard(uid) {
+      const c = document.getElementById(`rc-${uid}`);
+      if (!c) return;
+      c.classList.remove('flash'); void c.offsetWidth;
+      c.classList.add('flash');
+      setTimeout(() => c.classList.remove('flash'), 600);
+    }
+
+    // ── logs ───────────────────────────────────────
+    async function loadLogs() {
+      const { data } = await sb.from('race_logs').select('*')
+        .eq('race_id', raceId).order('logged_at', { ascending: false }).limit(40);
+      const feed = document.getElementById('logFeedEl');
+      feed.innerHTML = '';
+      (data || []).forEach(l => addLog(l, false));
+    }
+
+    function addLog(log, animate = true) {
+      const feed = document.getElementById('logFeedEl');
+      const entry = document.createElement('div');
+      entry.className = `log-entry${animate ? ' log-in' : ''}`;
+      const t = new Date(log.logged_at);
+      const ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`;
+      const detail = log.log_type === 'towers'
+        ? `won ${log.towers_won} ${log.tower_type} tower${log.towers_won !== 1 ? 's' : ''}`
+        : log.log_type === 'time'
+          ? `completed tower in ${fmtTime(log.completion_time)}`
+          : `updated to level ${Number(log.new_level || 0).toLocaleString()}`;
+
+      const xpBadge = log.log_type === 'time' ? '' : `<span class="log-xp">+${fmtXP(log.xp_gained)}</span>`;
+
+      entry.innerHTML = `
+    <span class="log-time">${ts}</span>
+    <span class="log-name">${esc(log.username)}</span>
+    <span class="log-detail">${detail}</span>
+    ${xpBadge}
+  `;
+      feed.prepend(entry);
+      while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+    }
+
+    // ── realtime ───────────────────────────────────
+    function subscribeRT() {
+      if (rtSub) sb.removeChannel(rtSub);
+      rtSub = sb.channel(`race-${raceId}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'racers', filter: `race_id=eq.${raceId}` }, p => {
+          if (!p.new) return;
+          racers[p.new.user_id] = p.new;
+          renderRacers();
+          flashCard(p.new.user_id);
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'race_logs', filter: `race_id=eq.${raceId}` }, p => {
+          if (p.new) addLog(p.new, true);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'races', filter: `id=eq.${raceId}` }, p => {
+          if (!p.new) return;
+          raceData = p.new; renderRaceMeta();
+          if (p.new.status === 'finished') { clearInterval(timerInterval); setConn('Race finished', false); }
+        })
+        .subscribe(s => setConn(s === 'SUBSCRIBED' ? 'Live' : s, s === 'SUBSCRIBED'));
+    }
+
+    // ── error ──────────────────────────────────────
+    function showRaceErr(title, msg) {
+      document.getElementById('errTitleEl').textContent = title;
+      document.getElementById('errMsgEl').textContent = msg;
+      rShow('raceError'); rHide('raceMeta'); rHide('raceEmpty'); rHide('logSectionEl');
+      setConn('Error', false);
+    }
+
+    function updateNavState() {
+      const nav = document.getElementById('nav');
+      if (!nav) return;
+      nav.classList.toggle('scrolled', window.scrollY > 18);
+    }
+
+    function initAmbientCanvas() {
+      const canvas = document.getElementById('ambientCanvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let width = 0;
+      let height = 0;
+      let animationFrame = null;
+
+      const particles = Array.from({ length: 28 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: 1 + Math.random() * 2.6,
+        dx: (Math.random() - 0.5) * 0.00045,
+        dy: (Math.random() - 0.5) * 0.00045,
+        alpha: 0.15 + Math.random() * 0.3
+      }));
+
+      const resize = () => {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      };
+
+      const render = () => {
+        ctx.clearRect(0, 0, width, height);
+
+        particles.forEach((particle, index) => {
+          particle.x += particle.dx;
+          particle.y += particle.dy;
+
+          if (particle.x < -0.08) particle.x = 1.08;
+          if (particle.x > 1.08) particle.x = -0.08;
+          if (particle.y < -0.08) particle.y = 1.08;
+          if (particle.y > 1.08) particle.y = -0.08;
+
+          const px = particle.x * width;
+          const py = particle.y * height;
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(196, 181, 253, ${particle.alpha})`;
+          ctx.arc(px, py, particle.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          for (let i = index + 1; i < particles.length; i++) {
+            const other = particles[i];
+            const ox = other.x * width;
+            const oy = other.y * height;
+            const dist = Math.hypot(px - ox, py - oy);
+            if (dist < 180) {
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(196, 181, 253, ${0.08 * (1 - dist / 180)})`;
+              ctx.lineWidth = 1;
+              ctx.moveTo(px, py);
+              ctx.lineTo(ox, oy);
+              ctx.stroke();
+            }
+          }
+        });
+
+        animationFrame = window.requestAnimationFrame(render);
+      };
+
+      resize();
+      render();
+      window.addEventListener('resize', resize);
+      window.addEventListener('beforeunload', () => {
+        if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      }, { once: true });
+    }
+
+    function bindCardSpotlights() {
+      document.querySelectorAll('.feature-card, .cmd-card, .race-select-card, .racer-card, .mockup').forEach(card => {
+        card.addEventListener('pointermove', e => {
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          card.style.setProperty('--spot-x', `${x}%`);
+          card.style.setProperty('--spot-y', `${y}%`);
+        });
+      });
+    }
+
+    // ════════════════════════════════════════════════
+    //  INIT
+    // ════════════════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', () => {
+      routeFromHash();
+
+      // Check for Grind Calendar pre-fill parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const cur = urlParams.get('cur');
+      const goal = urlParams.get('goal');
+      const days = urlParams.get('days');
+
+      if ((cur || goal || days) && window.location.hash === '#calendar') {
+        const curEl = document.getElementById('calCurLvl');
+        const goalEl = document.getElementById('calGoalLvl');
+        const daysEl = document.getElementById('calDays');
+        if (curEl && cur) curEl.value = cur;
+        if (goalEl && goal) goalEl.value = goal;
+        if (daysEl && days) daysEl.value = days;
+        // Optionally switch to create tab if not already there
+        if (typeof calTab === 'function') calTab('create');
+      }
+
+      // 1. Add .reveal class to key elements for scroll animations
+      const elementsToReveal = document.querySelectorAll('.feature-card, .cmd-category, .section-header, .mockup, .hero-inner > div, .timer-box, .creds-panel, .race-select-card, .legal-content, .cmd-card, .racer-card');
+      elementsToReveal.forEach(el => el.classList.add('reveal'));
+
+      // 2. Setup Intersection Observer
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            // Unobserve to animate only once
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.05, rootMargin: "0px 0px -40px 0px" });
+
+      elementsToReveal.forEach(el => observer.observe(el));
+
+      // 3. Scroll to Top Button
+      const scrollBtn = document.createElement('button');
+      scrollBtn.id = 'scrollTopBtn';
+      scrollBtn.innerHTML = '↑';
+      scrollBtn.title = 'Scroll to top';
+      scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.appendChild(scrollBtn);
+
+      let isScrolling;
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) {
+          scrollBtn.classList.add('visible');
+        } else {
+          scrollBtn.classList.remove('visible');
+        }
+      });
+
+      // 4. Hero Heading Typing Effect
+      const heroH1Span = document.querySelector('.hero h1 span');
+      if (heroH1Span) {
+        const originalText = heroH1Span.textContent;
+        heroH1Span.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        heroH1Span.parentNode.appendChild(cursor);
+        heroH1Span.parentNode.classList.add('typing-container');
+
+        let i = 0;
+        const typeWriter = () => {
+          if (i < originalText.length) {
+            heroH1Span.textContent += originalText.charAt(i);
+            i++;
+            setTimeout(typeWriter, Math.random() * 50 + 80); // Random delay between 80-130ms for realistic typing
+          } else {
+            setTimeout(() => cursor.style.display = 'none', 3000); // Hide cursor after 3 seconds
+          }
+        };
+        setTimeout(typeWriter, 600); // Start after 600ms
+      }
+
+      // 5. Apply Gradient Text to primary headers
+      const titles = document.querySelectorAll('.section-title, .legal-content h1');
+      titles.forEach(t => t.classList.add('gradient-text'));
+
+      bindCardSpotlights();
+      initAmbientCanvas();
+      updateNavState();
+      window.addEventListener('scroll', updateNavState, { passive: true });
+
+      requestAnimationFrame(() => document.body.classList.add('loaded'));
+    });
+
+    // ════════════════════════════════════════════════
+    //  GRIND CALENDAR
+    // ════════════════════════════════════════════════
+    const BAD_WORDS = ['fuck','shit','ass','bitch','dick','cock','pussy','cunt','nigger','nigga','fag','faggot','retard','rape','porn','sex','penis','vagina','anal','cum','slut','whore','bastard','damn','piss','tits','boob','nazi','hitler','kill','murder','suicide','kys','stfu','wtf','milf','dildo','orgasm','erect','wank','jizz','semen','hentai','blowjob','handjob','goddamn','asshole','bullshit','motherfucker','dumbass','jackass','dipshit','shithead','fucker','fucking','twat','wanker','tosser','bollocks','arsehole','crap','homo','tranny','spic','chink','gook','kike','wetback','beaner','cracker','redneck','incel','simp','thot','onlyfans','pornhub','xvideos','xnxx'];
+
+    function hasBadWord(text) {
+      const lower = String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return BAD_WORDS.some(w => lower.includes(w));
+    }
+
+    function sanitizeInput(s) {
+      return String(s || '').replace(/[<>"'&\\]/g, '').trim();
+    }
+
+    // Calendar state
+    let calSb = null;
+    let calUnlocked = false;
+    let calCurrentSecret = '';
+    let calCurrentData = null;
+    let calLinkPolling = null;
+
+    function getCalSb() {
+      if (calSb) return calSb;
+      calSb = supabase.createClient(DEFAULT_URL, DEFAULT_KEY);
+      return calSb;
+    }
+
+    function calTab(tab) {
+      ['create', 'view', 'stats', 'public'].forEach(t => {
+        const el = document.getElementById(`calv-${t}`);
+        const bt = document.getElementById(`ct-${t}`);
+        if (el) el.classList.toggle('active', t === tab);
+        if (bt) bt.classList.toggle('active', t === tab);
+      });
+      if (tab === 'public') calLoadPublic();
+      if (tab === 'stats' && calCurrentData) renderAnalytics(calCurrentData);
+    }
+
+    function calAlert(containerId, msg, type) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = msg ? `<div class="cal-alert ${type}">${esc(msg)}</div>` : '';
+    }
+
+    // ── CREATE ────────────────────────────────────
+    async function calCreate() {
+      const code = sanitizeInput(document.getElementById('calCode').value).toLowerCase().replace(/[^a-z0-9_]/g, '');
+      const name = sanitizeInput(document.getElementById('calName').value);
+      const curLvl = parseInt(document.getElementById('calCurLvl').value);
+      const goalLvl = parseInt(document.getElementById('calGoalLvl').value);
+      const days = parseInt(document.getElementById('calDays').value);
+      const secret = document.getElementById('calSecret').value;
+      const isPublic = document.getElementById('calPublic').checked;
+
+      // Validation
+      if (!code || code.length < 3 || code.length > 40) { calAlert('calCreateAlert', 'Calendar code must be 3-40 characters (lowercase, numbers, underscores)', 'error'); return; }
+      if (!/^[a-z0-9_]+$/.test(code)) { calAlert('calCreateAlert', 'Calendar code may only contain lowercase letters, numbers, and underscores', 'error'); return; }
+      if (!name || name.length < 1 || name.length > 30) { calAlert('calCreateAlert', 'Display name must be 1-30 characters', 'error'); return; }
+      if (hasBadWord(code)) { calAlert('calCreateAlert', 'Calendar code contains inappropriate language', 'error'); return; }
+      if (hasBadWord(name)) { calAlert('calCreateAlert', 'Display name contains inappropriate language', 'error'); return; }
+      if (isNaN(curLvl) || curLvl < 1 || curLvl > 999999) { calAlert('calCreateAlert', 'Current level must be 1-999,999', 'error'); return; }
+      if (isNaN(goalLvl) || goalLvl < 2 || goalLvl > 1000000) { calAlert('calCreateAlert', 'Goal level must be 2-1,000,000', 'error'); return; }
+      if (goalLvl <= curLvl) { calAlert('calCreateAlert', 'Goal level must be higher than current level', 'error'); return; }
+      if (isNaN(days) || days < 1 || days > 365) { calAlert('calCreateAlert', 'Days must be 1-365', 'error'); return; }
+      if (!secret || secret.length < 6) { calAlert('calCreateAlert', 'Secret code must be at least 6 characters', 'error'); return; }
+      if (secret.length > 100) { calAlert('calCreateAlert', 'Secret code must be under 100 characters', 'error'); return; }
+
+      const btn = document.getElementById('calCreateBtn');
+      btn.textContent = 'Creating…';
+      btn.disabled = true;
+
+      try {
+        const db = getCalSb();
+        const { data, error } = await db.rpc('create_grind_calendar', {
+          p_calendar_code: code,
+          p_display_name: name,
+          p_secret_code: secret,
+          p_current_level: curLvl,
+          p_goal_level: goalLvl,
+          p_total_days: days,
+          p_is_public: isPublic
+        });
+
+        if (error) throw new Error(error.message);
+
+        calAlert('calCreateAlert', `Calendar "${code}" created! Switch to "My Calendar" tab to view it.`, 'success');
+        document.getElementById('calCode').value = '';
+        document.getElementById('calName').value = '';
+        document.getElementById('calCurLvl').value = '';
+        document.getElementById('calGoalLvl').value = '';
+        document.getElementById('calDays').value = '';
+        document.getElementById('calSecret').value = '';
+        document.getElementById('calPublic').checked = false;
+      } catch (e) {
+        calAlert('calCreateAlert', e.message || 'Failed to create calendar', 'error');
+      } finally {
+        btn.textContent = 'Create Calendar';
+        btn.disabled = false;
+      }
+    }
+
+    // ── LOAD CALENDAR ─────────────────────────────
+    async function calLoad() {
+      const inputEl = document.getElementById('calLookup');
+      const code = sanitizeInput(inputEl.value).toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!code) return;
+      
+      const btn = document.getElementById('calLoadBtn');
+      btn.textContent = 'Loading…';
+      btn.disabled = true;
+      calUnlocked = false;
+      calCurrentSecret = '';
+      if (calLinkPolling) { clearInterval(calLinkPolling); calLinkPolling = null; }
+
+      try {
+        const db = getCalSb();
+        const { data: cal, error: ce } = await db.from('grind_calendars').select('*').eq('calendar_code', code).single();
+        if (ce || !cal) throw new Error('Calendar not found. Check the code and try again.');
+
+        const { data: days, error: de } = await db.from('calendar_days').select('*').eq('calendar_id', cal.id).order('day_number');
+        if (de) throw new Error('Failed to load calendar days');
+
+        // Fetch sessions for analytics
+        const { data: sessions, error: se } = await db.from('grind_sessions').select('*').eq('calendar_id', cal.id).order('start_time', { ascending: false });
+        
+        calCurrentData = { cal, days, sessions: sessions || [] };
+        
+        // Show analytics containers if we have a calendar
+        document.getElementById('calStatsPrompt').style.display = 'none';
+        document.getElementById('calStatsContent').style.display = 'block';
+
+        renderCalendar(cal, days, false);
+      } catch (e) {
+        document.getElementById('calViewContent').innerHTML = `<div class="cal-alert error">${esc(e.message)}</div>`;
+      } finally {
+        btn.textContent = 'Load';
+        btn.disabled = false;
+      }
+    }
+
+    function renderCalendar(cal, days, unlocked) {
+      const container = document.getElementById('calViewContent');
+      const today = new Date().toISOString().split('T')[0];
+      const completedDays = days.filter(d => d.completed).length;
+      const pct = days.length > 0 ? (completedDays / days.length * 100) : 0;
+      const pctDone = pct >= 100;
+      
+      const levelsLeft = cal.goal_level - cal.current_level;
+      const remainingDaysArray = days.filter(d => !d.completed && !d.is_rest_day);
+      const remainingDaysTotal = remainingDaysArray.length || 1;
+      const xpPerDay = Math.max(0, Math.ceil(levelsLeft / remainingDaysTotal));
+      
+      const startLvl = days[0].target_level - Math.round((cal.goal_level - days[0].target_level) / (days.length - 1 || 1));
+      const gained = cal.current_level - startLvl;
+
+      // Status calculation
+      const todayDay = days.find(d => d.day_date === today);
+      let statusHtml = '';
+      if (todayDay) {
+        const diff = cal.current_level - todayDay.target_level;
+        if (diff > 5) statusHtml = '<div class="cal-status-tag ahead">🚀 Ahead of Schedule</div>';
+        else if (diff < -5) statusHtml = '<div class="cal-status-tag behind">⚠️ Behind Target</div>';
+        else statusHtml = '<div class="cal-status-tag on-track">✨ On Track</div>';
+      }
+
+      // Check for pending Discord links when unlocked
+      if (unlocked && !cal.discord_user_id) {
+          calReviewPendingLinks(cal.id);
+      }
+
+      // Calculate average efficiency for header
+      let avgEff = 0;
+      if (calCurrentData && calCurrentData.sessions && calCurrentData.sessions.length > 0) {
+          let totalGain = 0;
+          let totalSec = 0;
+          calCurrentData.sessions.forEach(s => {
+              totalGain += (s.end_level - s.start_level) || 0;
+              totalSec += s.duration_seconds || 0;
+          });
+          avgEff = totalSec > 0 ? Math.round(totalGain / (totalSec / 3600)) : 0;
+      }
+
+      let html = `
+        <div id="calPendingLinkAlert"></div>
+        <div class="cal-header-bar" style="background: linear-gradient(135deg, rgba(88, 101, 242, 0.1) 0%, rgba(0,0,0,0) 100%); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 25px; border-radius: 16px 16px 0 0">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <div style="font-size:26px;font-weight:800;color:var(--white);letter-spacing:-0.5px">${esc(cal.display_name)}</div>
+              ${statusHtml}
+              ${avgEff > 10000 ? '<div class="chip elite" style="background:var(--glow);color:var(--bg)">⚡ Elite Grinder</div>' : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:15px;font-size:13px;color:var(--dim)">
+              <span style="background:rgba(88,101,242,0.15);color:var(--indigo);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-weight:600">${esc(cal.calendar_code)}</span>
+              <span style="display:flex;align-items:center;gap:5px"><i class="fas fa-arrow-up"></i> Level ${cal.current_level.toLocaleString()} → ${cal.goal_level.toLocaleString()}</span>
+              <span style="display:flex;align-items:center;gap:5px"><i class="fas fa-calendar"></i> ${completedDays}/${days.length} Days Completed</span>
+              ${cal.discord_user_id ? ` <span style="color:#5865F2;display:flex;align-items:center;gap:5px"><i class="fab fa-discord"></i> Verified Link</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+            <div style="display:flex;gap:8px;align-items:center">
+                ${unlocked ? `
+                <div style="display:flex;align-items:center;gap:12px;margin-right:10px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">${cal.is_public ? 'Public' : 'Private'}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="calPrivacyToggle" ${cal.is_public ? 'checked' : ''} onchange="calTogglePrivacy(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="width:1px;height:24px;background:rgba(255,255,255,0.1);margin:0 5px"></div>
+                </div>
+                <button class="cal-tab" onclick="calAddDay()" style="padding:6px 12px;font-size:12px;background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:#4ade80;display:flex;align-items:center;gap:5px"><i class="fas fa-plus"></i> Add Day</button>
+                <button class="cal-tab" onclick="calRemoveDay()" style="padding:6px 12px;font-size:12px;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:#f87171;display:flex;align-items:center;gap:5px"><i class="fas fa-minus"></i> Remove Day</button>
+                ${!cal.discord_user_id ? `<button class="btn-primary" onclick="calGenerateToken()" style="padding:6px 20px;font-size:12px;margin-left:10px;background:#5865F2;border:none"><i class="fab fa-discord"></i> Link Discord</button>` : ''}
+                ` : ''}
+                ${cal.is_public ? '<div class="chip live" style="padding:6px 12px;background:rgba(34,197,94,0.1);color:#4ade80">🌍 Public Profile</div>' : '<div class="chip" style="padding:6px 12px">🔒 Private View</div>'}
+            </div>
+            ${avgEff > 0 ? `<div style="font-size:18px;font-weight:800;color:#4ade80">${avgEff.toLocaleString()} <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">XP / HR</span></div>` : ''}
+          </div>
+        </div>
+
+        <div class="cal-stats-row" style="background:rgba(255,255,255,0.02);margin:0 25px 25px;border-radius:12px;border:1px solid rgba(255,255,255,0.05)">
+          <div class="cal-stat-card">
+            <div class="cal-stat-label">🔥 Win Streak</div>
+            <div class="cal-stat-value ${cal.streak_count >= 3 ? 'streak-hot' : ''}">${cal.streak_count || 0} Days</div>
+          </div>
+          <div class="cal-stat-card">
+            <div class="cal-stat-label">📈 XP / Day</div>
+            <div class="cal-stat-value highlight">${xpPerDay.toLocaleString()}</div>
+          </div>
+          <div class="cal-stat-card">
+            <div class="cal-stat-label">📈 XP Gained</div>
+            <div class="cal-stat-value">${Math.max(0, gained).toLocaleString()}</div>
+          </div>
+          <div class="cal-stat-card">
+            <div class="cal-stat-label">⏳ Days Left</div>
+            <div class="cal-stat-value">${remainingDaysTotal} Days</div>
+          </div>
+        </div>
+
+        <div class="cal-progress-bar">
+          <div class="cal-progress-fill ${pctDone ? 'done' : ''}" style="width:${pct.toFixed(1)}%"></div>
+        </div>
+
+        <div class="cal-unlock">
+          <span style="font-size:13px;color:var(--dim)">🔑</span>
+          <input class="cal-input" type="password" id="calUnlockInput" placeholder="Enter secret code to edit…" style="flex:1;min-width:160px" autocomplete="off">
+          <button class="btn-primary" onclick="calUnlock('${esc(cal.calendar_code)}')" style="padding:8px 16px">Unlock</button>
+          <span class="cal-unlock-status ${unlocked ? 'ok' : ''}" id="calUnlockStatus">${unlocked ? '✓ Unlocked' : 'Locked'}</span>
+        </div>
+
+        <div class="cal-grid">`;
+
+      days.forEach(d => {
+        const isToday = d.day_date === today;
+        const isPast = d.day_date < today;
+        const isMissed = isPast && !d.completed && !d.is_rest_day;
+        const isSurpassed = d.completed && d.actual_level > d.target_level;
+        
+        let cls = '';
+        if (d.is_rest_day) cls = 'rest';
+        else if (d.completed) cls = 'completed' + (isSurpassed ? ' blazing' : '');
+        else if (isMissed) cls = 'missed';
+        else if (isToday) cls = 'today';
+        else cls = 'future';
+        
+        if (d.is_manual_target) cls += ' pinned';
+
+        const dateStr = new Date(d.day_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const checkmark = d.is_rest_day ? '<div class="cal-day-check">😴</div>' : (d.completed ? '<div class="cal-day-check">✅</div>' : (isMissed ? '<div class="cal-day-check">❌</div>' : ''));
+        const actualInfo = (d.completed && d.actual_level) ? `<div class="cal-day-sub">Reached: ${d.actual_level.toLocaleString()}</div>` : (d.is_rest_day ? '<div class="cal-day-sub">Rest Day</div>' : '');
+        
+        // ANY day can be edited when unlocked
+        const showEdit = unlocked;
+
+        html += `
+          <div class="cal-day ${cls}" ${showEdit ? `onclick="calCompleteModal(${d.day_number}, ${d.target_level}, ${d.is_rest_day})"` : ''} style="${showEdit ? 'cursor:pointer' : ''}">
+            ${checkmark}
+            <div class="cal-day-num">Day ${d.day_number}</div>
+            <div class="cal-day-date">${dateStr}</div>
+            <div class="cal-day-target">${d.is_rest_day ? 'REST' : 'Lvl ' + d.target_level.toLocaleString()}</div>
+            ${actualInfo}
+            ${showEdit && !d.is_rest_day ? `<div style="font-size:10px;color:var(--dim);margin-top:4px">${d.completed ? 'Click to edit' : 'Click to log progress'}</div>` : ''}
+          </div>`;
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ── ANALYTICS ─────────────────────────────────
+    let progressChart = null;
+    let gainChart = null;
+
+    function renderAnalytics(data) {
+        if (!data || !data.days) return;
+        
+        const labels = data.days.map(d => `Day ${d.day_number}`);
+        const targetData = data.days.map(d => d.target_level);
+        const actualData = data.days.map(d => d.completed ? (d.actual_level || d.target_level) : null);
+        
+        // Gains calculation
+        const gains = [];
+        for (let i = 0; i < data.days.length; i++) {
+            if (!data.days[i].completed) {
+                gains.push(0);
+                continue;
+            }
+            const prevLvl = i === 0 ? (data.cal.current_level - (data.days[0].actual_level - data.cal.current_level)) : (data.days[i-1].actual_level || data.days[i-1].target_level);
+            // Simpler: just use actual_level directly if available
+            const currentActual = data.days[i].actual_level || data.days[i].target_level;
+            const previousActual = i === 0 ? (data.cal.goal_level - data.days[data.days.length-1].target_level) : (data.days[i-1].actual_level || data.days[i-1].target_level); // This is fallback
+            
+            // Actually, let's just calculate gain from the day before's target if first day, or prev day's actual
+            const startOfDays = data.cal.current_level; // approximation
+            const prev = i === 0 ? (data.days[0].target_level - (data.days[1].target_level - data.days[0].target_level)) : (data.days[i-1].actual_level || data.days[i-1].target_level);
+            gains.push(Math.max(0, currentActual - prev));
+        }
+
+        // Progress Chart
+        const ctxP = document.getElementById('progressChart').getContext('2d');
+        if (progressChart) progressChart.destroy();
+        progressChart = new Chart(ctxP, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Target Level',
+                        data: targetData,
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        fill: false,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Actual Level',
+                        data: actualData,
+                        borderColor: '#5865f2',
+                        backgroundColor: 'rgba(88, 101, 242, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#5865f2',
+                        pointBorderColor: '#fff',
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#949ba4', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#949ba4' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+
+        // Gain Chart
+        const ctxG = document.getElementById('gainChart').getContext('2d');
+        if (gainChart) gainChart.destroy();
+        gainChart = new Chart(ctxG, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Levels Gained',
+                    data: gains,
+                    backgroundColor: 'rgba(167, 139, 250, 0.4)',
+                    borderColor: '#a78bfa',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#949ba4', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#949ba4' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+
+        // Session History & Efficiency
+        const hist = document.getElementById('sessionHistory');
+        const avgEffEl = document.getElementById('statAvgEfficiency');
+        const bestEffEl = document.getElementById('statBestEfficiency');
+        
+        if (data.sessions && data.sessions.length > 0) {
+            let totalEff = 0;
+            let bestEff = 0;
+            let validSessions = 0;
+
+            hist.innerHTML = data.sessions.map(s => {
+                const gain = (s.end_level - s.start_level) || 0;
+                const hours = s.duration_seconds / 3600;
+                const efficiency = hours > 0 ? Math.round(gain / hours) : 0;
+                
+                if (efficiency > 0) {
+                    totalEff += efficiency;
+                    validSessions++;
+                    if (efficiency > bestEff) bestEff = efficiency;
+                }
+
+                return `
+                <div class="session-item">
+                    <div class="session-meta">
+                        <div style="color:var(--white); font-weight:600">Session: Lvl ${s.start_level} → ${s.end_level || '?'}</div>
+                        <div class="session-date">${new Date(s.start_time).toLocaleString()} · ${Math.floor(s.duration_seconds/60)}m ${s.duration_seconds%60}s ${efficiency > 0 ? `· <span style="color:#4ade80">${efficiency} XP/Hr</span>` : ''}</div>
+                    </div>
+                    <div class="session-gain">+${gain} Levels</div>
+                </div>
+            `}).join('');
+
+            const avgEff = validSessions > 0 ? Math.round(totalEff / validSessions) : 0;
+            if (avgEffEl) avgEffEl.textContent = `${avgEff} XP/Hr`;
+            if (bestEffEl) bestEffEl.textContent = `${bestEff} XP/Hr`;
+        } else {
+            hist.innerHTML = '<div style="color:var(--dim); font-size:13px">No recorded sessions yet.</div>';
+            if (avgEffEl) avgEffEl.textContent = '0 XP/Hr';
+            if (bestEffEl) bestEffEl.textContent = '0 XP/Hr';
+        }
+    }
+
+    // ── LEADERBOARD ────────────────────────────────
+    async function calLoadLeaderboard() {
+        const root = document.getElementById('leaderboardList');
+        try {
+            const db = getCalSb();
+            // We use a custom query to get top players and calculate their XP/Hr
+            const { data, error } = await db.from('grind_calendars')
+                .select('calendar_code, display_name, current_level, goal_level, streak_count, id')
+                .eq('is_public', true)
+                .order('current_level', { ascending: false })
+                .limit(10);
+                
+            if (error) throw error;
+
+            if (!data || !data.length) {
+                root.innerHTML = '<div class="state-box"><div class="state-text">No legends yet. Start grinding!</div></div>';
+                return;
+            }
+
+            // For each top user, fetch their sessions to calc efficiency
+            const lbData = await Promise.all(data.map(async (item, i) => {
+                const { data: sessions } = await db.from('grind_sessions').select('start_level, end_level, duration_seconds').eq('calendar_id', item.id);
+                
+                let totalGain = 0;
+                let totalSec = 0;
+                (sessions || []).forEach(s => {
+                    totalGain += (s.end_level - s.start_level) || 0;
+                    totalSec += s.duration_seconds || 0;
+                });
+                
+                const efficiency = totalSec > 0 ? Math.round(totalGain / (totalSec / 3600)) : 0;
+                const levelsGained = item.current_level - 1; // Simplification
+
+                return { ...item, efficiency, levelsGained, rank: i + 1 };
+            }));
+
+            root.innerHTML = lbData.map((item, i) => `
+                <div class="leaderboard-card" onclick="calViewPublic('${esc(item.calendar_code)}')">
+                    <div class="lb-rank ${i < 3 ? 'top-' + (i + 1) : ''}">${item.rank}</div>
+                    <div class="lb-info">
+                        <div class="lb-name">${esc(item.display_name)}</div>
+                        <div class="lb-code">#${esc(item.calendar_code)} ${item.efficiency > 10000 ? '⚡ Elite' : ''}</div>
+                    </div>
+                    <div class="lb-stats">
+                        <div class="lb-gain">${item.efficiency > 0 ? `<span style="color:#4ade80;font-weight:700">${item.efficiency.toLocaleString()} XP/Hr</span>` : `Lvl ${item.current_level}`}</div>
+                        <div class="lb-streak">🔥 ${item.streak_count} Day Streak</div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            root.innerHTML = `<div class="cal-alert error">Failed to load leaderboard</div>`;
+        }
+    }
+
+    async function calReviewPendingLinks(calId) {
+        const root = document.getElementById('calPendingLinkAlert');
+        if (!root) return;
+
+        try {
+            const db = getCalSb();
+            // Use RPC to bypass RLS and ensure visibility
+            const { data, error } = await db.rpc('check_pending_discord_link', {
+                p_calendar_id: calId
+            });
+
+            if (error) {
+                console.error("Pending links RPC error:", error);
+                return;
+            }
+
+            if (data && data.found) {
+                root.innerHTML = `
+                    <div class="cal-alert info" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; animation: slideIn 0.3s ease-out">
+                        <div>
+                            <b style="color:var(--white)">🔗 Discord Link Request</b><br>
+                            <span style="font-size:12px; color:rgba(255,255,255,0.7)">User <b>${esc(data.discord_name)}</b> wants to link this calendar.</span>
+                        </div>
+                        <div style="display:flex; gap:10px">
+                            <button class="btn-primary" onclick="calConfirmLink('${esc(data.token_code)}')" style="padding:6px 12px; font-size:12px">Confirm Link</button>
+                            <button class="btn-ghost" onclick="this.parentElement.parentElement.remove()" style="padding:6px 12px; font-size:12px">Reject</button>
+                        </div>
+                    </div>
+                `;
+            } else if (!calLinkPolling) {
+                // Only clear if we aren't actively polling (e.g., initial load)
+                root.innerHTML = '';
+            }
+        } catch (e) {
+            console.error("Pending links check failed", e);
+        }
+    }
+
+    async function calConfirmLink(tokenCode) {
+        if (!calUnlocked || !calCurrentData) return;
+        
+        try {
+            const db = getCalSb();
+            const { data, error } = await db.rpc('confirm_discord_link', {
+                p_calendar_code: calCurrentData.cal.calendar_code,
+                p_secret_code: calCurrentSecret,
+                p_token_code: tokenCode
+            });
+
+            if (error) throw error;
+            
+            if (calLinkPolling) { clearInterval(calLinkPolling); calLinkPolling = null; }
+            alert(`Successfully linked to Discord as ${data.discord_name}!`);
+            calLoad(); // Refresh
+        } catch (e) {
+            alert("Confirmation failed: " + e.message);
+        }
+    }
+
+    async function calGenerateToken() {
+        if (!calUnlocked || !calCurrentData) return;
+        
+        try {
+            const db = getCalSb();
+            const { data: token, error } = await db.rpc('generate_calendar_link_token', {
+                p_calendar_code: calCurrentData.cal.calendar_code,
+                p_secret_code: calCurrentSecret
+            });
+
+            if (error) throw error;
+
+            console.log("Token generated", token);
+            
+            // Show a beautiful custom modal or prompt
+            const alertHtml = `
+                <div style="padding:20px; text-align:center">
+                    <div style="font-size:32px; font-weight:800; color:#5865F2; letter-spacing:4px; margin-bottom:15px">${token}</div>
+                    <div style="font-size:14px; color:var(--dim); line-height:1.5">
+                        Copy this code and use the <b>/link</b> command in our Discord server.<br>
+                        <span style="color:var(--white)">The code expires in 10 minutes.</span>
+                    </div>
+                </div>
+            `;
+            
+            showCustomAlert("🎲 Discord Verification Token", alertHtml);
+
+            // Start polling for the link
+            calStartLinkPolling(calCurrentData.cal.id);
+        } catch (e) {
+            alert("Failed to generate token: " + e.message);
+        }
+    }
+
+    function calStartLinkPolling(calId) {
+        if (calLinkPolling) clearInterval(calLinkPolling);
+        
+        const root = document.getElementById('calPendingLinkAlert');
+        if (root) {
+            root.innerHTML = `
+                <div class="cal-alert info" style="margin-bottom:20px; display:flex; align-items:center; gap:12px; animation: slideIn 0.3s ease-out">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <div>
+                        <b style="color:var(--white)">Waiting for Discord link...</b><br>
+                        <span style="font-size:12px; color:rgba(255,255,255,0.7)">Run the <b>/link</b> command in Discord. This page will update automatically.</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initial check immediately
+        calReviewPendingLinks(calId);
+        
+        // Poll every 5 seconds
+        calLinkPolling = setInterval(() => {
+            if (!calUnlocked || !calCurrentData) {
+                clearInterval(calLinkPolling);
+                calLinkPolling = null;
+                return;
+            }
+            calReviewPendingLinks(calId);
+        }, 5000);
+    }
+
+    async function calTogglePrivacy(isPublic) {
+        if (!calUnlocked || !calCurrentData) return;
+        
+        try {
+            const db = getCalSb();
+            const { data, error } = await db.rpc('toggle_calendar_privacy', {
+                p_calendar_code: calCurrentData.cal.calendar_code,
+                p_secret_code: calCurrentSecret,
+                p_is_public: isPublic
+            });
+
+            if (error) throw error;
+            
+            calLoad(); // Refresh
+        } catch (e) {
+            alert("Privacy update failed: " + e.message);
+            // Revert checkbox
+            document.getElementById('calPrivacyToggle').checked = !isPublic;
+        }
+    }
+
+    function showCustomAlert(title, contentHtml) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-backdrop';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:400px; animation: modalFloat 0.4s cubic-bezier(0.16, 1, 0.3, 1)">
+                <div class="modal-header">
+                    <div class="modal-title">${title}</div>
+                    <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">×</button>
+                </div>
+                <div class="modal-body" style="padding:20px">
+                    ${contentHtml}
+                </div>
+                <div class="modal-footer" style="padding:15px; background:rgba(0,0,0,0.2)">
+                    <button class="btn-primary" onclick="this.closest('.modal-backdrop').remove()" style="width:100%">Got it!</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // ── DISCORD LINKING ────────────────────────────
+    async function calLinkDiscord() {
+        return calGenerateToken();
+    }
+
+    // ── GRIND TIMER ───────────────────────────────
+    let timerInstance = null;
+    class GrindTimer {
+        constructor() {
+            this.startTime = localStorage.getItem('grind_timer_start') ? parseInt(localStorage.getItem('grind_timer_start')) : null;
+            this.startLevel = localStorage.getItem('grind_timer_lvl') ? parseInt(localStorage.getItem('grind_timer_lvl')) : null;
+            this.interval = null;
+            if (this.startTime) this.start();
+        }
+
+        render() {
+            const root = document.getElementById('grindTimerRoot');
+            if (!root) return;
+            if (!calUnlocked) { root.innerHTML = ''; return; }
+
+            root.innerHTML = `
+                <div class="grind-timer-card">
+                    <div class="timer-info">
+                        <div class="timer-title">Grind Session Timer</div>
+                        <div class="timer-desc">${this.startTime ? `Started at level ${this.startLevel}` : 'Track your current grinding session.'}</div>
+                    </div>
+                    <div class="timer-display" id="sessionTimerDisplay">00:00:00</div>
+                    <div class="timer-controls">
+                        ${!this.startTime ? 
+                            `<button class="btn-primary" onclick="timerInstance.startPrompt()">Start Session</button>` : 
+                            `<button class="btn-primary" style="background:#ef4444" onclick="timerInstance.stop()">Stop & Save</button>
+                             <button class="btn-ghost" onclick="timerInstance.reset()">Reset</button>`
+                        }
+                    </div>
+                </div>`;
+            if (this.startTime) this.tick();
+        }
+
+        startPrompt() {
+            const lvl = prompt("Enter your starting level:", calCurrentData.cal.current_level);
+            if (lvl === null) return;
+            this.startTime = Date.now();
+            this.startLevel = parseInt(lvl);
+            localStorage.setItem('grind_timer_start', this.startTime);
+            localStorage.setItem('grind_timer_lvl', this.startLevel);
+            this.start();
+            this.render();
+        }
+
+        start() {
+            if (this.interval) clearInterval(this.interval);
+            this.interval = setInterval(() => this.tick(), 1000);
+        }
+
+        tick() {
+            const display = document.getElementById('sessionTimerDisplay');
+            if (!display || !this.startTime) return;
+            const diff = Math.floor((Date.now() - this.startTime) / 1000);
+            const h = Math.floor(diff / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            display.textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        async stop() {
+            const endLvl = prompt("Enter your ending level:", calCurrentData.cal.current_level);
+            if (endLvl === null) return;
+            
+            const endTime = Date.now();
+            const startLvl = this.startLevel;
+            const durationSec = Math.floor((endTime - this.startTime) / 1000);
+
+            try {
+                const db = getCalSb();
+                const { error } = await db.rpc('log_grind_session', {
+                    p_calendar_code: calCurrentData.cal.calendar_code,
+                    p_secret_code: calCurrentSecret,
+                    p_start_level: startLvl,
+                    p_end_level: parseInt(endLvl),
+                    p_duration_seconds: durationSec
+                });
+                if (error) throw error;
+                this.reset();
+                calLoad(); // Reload data
+            } catch (e) {
+                alert("Failed to save session: " + e.message);
+            }
+        }
+
+        reset() {
+            clearInterval(this.interval);
+            this.startTime = null;
+            this.startLevel = null;
+            localStorage.removeItem('grind_timer_start');
+            localStorage.removeItem('grind_timer_lvl');
+            this.render();
+        }
+    }
+
+    // Initialize components
+    window.addEventListener('load', () => {
+        timerInstance = new GrindTimer();
+    });
+
+    // Update renderCalendar to trigger timer & analytics render
+    const originalRenderCalendar = renderCalendar;
+    renderCalendar = function(cal, days, unlocked) {
+        originalRenderCalendar(cal, days, unlocked);
+        if (timerInstance) timerInstance.render();
+        if (typeof renderAnalytics === 'function' && calCurrentData) {
+            renderAnalytics(calCurrentData);
+        }
+    };
+
+    // ── UNLOCK ────────────────────────────────────
+    async function calUnlock(code) {
+      const secret = document.getElementById('calUnlockInput').value;
+      if (!secret) return;
+      const statusEl = document.getElementById('calUnlockStatus');
+      statusEl.textContent = 'Verifying…';
+      statusEl.className = 'cal-unlock-status';
+
+      try {
+        const db = getCalSb();
+        const { data, error } = await db.rpc('verify_calendar_code', {
+          p_calendar_code: code,
+          p_secret_code: secret
+        });
+        if (error) throw error;
+        if (data === true) {
+          calUnlocked = true;
+          calCurrentSecret = secret;
+          statusEl.textContent = '✓ Unlocked';
+          statusEl.className = 'cal-unlock-status ok';
+          if (calCurrentData) renderCalendar(calCurrentData.cal, calCurrentData.days, true);
+        } else {
+          statusEl.textContent = '✗ Wrong code';
+          statusEl.className = 'cal-unlock-status';
+          calUnlocked = false;
+          calCurrentSecret = '';
+        }
+      } catch (e) {
+        statusEl.textContent = 'Error';
+        statusEl.className = 'cal-unlock-status';
+      }
+    }
+
+    // ── COMPLETE DAY MODAL ────────────────────────
+    function calCompleteModal(dayNum, targetLvl, isRest) {
+      if (!calUnlocked || !calCurrentData) return;
+      const root = document.getElementById('calModalRoot');
+      const day = calCurrentData.days.find(d => d.day_number === dayNum);
+      const actualVal = day?.actual_level || targetLvl;
+      const today = new Date().toISOString().split('T')[0];
+      const isFuture = day.day_date > today;
+      
+      root.innerHTML = `
+        <div class="cal-modal-overlay" onclick="calCloseModal(event)">
+          <div class="cal-modal" onclick="event.stopPropagation()">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3 style="margin:0">Day ${dayNum} Settings</h3>
+              <button class="btn-ghost" onclick="calCloseModal()" style="padding:4px">✕</button>
+            </div>
+
+            <div class="cal-field">
+              <label>Target Level (Goal for this day)</label>
+              <input class="cal-input" type="number" id="calTargetLvl" value="${targetLvl}" min="1" max="1000000">
+              <div class="cal-hint">Changing this will "pin" the target and adjust other days.</div>
+            </div>
+            
+            <div class="cal-field" style="${isFuture ? 'opacity:0.5;pointer-events:none' : ''}">
+              <label>Actual Level Reached ${isFuture ? '<span style="color:var(--dim);font-weight:400">(Day hasn\'t started)</span>' : ''}</label>
+              <input class="cal-input" type="number" id="calActualLvl" value="${actualVal}" min="1" max="1000000" ${isFuture ? 'disabled' : ''}>
+              <div class="cal-hint">${isFuture ? 'You can only log progress once this day starts.' : 'Enter the level you finished at.'}</div>
+            </div>
+
+            <div class="cal-toggle-row">
+              <div class="cal-toggle-label">Mark as Rest Day</div>
+              <label class="cal-toggle">
+                <input type="checkbox" id="calIsRestModal" ${isRest ? 'checked' : ''}>
+                <span class="cal-toggle-track"></span>
+              </label>
+            </div>
+
+            <div class="cal-modal-actions">
+              <button class="btn-primary" onclick="calSaveAdvanced(${dayNum})" id="calCompleteBtn" style="flex:1;justify-content:center">Save Changes</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function calSaveAdvanced(dayNum) {
+      if (!calUnlocked || !calCurrentData) return;
+      const targetLvl = parseInt(document.getElementById('calTargetLvl').value);
+      const actualLvlRaw = document.getElementById('calActualLvl').value;
+      const actualLvl = actualLvlRaw ? parseInt(actualLvlRaw) : null;
+      const isRest = document.getElementById('calIsRestModal').checked;
+
+      const btn = document.getElementById('calCompleteBtn');
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      try {
+        const db = getCalSb();
+        const { error } = await db.rpc('update_calendar_day_advanced', {
+          p_calendar_code: calCurrentData.cal.calendar_code,
+          p_secret_code: calCurrentSecret,
+          p_day_number: dayNum,
+          p_target_level: targetLvl,
+          p_actual_level: actualLvl,
+          p_is_rest_day: isRest,
+          p_completed: actualLvl !== null || isRest
+        });
+        if (error) throw error;
+        calCloseModal();
+        await calReloadWorkflow();
+      } catch (e) {
+        alert('Failed to save: ' + e.message);
+        btn.textContent = 'Save Changes';
+        btn.disabled = false;
+      }
+    }
+
+    async function calToggleRestFromModal(dayNum) {
+      calCloseModal();
+      await calToggleRest(dayNum);
+    }
+
+    async function calToggleRest(dayNum) {
+      if (!calUnlocked || !calCurrentData) return;
+      try {
+        const db = getCalSb();
+        const { error } = await db.rpc('toggle_rest_day', {
+          p_calendar_code: calCurrentData.cal.calendar_code,
+          p_secret_code: calCurrentSecret,
+          p_day_number: dayNum
+        });
+        if (error) throw error;
+        await calReloadWorkflow();
+      } catch (e) {
+        alert('Failed to toggle rest day: ' + e.message);
+      }
+    }
+
+    async function calAddDay() {
+      if (!calUnlocked || !calCurrentData) return;
+      if (!confirm('Add a new day to the end of this calendar?')) return;
+      try {
+        const db = getCalSb();
+        const { error } = await db.rpc('add_calendar_day', {
+          p_calendar_code: calCurrentData.cal.calendar_code,
+          p_secret_code: calCurrentSecret
+        });
+        if (error) throw error;
+        await calReloadWorkflow();
+      } catch (e) {
+        alert('Failed to add day: ' + e.message);
+      }
+    }
+
+    async function calRemoveDay() {
+      if (!calUnlocked || !calCurrentData) return;
+      if (!confirm('Are you sure you want to remove the last day? This will recalculate your goal distribution!')) return;
+      try {
+        const db = getCalSb();
+        const { error } = await db.rpc('remove_calendar_day', {
+          p_calendar_code: calCurrentData.cal.calendar_code,
+          p_secret_code: calCurrentSecret
+        });
+        if (error) throw error;
+        await calReloadWorkflow();
+      } catch (e) {
+        alert('Failed to remove day: ' + e.message);
+      }
+    }
+
+    async function calReloadWorkflow() {
+      const code = calCurrentData.cal.calendar_code;
+      const secret = calCurrentSecret;
+      document.getElementById('calLookup').value = code;
+      await calLoad();
+      calUnlocked = true;
+      calCurrentSecret = secret;
+      if (calCurrentData) renderCalendar(calCurrentData.cal, calCurrentData.days, true);
+    }
+
+    function calCloseModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('calModalRoot').innerHTML = '';
+    }
+
+    async function calCompleteDay(dayNum) {
+      if (!calUnlocked || !calCurrentData) return;
+      const actualLvl = parseInt(document.getElementById('calActualLvl').value);
+      if (isNaN(actualLvl) || actualLvl < 1 || actualLvl > 1000000) { alert('Enter a valid level (1-1,000,000)'); return; }
+
+      const btn = document.getElementById('calCompleteBtn');
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      try {
+        const db = getCalSb();
+        const { data, error } = await db.rpc('complete_calendar_day', {
+          p_calendar_code: calCurrentData.cal.calendar_code,
+          p_secret_code: calCurrentSecret,
+          p_day_number: dayNum,
+          p_actual_level: actualLvl
+        });
+        if (error) throw new Error(error.message);
+
+        calCloseModal();
+        // Reload to show updated targets
+        document.getElementById('calLookup').value = calCurrentData.cal.calendar_code;
+        const savedSecret = calCurrentSecret;
+        await calLoad();
+        // Re-unlock after reload
+        calUnlocked = true;
+        calCurrentSecret = savedSecret;
+        if (calCurrentData) renderCalendar(calCurrentData.cal, calCurrentData.days, true);
+      } catch (e) {
+        alert('Error: ' + (e.message || 'Failed to complete day'));
+        btn.textContent = '✓ Mark Complete';
+        btn.disabled = false;
+      }
+    }
+
+    // ── PUBLIC DIRECTORY ──────────────────────────
+    async function calLoadPublic() {
+      calLoadLeaderboard(); // Trigger leaderboard load as well
+      const container = document.getElementById('calPubContent');
+      try {
+        const db = getCalSb();
+        const { data: cals, error } = await db.from('grind_calendars').select('*').eq('is_public', true).order('created_at', { ascending: false }).limit(50);
+        if (error) throw error;
+        if (!cals || !cals.length) {
+          container.innerHTML = '<div class="state-box"><div class="state-icon">📅</div><div class="state-title">No Public Calendars Yet</div><div class="state-text">Be the first! Create a calendar and toggle "Make Public".</div></div>';
+          return;
+        }
+
+        // Get day counts for progress
+        const ids = cals.map(c => c.id);
+        const { data: dayCounts } = await db.from('calendar_days').select('calendar_id, completed').in('calendar_id', ids);
+
+        let html = '<div class="cal-pub-grid">';
+        cals.forEach(c => {
+          const cDays = (dayCounts || []).filter(d => d.calendar_id === c.id);
+          const total = cDays.length || 1;
+          const done = cDays.filter(d => d.completed).length;
+          const pct = (done / total * 100).toFixed(0);
+
+          html += `
+            <div class="cal-pub-card" onclick="calViewPublic('${esc(c.calendar_code)}')">
+              <div class="cal-pub-name">${esc(c.display_name)}</div>
+              <div class="cal-pub-code">${esc(c.calendar_code)}</div>
+              <div class="cal-pub-progress"><div class="cal-pub-fill" style="width:${pct}%"></div></div>
+              <div class="cal-pub-meta">
+                <span>Lvl ${c.current_level.toLocaleString()} → ${c.goal_level.toLocaleString()}</span>
+                <span>${pct}% · ${done}/${total} days</span>
+              </div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<div class="cal-alert error">${esc(e.message || 'Failed to load')}</div>`;
+      }
+    }
+
+    function calViewPublic(code) {
+      calTab('view');
+      document.getElementById('calLookup').value = code;
+      calLoad();
+    }
+  </script>
+</body>
+
+</html>

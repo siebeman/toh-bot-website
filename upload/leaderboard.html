@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tower of Hell — Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090d;
+    --surface: rgba(15,15,20,0.78);
+    --surface2: rgba(20,20,28,0.92);
+    --border: rgba(255,255,255,0.1);
+    --accent: #8b7cf6;
+    --accent2: #c4b5fd;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --text: #e5e7ef;
+    --muted: #98a0b8;
+    --red: #e83b3b;
+    --green: #2ecc71;
+    --blue: #3b82f6;
+    --glow: rgba(139,124,246,0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(circle at top center, rgba(139,124,246,0.16), transparent 30%),
+      radial-gradient(circle at 85% 12%, rgba(255,255,255,0.08), transparent 20%),
+      linear-gradient(180deg, #0b0b10 0%, #09090d 100%);
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.42), transparent 92%);
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 26%);
+  }
+
+  .ambient-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 52px 0 36px;
+    text-align: center;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 36px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.06), transparent 30%),
+      rgba(12,12,17,0.66);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 28px 80px rgba(0,0,0,0.28);
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196,181,253,0.2), transparent);
+    margin-top: 32px;
+  }
+
+  .logo-ring {
+    width: 72px; height: 72px;
+    border: 1px solid rgba(196,181,253,0.32);
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(139,124,246,0.16));
+    box-shadow: 0 0 24px var(--glow), inset 0 0 24px var(--glow);
+    animation: pulse-ring 3s ease-in-out infinite;
+    font-size: 28px;
+  }
+
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 24px var(--glow), inset 0 0 24px var(--glow); }
+    50% { box-shadow: 0 0 48px rgba(255,76,0,0.35), inset 0 0 32px rgba(255,76,0,0.25); }
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    background: linear-gradient(135deg, #b9abd6 0%, #fff 50%, #b9abd6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .status-item {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  .status-dot.updating { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .status-dot.error { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .cache-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(139,124,246,0.12);
+    border: 1px solid rgba(196,181,253,0.26);
+    color: #ddd7ff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cache-badge:hover { background: rgba(139,124,246,0.2); transform: translateY(-1px); }
+  .cache-badge.stale { background: rgba(196,181,253,0.14); border-color: rgba(196,181,253,0.3); color: var(--accent2); }
+
+  /* ── TABS ── */
+  .tabs {
+    display: inline-flex; gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.03);
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    background: none; border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s, background 0.2s, transform 0.2s;
+    text-transform: uppercase;
+    border-radius: 999px;
+  }
+
+  .tab-btn::after {
+    display: none;
+  }
+
+  .tab-btn:hover { transform: translateY(-1px); }
+  .tab-btn.active { color: var(--text); background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+
+  .tab-btn .count {
+    margin-left: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: var(--muted);
+  }
+
+  .tab-btn.active .count { border-color: var(--accent); color: var(--accent); }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1; min-width: 220px;
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    background: rgba(15,15,20,0.82);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 10px 14px 10px 40px;
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+
+  .search-box input:focus { border-color: rgba(196,181,253,0.35); box-shadow: 0 0 0 4px rgba(139,124,246,0.1); }
+  .search-box input::placeholder { color: var(--muted); }
+
+  .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 0.9rem; pointer-events: none;
+  }
+
+  .filter-select {
+    background: rgba(15,15,20,0.82);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2398a0b8' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .filter-select:focus { border-color: rgba(196,181,253,0.35); box-shadow: 0 0 0 4px rgba(139,124,246,0.1); }
+  .filter-select option { background: var(--surface2); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), transparent 24%),
+      rgba(12,12,17,0.7);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  thead th {
+    background: rgba(255,255,255,0.03);
+    padding: 14px 16px;
+    text-align: left;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+  }
+
+  thead th:hover { color: var(--accent2); }
+  thead th.sorted { color: var(--accent); }
+  thead th .sort-arrow { margin-left: 6px; opacity: 0.5; font-size: 0.7rem; }
+  thead th.sorted .sort-arrow { opacity: 1; }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s, transform 0.15s;
+  }
+
+  tbody tr:hover { background: rgba(196,181,253,0.05); }
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody tr.top-3 { background: rgba(255,215,0,0.03); }
+  tbody tr.top-3:hover { background: rgba(255,215,0,0.06); }
+
+  td {
+    padding: 13px 16px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  /* Rank cell */
+  .rank-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    min-width: 60px;
+  }
+
+  .rank-medal {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .rank-1 { background: radial-gradient(circle, #ffd700, #b8860b); color: #000; box-shadow: 0 0 12px rgba(255,215,0,0.5); }
+  .rank-2 { background: radial-gradient(circle, #e8e8e8, #a0a0a0); color: #000; box-shadow: 0 0 8px rgba(192,192,192,0.4); }
+  .rank-3 { background: radial-gradient(circle, #cd7f32, #8b5a1a); color: #000; box-shadow: 0 0 8px rgba(205,127,50,0.4); }
+
+  /* Username */
+  .username { font-weight: 600; font-size: 1rem; letter-spacing: 0.02em; }
+
+  /* Level bar */
+  .level-cell { min-width: 140px; }
+  .level-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+
+  .level-bar-bg {
+    height: 3px; border-radius: 2px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .level-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+  }
+
+  /* Country */
+  .country-cell { color: var(--muted); font-size: 0.9rem; }
+
+  /* Device badge */
+  .device-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .device-pc { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: var(--blue); }
+  .device-mobile { background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3); color: var(--green); }
+  .device-other { background: rgba(107,122,153,0.15); border: 1px solid var(--border); color: var(--muted); }
+
+  /* Date */
+  .date-cell { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); }
+
+  /* Ban reason badge */
+  .ban-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    background: rgba(232,59,59,0.12);
+    border: 1px solid rgba(232,59,59,0.3);
+    color: var(--red);
+  }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    margin-top: 20px;
+  }
+
+  .page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); }
+
+  .page-btns { display: flex; gap: 6px; }
+
+  .page-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15,15,20,0.82);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+  }
+
+  .page-btn:hover { border-color: rgba(196,181,253,0.34); color: var(--accent2); transform: translateY(-1px); }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+  /* Tab panel */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Spinner */
+  .spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mobile */
+  header,
+  .status-bar,
+  .tabs,
+  .tab-panel {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  body.loaded header,
+  body.loaded .status-bar,
+  body.loaded .tabs,
+  body.loaded .tab-panel.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 720px) {
+    .wrapper {
+      padding: 14px 14px 42px;
+    }
+
+    header {
+      border-radius: 28px;
+      padding: 40px 0 28px;
+    }
+
+    .tabs {
+      display: flex;
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding-inline: 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .controls { flex-direction: column; }
+    .search-box { min-width: 0; }
+    td, th { padding: 10px 10px; }
+    .level-bar-bg { display: none; }
+  }
+
+  /* Fade-in animation for rows */
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  tbody tr { animation: row-in 0.2s ease both; }
+</style>
+</head>
+<body>
+<canvas class="ambient-canvas" id="ambientCanvas" aria-hidden="true"></canvas>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-ring">🔥</div>
+    <h1>Tower of Hell</h1>
+    <p class="subtitle">Official Community Leaderboard · Top 300</p>
+  </header>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-item">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Loading data...</span>
+      <div class="spinner" id="spinner"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span class="status-item" id="lastFetchTime"></span>
+      <span class="cache-badge" id="refreshBtn" onclick="forceRefresh()" title="Force refresh from Google Sheets">↺ Refresh</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('active',this)">
+      Active Players
+      <span class="count" id="activeCount">—</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('banned',this)">
+      Banned Leaderboard
+      <span class="count" id="bannedCount">—</span>
+    </button>
+  </div>
+
+  <!-- Active Players Tab -->
+  <div class="tab-panel active" id="tab-active">
+    <div class="controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchActive" placeholder="Search username or country…" oninput="filterActive()">
+      </div>
+      <select class="filter-select" id="deviceFilter" onchange="filterActive()">
+        <option value="">All Devices</option>
+        <option value="PC">PC</option>
+        <option value="Mobile">Mobile</option>
+      </select>
+      <select class="filter-select" id="sortActive" onchange="filterActive()">
+        <option value="rank">Sort: Rank</option>
+        <option value="level">Sort: Level</option>
+        <option value="username">Sort: Username A-Z</option>
+        <option value="updated">Sort: Last Updated</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="activeTable">
+        <thead>
+          <tr>
+            <th onclick="sortBy('rank')" class="sorted">Rank <span class="sort-arrow">▲</span></th>
+            <th onclick="sortBy('username')">Username <span class="sort-arrow">⇅</span></th>
+            <th onclick="sortBy('level')">Level <span class="sort-arrow">⇅</span></th>
+            <th>Country</th>
+            <th>Device</th>
+            <th onclick="sortBy('updated')">Last Updated <span class="sort-arrow">⇅</span></th>
+          </tr>
+        </thead>
+        <tbody id="activeBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="page-info" id="activePageInfo"></span>
+      <div class="page-btns" id="activePager"></div>
+    </div>
+  </div>
+
+  <!-- Banned Tab -->
+  <div class="tab-panel" id="tab-banned">
+    <div class="controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchBanned" placeholder="Search username…" oninput="filterBanned()">
+      </div>
+      <select class="filter-select" id="banReasonFilter" onchange="filterBanned()">
+        <option value="">All Ban Reasons</option>
+        <option value="Alts Abusement">Alts Abusement</option>
+        <option value="Exploiting">Exploiting</option>
+        <option value="Glitches">Glitches</option>
+        <option value="Glitches (Coil)">Glitches (Coil)</option>
+        <option value="Glitches (Hook)">Glitches (Hook)</option>
+        <option value="Illegal Material">Illegal Material</option>
+        <option value="Inappropriate Behaviour">Inappropriate Behaviour</option>
+        <option value="Roblox Ban">Roblox Ban</option>
+        <option value="Unknown">Unknown</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="bannedTable">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Username</th>
+            <th>Level</th>
+            <th>Country</th>
+            <th>Ban Reason</th>
+            <th>Device</th>
+          </tr>
+        </thead>
+        <tbody id="bannedBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="page-info" id="bannedPageInfo"></span>
+      <div class="page-btns" id="bannedPager"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const SHEET_ID = '1RsPrUbDIQzCvN1xqw5pZIK3KmabZi-ZCwRwkoQuWSfM';
+const SHEET_GID = '0';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+const CACHE_KEY = 'toh_leaderboard_v1';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+const PAGE_SIZE = 50;
+
+// ── SEED DATA (fallback if network unavailable) ──────────────
+const SEED_DATA = {"players":[{"rank":1,"username":"Skyourain","level":1341,"country":"Russia","device":"PC","last_updated":"2025-11-10"},{"rank":2,"username":"wilder270522","level":1067,"country":"Brazil","device":"PC","last_updated":"2026-02-12"},{"rank":3,"username":"chatgris31","level":933,"country":"France","device":"PC","last_updated":"2026-04-26"},{"rank":4,"username":"RealMorri","level":900,"country":"Sweden","device":"PC","last_updated":"2026-04-25"},{"rank":5,"username":"Corrxpt1on","level":888,"country":"France","device":"PC","last_updated":"2026-04-09"},{"rank":6,"username":"killadandan","level":815,"country":"Jamaica","device":"PC","last_updated":"2026-04-25"},{"rank":7,"username":"dv1zn","level":800,"country":"Philippines","device":"PC","last_updated":"2026-04-25"},{"rank":8,"username":"ybae333","level":777,"country":"South Korea","device":"PC","last_updated":"2026-03-21"},{"rank":9,"username":"insqwez","level":744,"country":"Brazil","device":"PC","last_updated":"2025-12-25"},{"rank":10,"username":"carlosTheSkull","level":737,"country":"Brazil","device":"PC","last_updated":"2025-12-09"},{"rank":11,"username":"samet5445fb","level":729,"country":"Turkey","device":"PC","last_updated":"2026-04-14"},{"rank":12,"username":"NoahIsBIue","level":723,"country":"USA","device":"PC","last_updated":"2026-04-25"},{"rank":13,"username":"lix_q99","level":718,"country":"Russia","device":"PC","last_updated":"2026-04-19"},{"rank":14,"username":"LifeIsSkywars","level":716,"country":"UK","device":"PC","last_updated":"2024-12-15"},{"rank":15,"username":"vuidere","level":702,"country":"UK","device":"PC","last_updated":"2025-11-07"},{"rank":16,"username":"c4vlt","level":680,"country":"Canada","device":"PC","last_updated":"2026-04-26"},{"rank":17,"username":"Im0kae","level":633,"country":"USA","device":"PC","last_updated":"2025-12-18"},{"rank":18,"username":"Borisdw1","level":600,"country":"Russia","device":"PC","last_updated":"2026-03-31"},{"rank":19,"username":"ivanettino","level":571,"country":"Italy","device":"Mobile","last_updated":"2026-04-19"},{"rank":20,"username":"helenc2007","level":570,"country":"Dominic Rep.","device":"PC","last_updated":"2026-02-25"},{"rank":21,"username":"wend00p_20","level":564,"country":"Mexico","device":"PC","last_updated":"2026-04-10"},{"rank":22,"username":"TurDez_TuTU","level":563,"country":"France","device":"PC","last_updated":"2026-03-21"},{"rank":23,"username":"enfvsis","level":552,"country":"Chile","device":"PC","last_updated":"2026-02-14"},{"rank":24,"username":"FeuNekko","level":551,"country":"Philippines","device":"Mobile","last_updated":"2023-11-05"},{"rank":25,"username":"gIoomza","level":536,"country":"Sweden","device":"PC","last_updated":"2026-04-19"},{"rank":26,"username":"tafi405boni","level":536,"country":"Peru","device":"PC","last_updated":"2023-09-09"},{"rank":27,"username":"CoNterisk","level":534,"country":"Philippines","device":"PC","last_updated":"2026-02-22"},{"rank":28,"username":"fiveheat123","level":525,"country":"UK","device":"PC","last_updated":"2024-07-20"},{"rank":29,"username":"TheWordAxo","level":515,"country":"Pakistan","device":"PC","last_updated":"2023-06-17"},{"rank":30,"username":"g998gh8gf8999fd8","level":511,"country":"UK","device":"PC","last_updated":"2022-09-03"},{"rank":31,"username":"vLyu6lennA","level":503,"country":"Russia","device":"PC","last_updated":"2026-04-27"},{"rank":32,"username":"wikicam","level":500,"country":"Venezuela","device":"PC","last_updated":"2026-04-25"},{"rank":33,"username":"mansimar990","level":464,"country":"India","device":"Mobile","last_updated":"2025-04-12"},{"rank":34,"username":"Catyspheric","level":458,"country":"Australia","device":"PC","last_updated":"2022-10-20"},{"rank":35,"username":"Linkoo9","level":450,"country":"South Korea","device":"PC","last_updated":"2024-11-19"},{"rank":36,"username":"MrWhoseTheBun","level":431,"country":"India","device":"PC","last_updated":"2025-09-26"},{"rank":37,"username":"Holakheazhe","level":427,"country":"Guatemala","device":"PC","last_updated":"2024-09-12"},{"rank":38,"username":"yKiwizx","level":426,"country":"Brazil","device":"PC","last_updated":"2025-08-30"},{"rank":39,"username":"marinascottage","level":420,"country":"USA","device":"Mobile","last_updated":"2026-02-03"},{"rank":40,"username":"pedryn123456 ","level":420,"country":"Brazil","device":"PC","last_updated":"2025-10-25"},{"rank":41,"username":"carista333","level":416,"country":"USA","device":"Mobile","last_updated":"2025-12-01"},{"rank":42,"username":"khrepp","level":416,"country":"Belgium","device":"PC","last_updated":"2025-12-17"},{"rank":43,"username":"KeeNTeamUP","level":415,"country":"Ukraine","device":"PC","last_updated":"2026-04-20"},{"rank":44,"username":"Jan_8008","level":413,"country":"Peru","device":"PC","last_updated":"2025-01-24"},{"rank":45,"username":"dasd_rvnner0","level":407,"country":"Argentina","device":"PC","last_updated":"2025-12-05"},{"rank":46,"username":"BlackRxsesV","level":405,"country":"UK ","device":"Mobile","last_updated":"2022-09-03"},{"rank":47,"username":"Seno107","level":403,"country":"Ukraine","device":"PC","last_updated":"2026-04-20"},{"rank":48,"username":"IAMBACK_PLGAMMER","level":400,"country":"Nepal","device":"PC","last_updated":"2026-02-14"},{"rank":49,"username":"Juzt1_ak7","level":400,"country":"Malaysia","device":"PC","last_updated":"2025-12-14"},{"rank":50,"username":"Unskilled_0bbyist","level":400,"country":"Indonesia","device":"PC","last_updated":"2026-04-19"},{"rank":51,"username":"F3RONDA","level":398,"country":"Turkey","device":"PC","last_updated":"2022-01-05"},{"rank":52,"username":"coolandrichcatlover","level":385,"country":"-","device":"-","last_updated":"2026-03-21"},{"rank":53,"username":"lionelmessi3202","level":384,"country":"Nigeria","device":"Mobile","last_updated":"2023-04-16"},{"rank":54,"username":"39082136","level":372,"country":"Sri Lanka","device":"PC","last_updated":"2025-07-28"},{"rank":55,"username":"1079_SL","level":371,"country":"Vietnam","device":"PC","last_updated":"2023-11-05"},{"rank":56,"username":"yLuhann","level":361,"country":"Japan","device":"PC","last_updated":"2022-12-17"},{"rank":57,"username":"KakoMacroMarc","level":361,"country":"Philippines","device":"Mobile","last_updated":"2023-09-09"},{"rank":58,"username":"k0uign","level":358,"country":"Peru","device":"PC","last_updated":"2023-12-31"},{"rank":59,"username":"uli22772","level":358,"country":"Ukraine","device":"PC","last_updated":"2025-07-28"},{"rank":60,"username":"1bossa12DH","level":354,"country":"Russia","device":"PC","last_updated":"2025-10-12"},{"rank":61,"username":"ricardogomes_2604","level":353,"country":"Portugal","device":"Mobile","last_updated":"2024-08-01"},{"rank":62,"username":"28xAtes","level":346,"country":"Turkey","device":"PC","last_updated":"2024-12-18"},{"rank":63,"username":"santu2210","level":345,"country":"Argentina","device":"PC","last_updated":"2024-01-18"},{"rank":64,"username":"Pedropeira2","level":343,"country":"Brazil","device":"Mobile","last_updated":"2025-11-28"},{"rank":65,"username":"zeIeyy","level":340,"country":"UK","device":"PC","last_updated":"2022-09-16"},{"rank":66,"username":"prohouhehe","level":339,"country":"Malaysia","device":"PC","last_updated":"2024-01-08"},{"rank":67,"username":"cerwav","level":336,"country":"Australia","device":"PC","last_updated":"2026-02-25"},{"rank":68,"username":"mintyisdead","level":336,"country":"Russia","device":"PC","last_updated":"2025-03-07"},{"rank":69,"username":"SussyyGrinder","level":335,"country":"India","device":"PC","last_updated":"2026-04-19"},{"rank":70,"username":"dirtbagsleez","level":335,"country":"Canada","device":"PC","last_updated":"2025-11-21"},{"rank":71,"username":"6lonne","level":333,"country":"Colombia","device":"PC","last_updated":"2026-04-18"},{"rank":72,"username":"FreZzy_Emir06","level":330,"country":"Germany","device":"PC","last_updated":"2025-10-22"},{"rank":73,"username":"7sxzzl","level":328,"country":"Brazil","device":"PC","last_updated":"2024-08-03"},{"rank":74,"username":"wislucas2","level":326,"country":"Argentina","device":"PC","last_updated":"2025-08-23"},{"rank":75,"username":"PartyNevers","level":323,"country":"Peru","device":"PC","last_updated":"2026-04-26"},{"rank":76,"username":"R3_R3D","level":322,"country":"Egypt","device":"Mobile","last_updated":"2024-01-08"},{"rank":77,"username":"5pxdr","level":320,"country":"UK","device":"Mobile","last_updated":"2025-05-09"},{"rank":78,"username":"4linexs","level":318,"country":"Brazil","device":"PC","last_updated":"2026-01-18"},{"rank":79,"username":"MumOfCqqp","level":318,"country":"Australia","device":"PC","last_updated":"2022-09-28"},{"rank":80,"username":"LogoMaster99","level":316,"country":"Puerto Rico","device":"PC","last_updated":"2025-06-02"},{"rank":81,"username":"viscelous","level":311,"country":"UK","device":"Mobile","last_updated":"2026-02-08"},{"rank":82,"username":"0718sp","level":311,"country":"South Korea","device":"Mobile","last_updated":"2026-02-25"},{"rank":83,"username":"01xcx01","level":311,"country":"Russia","device":"PC","last_updated":"2025-11-22"},{"rank":84,"username":"mrsofiane_dz1357","level":310,"country":"Algeria","device":"PC","last_updated":"2026-04-25"},{"rank":85,"username":"Obvolutely","level":307,"country":"Saudi Arabia","device":"PC","last_updated":"2026-04-02"},{"rank":86,"username":"pao78h","level":305,"country":"Portugal","device":"PC","last_updated":"2022-06-22"},{"rank":87,"username":"david213ar2","level":305,"country":"Mexico","device":"Mobile","last_updated":"2023-09-22"},{"rank":88,"username":"elmer088","level":304,"country":"El Salvador","device":"PC","last_updated":"2023-09-08"},{"rank":89,"username":"Just_Brxnd","level":304,"country":"Panama","device":"PC","last_updated":"2022-10-20"},{"rank":90,"username":"superIativo","level":302,"country":"Peru","device":"PC","last_updated":"2025-03-03"},{"rank":91,"username":"TheHack010109","level":301,"country":"Spain","device":"Mobile","last_updated":"2023-04-16"},{"rank":92,"username":"4lilyxa","level":300,"country":"Thailand","device":"PC","last_updated":"2026-03-22"},{"rank":93,"username":"is4bellaazx","level":300,"country":"Brazil","device":"PC","last_updated":"2025-10-11"},{"rank":94,"username":"Devxrn","level":300,"country":"Philippines","device":"PC","last_updated":"2025-04-29"},{"rank":95,"username":"Rainneyy101","level":298,"country":"USA","device":"Mobile","last_updated":"2025-12-31"},{"rank":96,"username":"moonlitSuki","level":288,"country":"Brazil","device":"PC","last_updated":"2025-03-26"},{"rank":97,"username":"hbk747","level":286,"country":"Pakistan","device":"PC","last_updated":"2026-02-15"},{"rank":98,"username":"UhhVolvo","level":285,"country":"India","device":"PC","last_updated":"2025-08-04"},{"rank":99,"username":"heyyDanro","level":283,"country":"Peru","device":"PC","last_updated":"2022-09-03"},{"rank":100,"username":"Rasxa22","level":280,"country":"Russia","device":"PC","last_updated":"2025-03-30"},{"rank":101,"username":"iiKarly_x","level":280,"country":"Germany","device":"PC","last_updated":"2022-05-16"},{"rank":102,"username":"OhhDeadly","level":280,"country":"China","device":"PC","last_updated":"2025-05-12"},{"rank":103,"username":"IdyllicNook","level":279,"country":"Chile","device":"PC","last_updated":"2021-10-15"},{"rank":104,"username":"SssantysS","level":279,"country":"Argentina","device":"PC","last_updated":"2022-09-03"},{"rank":105,"username":"YT_isthebestyay","level":276,"country":"UK","device":"PC","last_updated":"2026-03-02"},{"rank":106,"username":"BOBSUPERBR","level":275,"country":"Brazil","device":" PC","last_updated":"2023-12-21"},{"rank":107,"username":"isathemusician","level":274,"country":"USA","device":"PC","last_updated":"2022-07-01"},{"rank":108,"username":"davidttoh","level":272,"country":"Brazil","device":"PC","last_updated":"2025-12-01"},{"rank":109,"username":"6zunii","level":271,"country":"Saudi Arabia","device":"PC","last_updated":"2026-01-04"},{"rank":110,"username":"papuchoboca","level":270,"country":"Argentina ","device":"Mobile","last_updated":"2024-01-08"},{"rank":111,"username":"rayflme","level":268,"country":"India","device":"PC","last_updated":"2024-12-23"},{"rank":112,"username":"dpw666","level":267,"country":"UK","device":"PC","last_updated":"2024-12-23"},{"rank":113,"username":"gothcssinner","level":267,"country":"Chile","device":"PC","last_updated":"2023-08-28"},{"rank":114,"username":"JPfromTheMoon","level":267,"country":"Germany","device":"PC","last_updated":"2025-01-11"},{"rank":115,"username":"FUEGOxDRAGONxXD","level":265,"country":"Peru","device":"PC","last_updated":"2024-02-01"},{"rank":116,"username":"0verthelies","level":264,"country":"USA","device":"Controller","last_updated":"2024-03-20"},{"rank":117,"username":"piturringuis25","level":260,"country":"Argentina","device":"Mobile","last_updated":"2025-08-14"},{"rank":118,"username":"sabrin230212","level":260,"country":"Brazil","device":"Mobile","last_updated":"2026-04-23"},{"rank":119,"username":"19kvibbeszz","level":259,"country":"Lithuania","device":"PC","last_updated":"2026-03-28"},{"rank":120,"username":"xElianBz","level":259,"country":"Peru","device":"PC","last_updated":"2026-02-28"},{"rank":121,"username":"SHAUMXND","level":259,"country":"UK","device":"PC","last_updated":"2026-01-04"},{"rank":122,"username":" OneForceFull ","level":258,"country":"Brazil","device":"PC","last_updated":"2025-08-24"},{"rank":123,"username":"FreddyCarriesYou","level":256,"country":"-","device":"-","last_updated":"2025-11-29"},{"rank":124,"username":"Kon_truhard","level":255,"country":"Ecuador","device":"PC","last_updated":"2025-11-17"},{"rank":125,"username":"nyltoo","level":255,"country":"France","device":"PC","last_updated":"2025-08-11"},{"rank":126,"username":"RecopituIares","level":253,"country":"Colombia","device":"PC","last_updated":"2023-11-25"},{"rank":127,"username":"one1elis","level":253,"country":"Trinidad and T.","device":"PC","last_updated":"2023-11-26"},{"rank":128,"username":"JazJaboon ","level":253,"country":"Philippines","device":"PC","last_updated":"2024-11-20"},{"rank":129,"username":"Honey7210","level":253,"country":"Nigeria","device":"PC","last_updated":"2025-03-30"},{"rank":130,"username":"Twezky","level":252,"country":"UK","device":"Mobile","last_updated":"2022-08-16"},{"rank":131,"username":"Miyuuily","level":251,"country":"UK","device":"Mobile","last_updated":"2022-03-19"},{"rank":132,"username":"eriienne","level":250,"country":"UK","device":"PC","last_updated":"2025-01-11"},{"rank":133,"username":"Why2Savage_Revived","level":248,"country":"Japan","device":"PC","last_updated":"2026-01-01"},{"rank":134,"username":"DzSha5","level":248,"country":"Chile","device":"PC","last_updated":"2025-07-03"},{"rank":135,"username":"Rock_Bingo","level":248,"country":"Russia","device":"PC","last_updated":"2025-03-11"},{"rank":136,"username":"Irbk0st1n4ek","level":247,"country":"Russia","device":"PC","last_updated":"2023-09-09"},{"rank":137,"username":"Hypnxtyz","level":246,"country":"Ecuador","device":"PC","last_updated":"2026-02-09"},{"rank":138,"username":"willyrex2811","level":246,"country":"Peru","device":"PC","last_updated":"2022-09-03"},{"rank":139,"username":"Akylachkaa","level":246,"country":"-","device":"-","last_updated":"2025-01-15"},{"rank":140,"username":"Im_Google228","level":246,"country":"Russia","device":"PC","last_updated":"2025-08-26"},{"rank":141,"username":"filkop7","level":244,"country":"Poland","device":"PC","last_updated":"2023-04-16"},{"rank":142,"username":"moon7leo","level":243,"country":"Italy","device":"PC","last_updated":"2025-03-07"},{"rank":143,"username":"Itz_AggelozM","level":243,"country":"Greece","device":"PC","last_updated":"2025-07-24"},{"rank":144,"username":"0b_1I","level":241,"country":"South Korea","device":"Mobile","last_updated":"2022-05-19"},{"rank":145,"username":"thebeasterg12","level":240,"country":"Italy","device":"Mobile","last_updated":"2025-09-17"},{"rank":146,"username":"KingPiplupI","level":240,"country":"USA","device":"PC","last_updated":"2025-10-12"},{"rank":147,"username":"Jihoo_game10","level":238,"country":"South Korea","device":"PC","last_updated":"2026-02-19"},{"rank":148,"username":"vincejudd2nd","level":238,"country":"Canada","device":"Mobile","last_updated":"2022-09-14"},{"rank":149,"username":"fuzzoza","level":238,"country":"UK","device":"Mobile","last_updated":"2022-11-06"},{"rank":150,"username":"VirusNightmareStyle","level":237,"country":"Argentina","device":"-","last_updated":"2025-12-31"},{"rank":151,"username":"4Synx","level":236,"country":"Pakistan","device":"PC","last_updated":"2026-03-14"},{"rank":152,"username":"gentilityy","level":236,"country":"Mexico","device":"PC","last_updated":"2022-03-16"},{"rank":153,"username":"coolvan2qwer","level":235,"country":"Philippines","device":"PC","last_updated":"2025-03-27"},{"rank":154,"username":"Eddy_Jhim","level":234,"country":"-","device":"-","last_updated":"2025-12-31"},{"rank":155,"username":"fiilipe17","level":233,"country":"Brazil","device":"PC","last_updated":"2025-08-31"},{"rank":156,"username":"seokchic","level":232,"country":"UK","device":"PC","last_updated":"2026-01-04"},{"rank":157,"username":"Dxriiqx","level":232,"country":"Peru","device":"PC","last_updated":"2022-09-11"},{"rank":158,"username":"yNickyzx","level":232,"country":"Brazil","device":"PC","last_updated":"2022-09-03"},{"rank":159,"username":"LxstDark","level":232,"country":"UK","device":"PC","last_updated":"2021-10-31"},{"rank":160,"username":"beyzaTR46","level":231,"country":"Turkey","device":"Mobile","last_updated":"2026-03-14"},{"rank":161,"username":"EW_EliteWarrior","level":230,"country":"Ukraine","device":"PC","last_updated":"2026-02-17"},{"rank":162,"username":"MisMoonSalitaire","level":230,"country":"Russia","device":"Mobile","last_updated":"2026-02-17"},{"rank":163,"username":"hijodenada","level":230,"country":"Peru","device":"PC","last_updated":"2025-05-05"},{"rank":164,"username":"NorthKless","level":230,"country":"Peru","device":"PC","last_updated":"2022-07-31"},{"rank":165,"username":"JULIAJSS999","level":229,"country":"-","device":"-","last_updated":"2025-01-21"},{"rank":166,"username":"jose2802811","level":228,"country":"Chile","device":"PC","last_updated":"2024-01-08"},{"rank":167,"username":"siebieman","level":228,"country":"Belgium","device":"PC","last_updated":"2026-04-19"},{"rank":168,"username":"manunited1best","level":227,"country":"UK","device":"Mobile","last_updated":"2022-06-04"},{"rank":169,"username":"fortnit123legeandpro","level":226,"country":"Jordan","device":"PC","last_updated":"2023-10-29"},{"rank":170,"username":"adaqnn","level":225,"country":"-","device":"PC","last_updated":"2025-03-11"},{"rank":171,"username":"kuajinpro","level":225,"country":"Chile","device":"PC","last_updated":"2024-02-10"},{"rank":172,"username":"felipertsfox","level":224,"country":"Brazil","device":"PC","last_updated":"2026-01-21"},{"rank":173,"username":"Josep_574","level":224,"country":"Venezuela","device":"PC","last_updated":"2025-05-05"},{"rank":174,"username":"SubSeDion","level":223,"country":"Kuwait ","device":"PC","last_updated":"2026-01-22"},{"rank":175,"username":"AkaiRyu125","level":223,"country":"Vietnam","device":"PC","last_updated":"2025-12-17"},{"rank":176,"username":"jahwrx","level":223,"country":"USA","device":"PC","last_updated":"2025-06-17"},{"rank":177,"username":"aa_udi","level":222,"country":"-","device":"-","last_updated":"2026-04-05"},{"rank":178,"username":"emcsvzz","level":222,"country":"Brazil","device":"PC","last_updated":"2025-10-26"},{"rank":179,"username":"perguntion","level":222,"country":"Brazil","device":"PC","last_updated":"2026-04-23"},{"rank":180,"username":"ChaoticR0bloxian","level":222,"country":"UK","device":"PC","last_updated":"2023-06-26"},{"rank":181,"username":"poopsmacoops","level":221,"country":"Canada","device":"PC","last_updated":"2025-08-26"},{"rank":182,"username":"bladerunner12349","level":221,"country":"UK","device":"PC","last_updated":"2022-05-21"},{"rank":183,"username":"MAKILL2479","level":221,"country":"UK","device":"PC","last_updated":"2022-05-24"},{"rank":184,"username":"verollino","level":220,"country":"Indonesia","device":"-","last_updated":"2026-04-19"},{"rank":185,"username":"berkay37ozk","level":220,"country":"Germany","device":"PC","last_updated":"2025-09-08"},{"rank":186,"username":"Mikach2004","level":220,"country":"Peru","device":"PC","last_updated":"2025-08-23"},{"rank":187,"username":"ffavaas","level":220,"country":"France","device":"PC","last_updated":"2025-04-17"},{"rank":188,"username":"kaeruwasplaying","level":219,"country":"Philippines","device":"Mobile","last_updated":"2024-12-08"},{"rank":189,"username":"9oxys","level":219,"country":"UK","device":"PC","last_updated":"2024-09-18"},{"rank":190,"username":"qtrwqii","level":219,"country":"Russia","device":"PC","last_updated":"2024-10-29"},{"rank":191,"username":"ImRedVoid","level":220,"country":"Russia","device":"PC","last_updated":"2026-03-09"},{"rank":192,"username":"Mighty_Jeiro","level":219,"country":"Philippines","device":"PC","last_updated":"2025-12-24"},{"rank":193,"username":"XxCristoferXDx","level":218,"country":"Chile","device":"Mobile","last_updated":"2026-03-17"},{"rank":194,"username":"summ3r_st4r","level":218,"country":"France","device":"PC","last_updated":"2025-10-05"},{"rank":195,"username":"hewweky","level":218,"country":"Russia","device":"Mobile","last_updated":"2025-09-12"},{"rank":196,"username":"Elite_Gamer89898","level":218,"country":"   USA ","device":"Mobile","last_updated":"2021-08-15"},{"rank":197,"username":"Hunting_Gryffin","level":217,"country":"-","device":"PC","last_updated":"2026-03-23"},{"rank":198,"username":"valenmontiel1967","level":217,"country":"Argentina","device":"Mobile","last_updated":"2025-08-14"},{"rank":199,"username":"YoTimStar","level":217,"country":"Taiwan","device":"Mobile","last_updated":"2022-07-12"},{"rank":200,"username":"UnicornRainbowSparkz","level":216,"country":"UK","device":"PC","last_updated":"2026-04-20"},{"rank":201,"username":"000nih","level":216,"country":"Turkey","device":"PC","last_updated":"2025-09-11"},{"rank":202,"username":"alan09866","level":216,"country":"Ecuador","device":"PC","last_updated":"2024-02-12"},{"rank":203,"username":"mafeflocar","level":216,"country":"Colombia","device":"PC","last_updated":"2025-08-13"},{"rank":204,"username":"BankAmount","level":216,"country":"-","device":"PC","last_updated":"2022-05-30"},{"rank":205,"username":"mvltp","level":215,"country":"-","device":"Controller","last_updated":"2023-11-30"},{"rank":206,"username":"Julgomme","level":215,"country":"Switzerland","device":"PC","last_updated":"2025-03-04"},{"rank":207,"username":"Jqdeix","level":214,"country":"Australia","device":"PC","last_updated":"2026-03-30"},{"rank":208,"username":"abrik0s506","level":214,"country":"Ukraine","device":"Mobile","last_updated":"2026-04-23"},{"rank":209,"username":"ksarwar99","level":214,"country":"Pakistan","device":"PC","last_updated":"2024-12-13"},{"rank":210,"username":"lucky123shine456","level":214,"country":"Turkey","device":"-","last_updated":"2025-09-12"},{"rank":211,"username":"kadar2009m","level":213,"country":"-","device":"PC","last_updated":"2021-04-11"},{"rank":212,"username":"mr_starrxd","level":213,"country":"Germany","device":"PC","last_updated":"2026-03-09"},{"rank":213,"username":"73894O","level":212,"country":"-","device":"PC","last_updated":"2024-06-04"},{"rank":214,"username":"vSxrqq ","level":212,"country":"Italy","device":"Mobile","last_updated":"2024-11-10"},{"rank":215,"username":"CutiPie_PieCuti","level":212,"country":"Russia","device":"PC","last_updated":"2025-08-12"},{"rank":216,"username":"taihou64","level":211,"country":"Japan","device":"PC","last_updated":"2025-09-11"},{"rank":217,"username":"TahizOwO","level":211,"country":"Brazil","device":"-","last_updated":"2025-03-19"},{"rank":218,"username":"miravzt","level":211,"country":"Palestine","device":"PC","last_updated":"2025-08-25"},{"rank":219,"username":"Pklo444","level":210,"country":"Kuwait","device":"PC","last_updated":"2025-08-29"},{"rank":220,"username":"ixqrll","level":210,"country":"-","device":"PC","last_updated":"2022-06-29"},{"rank":221,"username":"pkslight","level":209,"country":"Lebanon","device":"PC","last_updated":"2025-11-29"},{"rank":222,"username":"Jydvic","level":209,"country":"Hong Kong","device":"PC","last_updated":"2025-11-17"},{"rank":223,"username":"kwecubochidi2","level":209,"country":"Nigeria","device":"PC","last_updated":"2022-03-27"},{"rank":224,"username":"ayyshoun","level":209,"country":"Sri lanka","device":"PC","last_updated":"2023-02-14"},{"rank":225,"username":"KycTheGoat69","level":208,"country":"USA","device":"Mobile","last_updated":"2026-01-27"},{"rank":226,"username":"1tzFuze","level":208,"country":"Lithuania","device":"PC","last_updated":"2025-12-01"},{"rank":227,"username":"OiiDattebayoUwU","level":208,"country":"-","device":"PC","last_updated":"2025-02-28"},{"rank":228,"username":"sdogg7159","level":208,"country":"-","device":"-","last_updated":"2025-03-18"},{"rank":229,"username":"marcus474e","level":207,"country":"USA","device":"PC","last_updated":"2021-10-31"},{"rank":230,"username":"poikljuhygtyg","level":207,"country":"Russia","device":"PC","last_updated":"2025-09-03"},{"rank":231,"username":"XYTugra432","level":206,"country":"Turkey","device":"PC","last_updated":"2025-10-06"},{"rank":232,"username":"AUR0R1C","level":206,"country":"Philippines","device":"PC","last_updated":"2025-08-26"},{"rank":233,"username":"LucasGamesz_YT","level":206,"country":"Brazil","device":"PC","last_updated":"2022-04-03"},{"rank":234,"username":"0vxxr","level":205,"country":"UAE","device":"Mobile","last_updated":"2026-04-24"},{"rank":235,"username":"hopiawi","level":205,"country":"Romania","device":"Mobile","last_updated":"2025-10-25"},{"rank":236,"username":"BAAAAAAAAAADE","level":205,"country":"Sweden","device":"PC","last_updated":"2025-02-25"},{"rank":237,"username":"IeIqv","level":205,"country":"Germany","device":"PC","last_updated":"2022-03-12"},{"rank":238,"username":"rosme127","level":205,"country":"Dominic Rep.","device":"PC","last_updated":"2022-03-12"},{"rank":239,"username":"Its_NinjaSloth","level":205,"country":"-","device":"PC","last_updated":"2022-05-15"},{"rank":240,"username":"chelseab1230","level":205,"country":"USA","device":"PC","last_updated":"2025-10-25"},{"rank":241,"username":"Estrellitadorada190","level":204,"country":"-","device":"PC","last_updated":"2026-01-31"},{"rank":242,"username":"Vunibe","level":204,"country":"UK","device":"PC","last_updated":"2022-01-26"},{"rank":243,"username":"onelastheartbreak","level":203,"country":"Netherlands","device":"PC","last_updated":"2026-02-16"},{"rank":244,"username":"carloshzn","level":203,"country":"Brazil","device":"PC","last_updated":"2025-09-04"},{"rank":245,"username":"Aeckle","level":203,"country":"Australia","device":"Mobile","last_updated":"2022-03-26"},{"rank":246,"username":"Modx11756","level":203,"country":"-","device":"-","last_updated":"2024-11-18"},{"rank":247,"username":"a4nee9","level":202,"country":"Kurdistan","device":"Mobile","last_updated":"2025-10-31"},{"rank":248,"username":"batman_3199","level":201,"country":"Peru","device":"PC","last_updated":"2023-10-29"},{"rank":249,"username":"vwmxwa","level":200,"country":"Brazil","device":"PC","last_updated":"2026-03-21"},{"rank":250,"username":"as_energy","level":200,"country":"Iran","device":"PC","last_updated":"2026-03-15"},{"rank":251,"username":"lnBlank","level":200,"country":"Brazil","device":"PC","last_updated":"2026-01-23"},{"rank":252,"username":"outbass","level":200,"country":"Brazil","device":"PC","last_updated":"2025-12-27"},{"rank":253,"username":"sftballplyr19","level":200,"country":"-","device":"PC","last_updated":"2022-03-17"},{"rank":254,"username":"JavaBruv","level":200,"country":"USA","device":"PC","last_updated":"2021-10-31"},{"rank":255,"username":"Xxgamer_BR029","level":200,"country":"Brazil","device":"Mobile","last_updated":"2025-02-15"},{"rank":256,"username":"xReborn_x","level":200,"country":"-","device":"PC","last_updated":"-"},{"rank":257,"username":"mioMiosw","level":200,"country":"Russia","device":"PC","last_updated":"2025-11-11"},{"rank":258,"username":"DIORXJSTIN","level":200,"country":"Philippines","device":"PC","last_updated":"2025-12-17"},{"rank":259,"username":"Mixshi","level":199,"country":"Peru","device":"PC","last_updated":"2025-12-01"},{"rank":260,"username":"FearlessElk78","level":199,"country":"Indonesia","device":"Mobile","last_updated":"2022-07-12"},{"rank":261,"username":"Oscar_rdrgz","level":198,"country":"USA","device":"PC","last_updated":"2025-09-28"},{"rank":262,"username":"Urapunk01","level":197,"country":"USA","device":"Mobile","last_updated":"-"},{"rank":263,"username":"hrtsdsire","level":197,"country":"USA","device":"Mobile","last_updated":"2023-06-20"},{"rank":264,"username":"BrokenRubyy","level":197,"country":"UK","device":"Mobile","last_updated":"2023-07-24"},{"rank":265,"username":"alemagnific6","level":196,"country":"USA","device":"PC","last_updated":"2025-10-23"},{"rank":266,"username":"sacrificethestraight","level":196,"country":"-","device":"-","last_updated":"2026-03-22"},{"rank":267,"username":"poloclub0687","level":196,"country":"Pakistan","device":"Mobile","last_updated":"2022-12-09"},{"rank":268,"username":"telin312_roblox","level":196,"country":"Mexico","device":"Mobile","last_updated":"2025-08-20"},{"rank":269,"username":"mchvIli","level":195,"country":"USA","device":"PC","last_updated":"2025-09-07"},{"rank":270,"username":"ilabyoubab","level":195,"country":"Philippines","device":"Mobile","last_updated":"2022-01-02"},{"rank":271,"username":"panda_fofo128","level":194,"country":"-","device":"-","last_updated":"2026-01-03"},{"rank":272,"username":"Ilcleo","level":194,"country":"UK","device":"PC","last_updated":"2022-12-16"},{"rank":273,"username":"Alexgamer_dino","level":193,"country":"Columbia","device":"Mobile","last_updated":"2022-07-29"},{"rank":274,"username":"Edxcle","level":193,"country":"Spain","device":"PC","last_updated":"2025-07-25"},{"rank":275,"username":"haris_739","level":192,"country":"UK","device":"PC","last_updated":"2021-09-02"},{"rank":276,"username":"masraxvv","level":192,"country":"-","device":"Mobile","last_updated":"2022-01-19"},{"rank":277,"username":"6heaveil","level":192,"country":"Brazil","device":"PC","last_updated":"2025-08-25"},{"rank":278,"username":"seemsillegal","level":191,"country":"Egypt","device":"PC","last_updated":"2026-03-14"},{"rank":279,"username":"Chesnq","level":192,"country":"Sweden","device":"PC","last_updated":"2025-12-05"},{"rank":280,"username":"Christony25","level":191,"country":"Hong Kong","device":"PC","last_updated":"2025-08-25"},{"rank":281,"username":"Zcnxt","level":189,"country":"USA","device":"PC","last_updated":"2025-11-09"},{"rank":282,"username":"nerosdisneyland","level":188,"country":"UK","device":"PC","last_updated":"2025-09-10"},{"rank":283,"username":"H4R7NSunar","level":188,"country":"Turkey","device":"PC","last_updated":"2022-11-05"},{"rank":284,"username":"Draelifx559","level":187,"country":"Ecuador","device":"PC","last_updated":"2026-01-27"},{"rank":285,"username":"theunknownproguyhehe","level":187,"country":"Malaysia","device":"Mobile","last_updated":"2025-12-01"},{"rank":286,"username":"-","level":187,"country":"-","device":"-","last_updated":"2022-11-05"},{"rank":287,"username":"Dy_xle","level":186,"country":"Albania","device":"PC","last_updated":"2026-01-12"},{"rank":288,"username":"dexhuntpro","level":186,"country":"-","device":"PC","last_updated":"2022-02-10"},{"rank":289,"username":"jia120106","level":185,"country":"South Korea","device":"Mobile","last_updated":"2025-08-20"},{"rank":290,"username":"cxreeyy","level":185,"country":"UK","device":"Mobile","last_updated":"2025-08-03"},{"rank":291,"username":"k7alt","level":185,"country":"China","device":"PC","last_updated":"2021-03-17"},{"rank":292,"username":"isabelinha2911","level":185,"country":"Brazil","device":"PC","last_updated":"2025-08-30"},{"rank":293,"username":"torr123456789000","level":184,"country":"Peru","device":"PC","last_updated":"2022-06-03"},{"rank":294,"username":"Yo_Zak","level":184,"country":"UK","device":"PC","last_updated":"2025-06-04"},{"rank":295,"username":"SPIDRAH1","level":183,"country":"Russia","device":"PC","last_updated":"2026-01-13"},{"rank":296,"username":"sucywyrix70","level":183,"country":"-","device":"-","last_updated":"2025-09-08"},{"rank":297,"username":"SKlBIDISM","level":183,"country":"Romania","device":"PC","last_updated":"2021-01-20"},{"rank":298,"username":"katita23089","level":183,"country":"-","device":"PC","last_updated":"2022-07-04"},{"rank":299,"username":"pablocesar89","level":182,"country":"Ecuador","device":"PC","last_updated":"2022-01-06"},{"rank":300,"username":"DKAdrian3000","level":182,"country":"Philippines","device":"PC","last_updated":"2025-08-26"}],"banned":[{"rank":1,"username":"enfvsis","level":"1341","country":"Chile","ban_reason":"Alts Abusement","device":"PC"},{"rank":2,"username":"wilder270522","level":"1262","country":"Brazil","ban_reason":"Alts Abusement","device":"PC"},{"rank":3,"username":"yDa4LuBbli","level":"1,042","country":"Russia","ban_reason":"Glitches (Coil)","device":"PC"},{"rank":4,"username":"fandeyolouwuxd","level":"902","country":"Colombia","ban_reason":"Illegal Material","device":"PC"},{"rank":5,"username":"Devxrn","level":"896","country":"Philippines","ban_reason":"Alts Abusement","device":"PC"},{"rank":6,"username":"killadandan","level":"846","country":"Jamaica","ban_reason":"Alts Abusement","device":"PC"},{"rank":7,"username":"echos_rge","level":"830","country":"UK","ban_reason":"Alts Abusement","device":"PC"},{"rank":8,"username":"Skyourain","level":"812","country":"Russia","ban_reason":"Glitches (Coil)","device":"PC"},{"rank":9,"username":"Yui_1ll","level":"800","country":"Russia","ban_reason":"Alts Abusement","device":"PC"},{"rank":10,"username":"ApocaIipsing","level":"752","country":"Colombia/Chile","ban_reason":"Exploiting","device":"PC"},{"rank":11,"username":"carlosTheSkull","level":"715","country":"Brazil","ban_reason":"Alts Abusement","device":"PC"},{"rank":12,"username":"Lucianox20","level":"668","country":"Chile","ban_reason":"Alts Abusement","device":"PC"},{"rank":13,"username":"5oFun","level":"653","country":"Philippines","ban_reason":"Glitches (Hook)","device":"PC"},{"rank":14,"username":"ron2no","level":"626","country":"USA ","ban_reason":"Inappropriate Behaviour","device":"Mobile"},{"rank":15,"username":"GaIiba","level":"621","country":"Turkey","ban_reason":"Exploiting","device":"PC"},{"rank":16,"username":"outbass","level":"610","country":"Brazil","ban_reason":"Alts Abusement","device":"PC"},{"rank":17,"username":"arlmds","level":"585","country":"Belgium","ban_reason":"Glitches","device":"PC"},{"rank":18,"username":"dasd_Runner0","level":"579","country":"Argentina","ban_reason":"Exploiting","device":"PC"},{"rank":19,"username":"7epis0de","level":"562","country":"Puerto Rico","ban_reason":"Unknown","device":"Mobile"},{"rank":20,"username":"SpainToCanada","level":"549","country":"Canada","ban_reason":"Roblox Ban","device":"PC"},{"rank":21,"username":"ghx6l","level":"527","country":"New Zealand","ban_reason":"Roblox Ban","device":"Mobile"},{"rank":22,"username":"6enessis","level":"504","country":"Colombia/Chile","ban_reason":"Exploiting","device":"Mobile"},{"rank":23,"username":"Iu1zv","level":"486","country":"Mexico","ban_reason":"Alts Abusement","device":"PC"},{"rank":25,"username":"Narakorobi","level":"504","country":"Colombia/Chile","ban_reason":"Exploiting","device":"Mobile"}]};
+
+// ── STATE ───────────────────────────────────────────────────
+let allPlayers = [];
+let allBanned = [];
+let filteredActive = [];
+let filteredBanned = [];
+let activePageNum = 1;
+let bannedPageNum = 1;
+let activeSortField = 'rank';
+let activeSortAsc = true;
+
+function initAmbientCanvas() {
+  const canvas = document.getElementById('ambientCanvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let width = 0;
+  let height = 0;
+
+  const particles = Array.from({ length: 24 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 1 + Math.random() * 2.4,
+    dx: (Math.random() - 0.5) * 0.00045,
+    dy: (Math.random() - 0.5) * 0.00045,
+    alpha: 0.12 + Math.random() * 0.24
+  }));
+
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+
+  const draw = () => {
+    ctx.clearRect(0, 0, width, height);
+
+    particles.forEach((particle, index) => {
+      particle.x += particle.dx;
+      particle.y += particle.dy;
+
+      if (particle.x < -0.08) particle.x = 1.08;
+      if (particle.x > 1.08) particle.x = -0.08;
+      if (particle.y < -0.08) particle.y = 1.08;
+      if (particle.y > 1.08) particle.y = -0.08;
+
+      const px = particle.x * width;
+      const py = particle.y * height;
+
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(196, 181, 253, ${particle.alpha})`;
+      ctx.arc(px, py, particle.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let i = index + 1; i < particles.length; i++) {
+        const other = particles[i];
+        const ox = other.x * width;
+        const oy = other.y * height;
+        const distance = Math.hypot(px - ox, py - oy);
+        if (distance < 170) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(196, 181, 253, ${0.06 * (1 - distance / 170)})`;
+          ctx.lineWidth = 1;
+          ctx.moveTo(px, py);
+          ctx.lineTo(ox, oy);
+          ctx.stroke();
+        }
+      }
+    });
+
+    window.requestAnimationFrame(draw);
+  };
+
+  resize();
+  draw();
+  window.addEventListener('resize', resize);
+}
+let maxLevel = 1;
+
+// ── INIT ────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  initAmbientCanvas();
+  requestAnimationFrame(() => document.body.classList.add('loaded'));
+  const cached = loadCache();
+  if (cached) {
+    setData(cached.players, cached.banned);
+    updateStatusLive(cached.fetchedAt);
+    // Check if stale
+    if (Date.now() - cached.fetchedAt > CACHE_TTL) {
+      setStatus('updating', 'Cache stale — refreshing…');
+      fetchAndUpdate();
+    }
+  } else {
+    setStatus('updating', 'Fetching latest data…');
+    setData(SEED_DATA.players, SEED_DATA.banned);
+    fetchAndUpdate();
+  }
+});
+
+// ── CACHE ────────────────────────────────────────────────────
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveCache(players, banned) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ players, banned, fetchedAt: Date.now() }));
+  } catch(e) { console.warn('Cache write failed', e); }
+}
+
+function clearCache() {
+  localStorage.removeItem(CACHE_KEY);
+}
+
+// ── FETCH FROM GOOGLE SHEETS ─────────────────────────────────
+async function fetchAndUpdate() {
+  showSpinner(true);
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csv = await res.text();
+    const { players, banned } = parseCSV(csv);
+    if (players.length > 0) {
+      saveCache(players, banned);
+      setData(players, banned);
+      updateStatusLive(Date.now());
+      setStatus('live', `Live — ${players.length} players loaded`);
+    } else {
+      throw new Error('Empty parse result');
+    }
+  } catch (e) {
+    console.error('Fetch failed:', e);
+    setStatus('error', 'Could not reach Google Sheets — showing cached data');
+  } finally {
+    showSpinner(false);
+  }
+}
+
+function forceRefresh() {
+  clearCache();
+  setStatus('updating', 'Force refreshing…');
+  fetchAndUpdate();
+}
+
+// ── CSV PARSER ───────────────────────────────────────────────
+function parseCSV(csv) {
+  const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return { players: SEED_DATA.players, banned: SEED_DATA.banned };
+
+  function parseRow(line) {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
+
+  const header = parseRow(lines[0]);
+  const rows = lines.slice(1).map(parseRow);
+
+  // Find column indices dynamically
+  const rankIdx = header.indexOf('Rank');
+  const userIdx = header.indexOf('Username');
+  const lvlIdx = header.indexOf('Level');
+  const countryIdx = header.indexOf('Country');
+  const deviceIdx = header.indexOf('Device');
+  const updIdx = header.indexOf('Last Updated');
+
+  const players = [];
+  const banned = [];
+
+  if (rankIdx === -1) return { players: SEED_DATA.players, banned: SEED_DATA.banned };
+
+  // Multi-column layout: find all "Rank" column groups
+  const rankCols = [];
+  header.forEach((h, i) => { if (h === 'Rank') rankCols.push(i); });
+
+  for (const row of rows) {
+    for (const rc of rankCols) {
+      const rankStr = row[rc] || '';
+      const digits = rankStr.replace(/[^0-9]/g, '');
+      if (digits && digits.length <= 3) {
+        const rn = parseInt(digits);
+        const username = row[rc+1] || '';
+        const level = parseInt((row[rc+2] || '').replace(/,/g, '')) || 0;
+        const country = row[rc+5] || '';
+        const device = row[rc+6] || '';
+        const updated = row[rc+3] ? row[rc+3].slice(0,10) : '';
+        if (username && username !== 'Username') {
+          players.push({ rank: rn, username, level, country, device, last_updated: updated });
+        }
+      }
+    }
+
+    // Banned section: look for "Banned Level Leaderboard" header
+    const bannedIdx = header.indexOf('Banned Level Leaderboard');
+    if (bannedIdx > -1) {
+      const bannedRankCols = [];
+      header.forEach((h, i) => { if (i >= bannedIdx && h === 'Rank') bannedRankCols.push(i); });
+      for (const bc of bannedRankCols) {
+        const rankStr = row[bc] || '';
+        const digits = rankStr.replace(/[^0-9]/g, '');
+        if (digits && digits.length <= 3) {
+          const rn = parseInt(digits);
+          const username = row[bc+1] || '';
+          const level = row[bc+2] || '';
+          const country = row[bc+4] || '';
+          const banReason = row[bc+6] || '';
+          const device = row[bc+7] || '';
+          if (username) {
+            banned.push({ rank: rn, username, level, country, ban_reason: banReason, device });
+          }
+        }
+      }
+    }
+  }
+
+  // Deduplicate
+  const seenP = new Set(), seenB = new Set();
+  const uniqueP = players.filter(p => { if (seenP.has(p.rank)) return false; seenP.add(p.rank); return true; });
+  const uniqueB = banned.filter(b => { if (seenB.has(b.rank)) return false; seenB.add(b.rank); return true; });
+
+  uniqueP.sort((a,b) => a.rank - b.rank);
+  uniqueB.sort((a,b) => a.rank - b.rank);
+
+  return { players: uniqueP.length > 0 ? uniqueP : SEED_DATA.players, banned: uniqueB.length > 0 ? uniqueB : SEED_DATA.banned };
+}
+
+// ── SET DATA ─────────────────────────────────────────────────
+function setData(players, banned) {
+  allPlayers = players;
+  allBanned = banned;
+  maxLevel = Math.max(...players.map(p => p.level), 1);
+  document.getElementById('activeCount').textContent = players.length;
+  document.getElementById('bannedCount').textContent = banned.length;
+  filterActive();
+  filterBanned();
+}
+
+// ── FILTER & SORT ACTIVE ─────────────────────────────────────
+function filterActive() {
+  const query = document.getElementById('searchActive').value.toLowerCase().trim();
+  const device = document.getElementById('deviceFilter').value;
+  const sort = document.getElementById('sortActive').value;
+  activeSortField = sort;
+
+  let data = allPlayers.filter(p => {
+    const matchQ = !query || p.username.toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query);
+    const matchD = !device || p.device === device;
+    return matchQ && matchD;
+  });
+
+  data.sort((a,b) => {
+    if (sort === 'rank') return a.rank - b.rank;
+    if (sort === 'level') return b.level - a.level;
+    if (sort === 'username') return a.username.localeCompare(b.username);
+    if (sort === 'updated') return (b.last_updated||'').localeCompare(a.last_updated||'');
+    return 0;
+  });
+
+  filteredActive = data;
+  activePageNum = 1;
+  renderActive();
+}
+
+function filterBanned() {
+  const query = document.getElementById('searchBanned').value.toLowerCase().trim();
+  const reason = document.getElementById('banReasonFilter').value;
+
+  filteredBanned = allBanned.filter(b => {
+    const matchQ = !query || b.username.toLowerCase().includes(query);
+    const matchR = !reason || b.ban_reason === reason;
+    return matchQ && matchR;
+  });
+
+  bannedPageNum = 1;
+  renderBanned();
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function renderActive() {
+  const tbody = document.getElementById('activeBody');
+  const start = (activePageNum - 1) * PAGE_SIZE;
+  const page = filteredActive.slice(start, start + PAGE_SIZE);
+
+  if (page.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="no-results">⬡ No players found</td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(p => {
+      const pct = Math.round((p.level / maxLevel) * 100);
+      const rankClass = p.rank <= 3 ? `rank-${p.rank}` : '';
+      const rankHtml = p.rank <= 3
+        ? `<span class="rank-medal ${rankClass}">${p.rank}</span>`
+        : `<span style="font-family:'JetBrains Mono',monospace;color:var(--muted)">#${p.rank}</span>`;
+      const devClass = p.device === 'PC' ? 'device-pc' : p.device === 'Mobile' ? 'device-mobile' : 'device-other';
+      const rowClass = p.rank <= 3 ? 'top-3' : '';
+      return `<tr class="${rowClass}">
+        <td class="rank-cell">${rankHtml}</td>
+        <td class="username">${escHtml(p.username)}</td>
+        <td class="level-cell">
+          <div class="level-num">${p.level.toLocaleString()}</div>
+          <div class="level-bar-bg"><div class="level-bar-fill" style="width:${pct}%"></div></div>
+        </td>
+        <td class="country-cell">${escHtml(p.country || '—')}</td>
+        <td><span class="device-badge ${devClass}">${escHtml(p.device || '?')}</span></td>
+        <td class="date-cell">${escHtml(p.last_updated || '—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  renderPager('activePager', 'activePageInfo', activePageNum, filteredActive.length, (n) => { activePageNum = n; renderActive(); });
+}
+
+function renderBanned() {
+  const tbody = document.getElementById('bannedBody');
+  const start = (bannedPageNum - 1) * PAGE_SIZE;
+  const page = filteredBanned.slice(start, start + PAGE_SIZE);
+
+  if (page.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="no-results">⬡ No banned players found</td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(b => {
+      return `<tr>
+        <td class="rank-cell"><span style="font-family:'JetBrains Mono',monospace;color:var(--muted)">#${b.rank}</span></td>
+        <td class="username">${escHtml(b.username)}</td>
+        <td><span style="font-family:'Space Grotesk',sans-serif;font-size:0.8rem;color:var(--red)">${escHtml(b.level||'—')}</span></td>
+        <td class="country-cell">${escHtml(b.country || '—')}</td>
+        <td><span class="ban-badge">${escHtml(b.ban_reason || 'Unknown')}</span></td>
+        <td>${escHtml(b.device || '—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  renderPager('bannedPager', 'bannedPageInfo', bannedPageNum, filteredBanned.length, (n) => { bannedPageNum = n; renderBanned(); });
+}
+
+function renderPager(pagerId, infoId, current, total, cb) {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const info = document.getElementById(infoId);
+  const pager = document.getElementById(pagerId);
+
+  const start = (current-1)*PAGE_SIZE + 1;
+  const end = Math.min(current*PAGE_SIZE, total);
+  info.textContent = total > 0 ? `${start}–${end} of ${total}` : '0 results';
+
+  if (totalPages <= 1) { pager.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="page-btn" onclick="(${cb.toString()})(${current-1})" ${current===1?'disabled':''}>‹</button>`;
+
+  // Show page numbers with ellipsis
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - current) <= 1) pages.push(i);
+    else if (pages[pages.length-1] !== '…') pages.push('…');
+  }
+
+  for (const p of pages) {
+    if (p === '…') {
+      html += `<button class="page-btn" disabled>…</button>`;
+    } else {
+      html += `<button class="page-btn ${p===current?'active':''}" onclick="(${cb.toString()})(${p})">${p}</button>`;
+    }
+  }
+
+  html += `<button class="page-btn" onclick="(${cb.toString()})(${current+1})" ${current===totalPages?'disabled':''}>›</button>`;
+  pager.innerHTML = html;
+}
+
+// ── SORT ─────────────────────────────────────────────────────
+function sortBy(field) {
+  document.getElementById('sortActive').value = field;
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+  filterActive();
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── STATUS ───────────────────────────────────────────────────
+function setStatus(type, msg) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.className = 'status-dot';
+  if (type === 'error') dot.classList.add('error');
+  if (type === 'updating') dot.classList.add('updating');
+  text.textContent = msg;
+}
+
+function updateStatusLive(ts) {
+  const el = document.getElementById('lastFetchTime');
+  const age = Math.round((Date.now() - ts) / 1000 / 60);
+  const btn = document.getElementById('refreshBtn');
+  if (age < 1) {
+    el.textContent = 'just now';
+    btn.className = 'cache-badge';
+  } else if (age < 60) {
+    el.textContent = `${age}m ago`;
+    btn.className = 'cache-badge';
+  } else if (age < 1440) {
+    el.textContent = `${Math.round(age/60)}h ago`;
+    btn.className = 'cache-badge';
+  } else {
+    el.textContent = `${Math.round(age/1440)}d ago`;
+    btn.className = 'cache-badge stale';
+  }
+  setStatus('live', `${allPlayers.length} active · ${allBanned.length} banned`);
+}
+
+function showSpinner(show) {
+  document.getElementById('spinner').style.display = show ? 'inline-block' : 'none';
+}
+
+function escHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
