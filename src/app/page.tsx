@@ -5,7 +5,7 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell } from 'lucide-react';
+import { Menu, X, ArrowUp, Sun, Moon, Keyboard } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 type NavigateDirection = 'forward' | 'back';
@@ -21,22 +21,7 @@ const PAGE_META: Record<PageType, { emoji: string; label: string }> = {
   leaderboard: { emoji: '🏆', label: 'Leaderboard' },
 };
 
-interface Notification {
-  id: number;
-  emoji: string;
-  title: string;
-  desc: string;
-  time: string;
-  unread: boolean;
-}
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: 1, emoji: '🏆', title: 'New #1 Player', desc: 'Skyourain reached Level 1,341!', time: '2m ago', unread: true },
-  { id: 2, emoji: '🏁', title: 'Race Completed', desc: 'wilder270522 won a race', time: '15m ago', unread: true },
-  { id: 3, emoji: '📊', title: 'Leaderboard Update', desc: '300 players now tracked', time: '1h ago', unread: false },
-  { id: 4, emoji: '⚡', title: 'New Milestone', desc: 'chatgris31 hit Level 900!', time: '3h ago', unread: false },
-  { id: 5, emoji: '🤖', title: 'Bot Update', desc: 'v2.4 Race Mode is live!', time: '1d ago', unread: false },
-];
 
 /* ════════════════════════════════════════════
    Background Particles Canvas
@@ -215,12 +200,9 @@ export default function MainPage() {
   const [isLight, setIsLight] = useState(false);
   const [showKbHelp, setShowKbHelp] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
   const [navigateDirection, setNavigateDirection] = useState<NavigateDirection>('forward');
 
-  const notifRef = useRef<HTMLDivElement>(null);
   const pageHistoryRef = useRef<PageType[]>(['home']);
 
   // Scroll progress tracker
@@ -343,19 +325,6 @@ export default function MainPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [navigate]);
 
-  // Close notification dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    if (showNotifications) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
-
   // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help, / focuses search, Alt+Left goes back
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -375,8 +344,6 @@ export default function MainPage() {
       if (e.key === 'Escape') {
         if (showKbHelp) {
           setShowKbHelp(false);
-        } else if (showNotifications) {
-          setShowNotifications(false);
         } else if (mobileMenuOpen) {
           setMobileMenuOpen(false);
         }
@@ -396,20 +363,7 @@ export default function MainPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate, goBack, mobileMenuOpen, showKbHelp, showNotifications, currentPage]);
-
-  // Notification handlers
-  const markAsRead = useCallback((id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
-    );
-  }, []);
-
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-  }, []);
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  }, [navigate, goBack, mobileMenuOpen, showKbHelp, currentPage]);
 
   // Cookie consent handlers
   const acceptCookies = useCallback(() => {
@@ -463,53 +417,6 @@ export default function MainPage() {
           </div>
 
           <div className="toh-nav-actions">
-            {/* Notification Bell */}
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button
-                className="toh-notif-btn"
-                onClick={() => setShowNotifications((v) => !v)}
-                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-                title="Notifications"
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && <span className="toh-notif-badge">{unreadCount}</span>}
-              </button>
-
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="toh-notif-dropdown">
-                  <div className="toh-notif-header">
-                    <span>Notifications</span>
-                    {unreadCount > 0 && (
-                      <button className="toh-notif-mark-all" onClick={markAllAsRead}>
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  <div className="toh-notif-list">
-                    {notifications.map((notif) => (
-                      <button
-                        key={notif.id}
-                        className={`toh-notif-item ${notif.unread ? 'toh-notif-item-unread' : ''}`}
-                        onClick={() => markAsRead(notif.id)}
-                      >
-                        <span className="toh-notif-item-emoji">{notif.emoji}</span>
-                        <div className="toh-notif-item-content">
-                          <div className="toh-notif-item-title">{notif.title}</div>
-                          <div className="toh-notif-item-desc">{notif.desc}</div>
-                        </div>
-                        <span className="toh-notif-item-time">{notif.time}</span>
-                        {notif.unread && <span className="toh-notif-item-dot" />}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="toh-notif-footer">
-                    <span className="toh-notif-footer-text">That&apos;s all for now!</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <button
               className="toh-kb-toggle toh-theme-toggle"
               onClick={() => setShowKbHelp((v) => !v)}
@@ -604,15 +511,6 @@ export default function MainPage() {
               <p className="toh-footer-desc">
                 The ultimate Discord bot for the Tower of Hell community. Track leaderboards, race friends, and climb the ranks.
               </p>
-              <div className="toh-footer-newsletter">
-                <input
-                  type="email"
-                  className="toh-footer-newsletter-input"
-                  placeholder="Stay updated — enter email"
-                  aria-label="Email for newsletter"
-                />
-                <button className="toh-footer-newsletter-btn">Subscribe</button>
-              </div>
             </div>
 
             {/* Quick Links Column */}
@@ -630,18 +528,6 @@ export default function MainPage() {
             <div className="toh-footer-col">
               <h3 className="toh-footer-col-title">Community</h3>
               <ul className="toh-footer-links-list">
-                <li>
-                  <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
-                    <MessageCircle size={14} />
-                    Discord
-                  </a>
-                </li>
-                <li>
-                  <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
-                    <Github size={14} />
-                    GitHub
-                  </a>
-                </li>
                 <li>
                   <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

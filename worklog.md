@@ -1,8 +1,49 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 21 - Latest)
+## Current Project Status (Round 22 - Latest)
 
-The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Round 22 Development Summary (Notifications Removal + Favicon + Footer Cleanup)
+
+**Changes Implemented:**
+
+1. ✅ **Notification Center Completely Removed** — Removed the bell icon, notification dropdown, and all related code
+   - Removed `Bell` import from lucide-react
+   - Removed `Notification` interface and `INITIAL_NOTIFICATIONS` array
+   - Removed `showNotifications`, `notifications` state variables
+   - Removed `notifRef` ref
+   - Removed notification dropdown JSX (bell button, dropdown panel, mark-as-read)
+   - Removed `markAsRead`, `markAllAsRead`, `unreadCount` handlers
+   - Removed outside-click handler for notification dropdown
+   - Removed `showNotifications` from keyboard shortcut Escape handler
+   - Removed all notification CSS (~602 lines) from globals.css
+   - Removed all `html.light .toh-notif-*` overrides
+   - Removed notification references from responsive breakpoints and reduced-motion queries
+
+2. ✅ **Favicon Changed to Custom Image** — Replaced the default logo.svg favicon with the user's uploaded image
+   - Copied uploaded image to `/public/favicon.png`
+   - Updated `layout.tsx` metadata `icons.icon` from `https://z-cdn.chatglm.cn/z-ai/static/logo.svg` to `/favicon.png`
+
+3. ✅ **"Stay Updated" Email Newsletter Removed** — Removed the email signup section from the footer
+   - Removed `<div className="toh-footer-newsletter">` with email input and Subscribe button
+   - Removed all `.toh-footer-newsletter-*` CSS classes from globals.css
+   - Removed `html.light .toh-footer-newsletter-*` overrides
+
+4. ✅ **Discord and GitHub Links Removed from Footer** — Cleaned up Community column
+   - Removed Discord link (with MessageCircle icon)
+   - Removed GitHub link (with Github icon)
+   - Kept only "Add to Server" link in Community column
+   - Removed `MessageCircle` and `Github` imports from lucide-react
+
+5. ✅ **Scheduled WebDevReview Cron Job Created** — 15-minute interval review task (job ID: 121718)
+
+**QA Testing Results:**
+- 0 lint errors ✅
+- Dev server compiling without errors ✅
+- No runtime errors ✅
+
+---
 
 ### Round 21 Development Summary (Rank Arrows Removal + Race System Rewrite)
 
