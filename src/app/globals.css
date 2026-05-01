@@ -2277,7 +2277,7 @@ button {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 0 0 24px;
+  margin: 0 0 12px;
   padding: 14px 20px;
   background: var(--surface);
   border: 1px solid var(--toh-border);
@@ -3164,7 +3164,7 @@ mark.toh-highlight {
   align-items: flex-end;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 12px;
   padding: 20px 0;
 }
 
@@ -3274,13 +3274,11 @@ mark.toh-highlight {
 /* Leaderboard row with cursor and click */
 .toh-lb-row {
   cursor: pointer;
-  transition: background 0.15s, border-left-color 0.2s;
-  border-left: 3px solid transparent;
+  transition: background 0.15s;
 }
 
 .toh-lb-row:hover {
-  background: rgba(196, 181, 253, 0.05);
-  border-left-color: var(--indigo);
+  background: rgba(196, 181, 253, 0.06);
 }
 
 /* Staggered row fade in */
@@ -4508,7 +4506,7 @@ select:focus-visible,
     var(--surface);
   border: 1px solid var(--toh-border);
   border-radius: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   overflow: hidden;
@@ -5591,7 +5589,8 @@ select:focus-visible,
 
 .toh-changelog-desc {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--toh-text);
+  opacity: 0.7;
   line-height: 1.65;
   margin-bottom: 14px;
 }
@@ -5636,6 +5635,26 @@ select:focus-visible,
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--toh-border);
   color: var(--dim);
+}
+
+/* Changelog light theme */
+html.light .toh-changelog-content {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(245, 245, 250, 0.5));
+  border-color: rgba(139, 124, 246, 0.12);
+}
+html.light .toh-changelog-content:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 248, 252, 0.7));
+  border-color: rgba(139, 124, 246, 0.2);
+}
+html.light .toh-changelog-desc {
+  opacity: 0.8;
+}
+html.light .toh-changelog-tag-default {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+html.light .toh-changelog-line {
+  background: rgba(139, 124, 246, 0.2);
 }
 
 /* Changelog responsive */
@@ -5775,7 +5794,8 @@ select:focus-visible,
   padding: 0 22px 18px;
   font-size: 14px;
   line-height: 1.7;
-  color: var(--muted);
+  color: var(--toh-text);
+  opacity: 0.7;
 }
 
 /* ════════════════════════════════════════════
@@ -6750,7 +6770,7 @@ html.light .toh-skeleton-level-bar {
     var(--surface);
   border: 1px solid var(--toh-border);
   border-radius: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   overflow: hidden;
@@ -7707,15 +7727,7 @@ html.light .toh-nav-link:active {
   transform: scale(0.97);
 }
 
-/* Table row left-border color slide on hover */
-.toh-lb-row td {
-  border-left: 2px solid transparent;
-  transition: border-left-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toh-lb-row:hover td {
-  border-left-color: var(--indigo);
-}
+/* Table row left-border accent on hover (row-level only, no per-cell borders) */
 
 /* ── 3. Loading Shimmer Effect ── */
 
@@ -8076,7 +8088,8 @@ html.light ::-webkit-scrollbar-thumb:hover {
 
 .toh-kb-desc {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--toh-text);
+  opacity: 0.7;
 }
 
 .toh-kb-footer {
@@ -10441,8 +10454,7 @@ html.light .toh-cookie-accept:hover {
 }
 
 .toh-lb-row-enhanced:hover {
-  border-left: 3px solid var(--indigo);
-  background: linear-gradient(90deg, rgba(139, 124, 246, 0.06), rgba(139, 124, 246, 0.02), transparent);
+  background: rgba(196, 181, 253, 0.06);
 }
 
 /* ── 8. Activity Feed ── */
@@ -10799,8 +10811,7 @@ html.light .toh-lb-rank-down {
 
 /* Enhanced Row — Light */
 html.light .toh-lb-row-enhanced:hover {
-  border-left-color: var(--indigo);
-  background: linear-gradient(90deg, rgba(124, 110, 214, 0.06), rgba(124, 110, 214, 0.02), transparent);
+  background: rgba(139, 124, 246, 0.08);
 }
 
 /* Activity Feed — Light */
@@ -11313,7 +11324,7 @@ html.light .toh-kb-plus {
 ══════════════════════════════ */
 
 .toh-level-dist-panel {
-  margin-top: 24px;
+  margin-top: 10px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
     rgba(11, 11, 16, 0.6);

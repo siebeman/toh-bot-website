@@ -1,8 +1,42 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 19 - Latest)
+## Current Project Status (Round 20 - Latest)
 
 The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Round 20 Development Summary (UI Bug Fixes)
+
+**Changes Implemented:**
+
+1. ✅ **Changelog Text Readability Fixed** — Fixed black/invisible text on dark background in changelog section
+   - Root cause: `--muted` CSS variable was overridden by shadcn to `rgba(255,255,255,0.06)` (nearly invisible on dark bg)
+   - `.toh-changelog-desc`: Changed from `color: var(--muted)` to `color: var(--toh-text); opacity: 0.7;`
+   - Also fixed `.toh-faq-answer`: Same `var(--muted)` → `var(--toh-text); opacity: 0.7;` fix
+   - Also fixed `.toh-kb-desc`: Same fix
+   - Added light theme overrides for changelog: `html.light .toh-changelog-content`, `html.light .toh-changelog-content:hover`, `html.light .toh-changelog-desc`, `html.light .toh-changelog-tag-default`, `html.light .toh-changelog-line`
+
+2. ✅ **Leaderboard Podium-to-Table Gap Reduced** — Reduced excessive spacing between podium and leaderboard table
+   - `.toh-podium` margin-bottom: 32px → 12px
+   - `.toh-level-dist-panel` margin-top: 24px → 10px
+   - `.toh-country-panel` margin-bottom: 24px → 10px
+   - `.toh-device-panel` margin-bottom: 24px → 10px
+   - `.toh-lb-status-bar` margin-bottom: 24px → 12px
+
+3. ✅ **Purple Bars Between Columns on Hover Removed** — Fixed purple vertical bars appearing between every table column on row hover
+   - Root cause: `.toh-lb-row td` had `border-left: 2px solid transparent` that turned `var(--indigo)` (purple) on hover via `.toh-lb-row:hover td`
+   - Removed per-cell border-left rules entirely (`.toh-lb-row td` and `.toh-lb-row:hover td`)
+   - Changed `.toh-lb-row-enhanced:hover` from `border-left + gradient background` to just `background: rgba(196, 181, 253, 0.06)`
+   - Changed `.toh-lb-row:hover` from `border-left-color + background` to just `background: rgba(196, 181, 253, 0.06)`
+   - Removed `border-left: 3px solid transparent` from `.toh-lb-row` base style
+   - Updated light theme overrides accordingly
+
+**QA Testing Results:**
+- Changelog text rated 8/10 contrast (readable) ✅
+- Podium-to-table gap described as "reasonable" ✅
+- No purple vertical bars between columns on hover ✅
+- 0 lint errors, dev server compiling without errors
+
+---
 
 ### Round 19 Development Summary (Discord Invite Link Update)
 
@@ -12,11 +46,6 @@ The TOH Bot website is a feature-rich single-page application with 4 pages (Home
    - URL: `https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200`
    - Updated in `src/app/page.tsx` (3 occurrences: nav bar "Add to Server" button, mobile menu "Add to Server" button, footer "Add to Server" link)
    - Updated in `src/components/HomePage.tsx` (1 occurrence: hero "Add to Server" button)
-
-**Verification:**
-- Grep confirms 0 remaining `YOUR_BOT_ID` placeholders in source
-- 0 lint errors
-- Dev server compiling without errors
 
 ---
 
