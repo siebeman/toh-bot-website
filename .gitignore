@@ -36,7 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -52,3 +51,20 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Large artifacts
+*.tar
+*.zip
+*.gz
+
+# Local database
+/db/
+*.db
+*.db-journal
+
+# Environment scripts
+.zscripts/
+
+# Mini-services
+/mini-services/
+*.tar
