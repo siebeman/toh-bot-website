@@ -1,10 +1,258 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 14 - Latest)
+## Current Project Status (Round 17 - Latest)
 
-The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, activity feed, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~11,012 lines.
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing with breadcrumb navigation, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, activity feed, player hover tooltips, level distribution chart, search history, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~12,011 lines.
 
-### Round 14 QA Assessment & Development Summary
+### Round 17 Development Summary (QA + New Features + Styling Polish)
+
+**QA Testing Results:**
+- All 4 pages tested with agent-browser
+- 0 lint errors, 0 runtime errors
+- No critical bugs found
+- Project stable from previous rounds
+
+**New Features Implemented:**
+
+1. ✅ **Breadcrumb Navigation with Back Button** — Replaced simple page title indicator with full breadcrumb bar
+   - Shows "Home > Current Page" with emoji + labels
+   - "← Back" button navigates to previous page in app history
+   - Animated underlines with indigo→violet gradient glow on hover/active
+   - Alt+Left keyboard shortcut for going back
+   - Page history tracking via `pageHistoryRef`
+   
+2. ✅ **Enhanced Page Transitions** — Directional slide animations
+   - Forward navigation: slide in from right (+40px offset)
+   - Back navigation: slide in from left (-40px offset)
+   - Spring-like easing with cubic-bezier(0.16, 1, 0.3, 1)
+
+3. ✅ **Level Distribution Chart** (Leaderboard) — Visual horizontal bar chart
+   - 11 level ranges (0–100 through 1001+)
+   - Collapsible panel with expand/collapse toggle
+   - Gradient-filled bars (indigo→violet), player count, and percentage
+   - Positioned between podium and country distribution panel
+
+4. ✅ **Search History Feature** (Leaderboard) — Recent searches saved in localStorage
+   - Key: `toh-lb-search-history`, stores up to 5 recent searches
+   - Clickable chips below search input when focused and empty
+   - "Clear history" link, debounced saving
+
+5. ✅ **Player Hover Tooltip** (Leaderboard) — Floating tooltip on row hover
+   - Shows: username, level, rank, country, device, milestone badge
+   - Mini level progress bar, glassmorphism styling
+   - Position adapts (above/below) based on viewport space
+   - Fade-in animation
+
+6. ✅ **Leaderboard Table Zebra Striping** — Alternating row backgrounds
+   - Even rows: subtle lighter background
+   - Works with hover effects and top-3 highlighting
+
+7. ✅ **Footer Enhancement** — Newsletter signup + gradient border
+   - `.toh-footer-enhanced` with gradient top border
+   - `.toh-footer-newsletter` with email input + Subscribe button
+
+**Styling Improvements:**
+
+8. ✅ **Section Gradient Text** — `.toh-section-gradient` with flowing gradient animation
+9. ✅ **Card Lift Effect** — `.toh-card-lift` with enhanced shadow on hover
+10. ✅ **Button Glow Effect** — `.toh-btn-glow` with subtle pulsing glow on hover
+11. ✅ **Mobile Card View** — `.toh-lb-mobile-card` responsive card layout for leaderboard
+12. ✅ **Enhanced Skeleton Shimmer** — `.toh-skeleton-shimmer` with gradient sweep animation
+
+**CSS Additions (~340 lines):**
+- Player hover tooltip (12 classes + animation + light theme)
+- Card lift effect (2 classes + light theme)
+- Button glow effect (1 class + animation + light theme)
+- Section gradient text (1 class + animation + light theme)
+- Mobile card view (4 classes + light theme)
+- Footer enhancement (3 classes + light theme)
+- Skeleton shimmer (1 class + animation + light theme)
+- Zebra row even (1 class + light theme)
+- Reduced motion support for all new animations
+
+### Unresolved Issues / Next Phase Priorities
+
+1. **globals.css is ~12,000 lines** — could benefit from CSS splitting or PurgeCSS in production build (medium priority)
+2. **Particle canvas performance** on low-end devices - could benefit from requestAnimationFrame throttling (low priority)
+3. **FAQ accessibility** — collapsed answers still present in DOM for screen readers (aria-hidden recommended)
+4. **Keyboard shortcuts panel** — no focus trapping when open (accessibility concern)
+5. **WebSocket integration** for live leaderboard updates — would require backend changes (nice-to-have)
+6. **Mobile leaderboard** — hidden columns reduce usability, consider tap-to-expand detail rows
+7. **Real-time notification updates** — connect notification center to actual data source
+8. **Newsletter form** — currently non-functional, could connect to backend API
+
+### Round 16 Development Summary (Task 4 - Leaderboard Enhancements)
+
+**New Features Implemented:**
+
+1. ✅ **Level Distribution Chart** — Horizontal bar chart showing player distribution across 11 level ranges (0–100, 101–200, ..., 1001+)
+   - Collapsible panel with expand/collapse toggle (default expanded)
+   - `levelDistExpanded` state controlling visibility
+   - `levelDistribution` useMemo computing bucket counts, percentages, and maxCount from `filteredActive` players
+   - Each row shows: range label, gradient-filled bar (indigo→violet), player count, and percentage
+   - Bar widths proportional to the max bucket count (not total percentage) for visual clarity
+   - Positioned between the podium and the country distribution panel
+   - Staggered entrance animation for each row
+   - Footer showing total player count and number of level ranges
+   - Glassmorphism panel matching the country distribution panel design
+   - `levelDistRevealRef` via `useScrollReveal` for scroll-based entrance
+
+2. ✅ **Search History Feature** — Recent search terms saved in localStorage
+   - Key: `toh-lb-search-history`, stores up to 5 recent searches
+   - Search history loaded from localStorage on mount
+   - Debounced save: saves after 1 second of inactivity during typing, or immediately on blur
+   - Shows clickable chips below the search input when it's focused and empty
+   - Clicking a chip fills the search input and triggers the search
+   - "Clear history" link to remove all history
+   - Uses `onMouseDown` with `preventDefault` to prevent blur race condition
+   - `activeSearchFocused` state tracks focus for showing/hiding history chips
+   - `handleActiveSearchChange` replaces direct `setActiveSearch` for debounced saving
+   - `handleActiveSearchBlur` saves on blur and clears focused state
+   - `saveSearchToHistory` deduplicates and limits to 5 entries
+
+3. ✅ **Leaderboard Table Zebra Striping** — Alternating row background colors
+   - Even rows (index % 2 === 0) get `toh-lb-row-even` class
+   - Even rows: subtle lighter background (rgba(255,255,255,0.015) in dark mode)
+   - Odd rows: default background
+   - Works with existing hover effects and top-3 highlighting
+   - Top-3 even rows get slightly different gold tint
+   - Light theme overrides with appropriate light mode backgrounds
+
+**CSS Additions (~380 lines):**
+
+**Level Distribution Panel:**
+- `.toh-level-dist-panel` — Glassmorphism panel wrapper
+- `.toh-level-dist-header` — Collapsible header button
+- `.toh-level-dist-title` / `.toh-level-dist-title-icon` — Title with 📊 icon
+- `.toh-level-dist-meta` — Right side meta area
+- `.toh-level-dist-total-badge` — Player count badge pill
+- `.toh-level-dist-chevron` — Expand/collapse chevron with rotation transition
+- `.toh-level-dist-body` — Body with expand/collapse animation
+- `.toh-level-dist-chart` — Chart container
+- `.toh-level-dist-row` — Grid row (72px 1fr 36px 52px)
+- `.toh-level-dist-label` — Range label (monospace, right-aligned)
+- `.toh-level-dist-bar-track` — Bar background track
+- `.toh-level-dist-bar-fill` — Gradient fill with highlight ::after
+- `.toh-level-dist-count` — Player count (monospace)
+- `.toh-level-dist-pct` — Percentage (monospace)
+- `.toh-level-dist-footer` — Footer with border-top
+- `@keyframes toh-level-dist-stagger` — Entrance animation
+
+**Search History:**
+- `.toh-lb-search-history` — Dropdown wrapper below search input
+- `.toh-lb-search-history-chip` — Clickable pill chips
+- `.toh-lb-search-history-clear` — Clear history link
+
+**Zebra Striping:**
+- `.toh-lb-row-even` — Even row background
+- `.toh-lb-row-even:hover` — Even row hover override
+- `.toh-lb-row-even.top-3` — Top-3 even row
+- `.toh-lb-row-even.top-3:hover` — Top-3 even row hover
+
+**Theme/Responsive/Motion:**
+- Light theme overrides for all new components (html.light selectors)
+- Responsive breakpoints at 640px for level distribution and search history
+- Reduced motion support for level distribution animations
+
+**Component Changes:**
+- `LeaderboardPage.tsx`: Added `levelDistExpanded`, `searchHistory`, `activeSearchFocused` states. Added `levelDistRevealRef`. Added search history localStorage load effect. Added `levelDistribution` useMemo. Added `saveSearchToHistory`, `handleActiveSearchChange`, `handleActiveSearchBlur`, `clearSearchHistory`, `applySearchHistoryChip` callbacks. Added `searchSaveTimerRef` for debounced saving. Added Level Distribution Chart JSX between podium and country distribution. Added search history chips JSX below search input. Added `toh-lb-row-even` class for zebra striping on even rows.
+
+---
+
+Task ID: 4
+Agent: Leaderboard Enhancement Agent
+Task: Add Level Distribution Chart, Search History Feature, and Leaderboard Table Zebra Striping
+
+Work Log:
+- Read worklog.md for project history and context
+- Read LeaderboardPage.tsx to understand existing structure (podium → country dist → device dist → status bar → tabs → controls → table)
+- Read globals.css to understand existing CSS patterns (toh-country-panel as reference for level dist panel)
+- Added levelDistExpanded, searchHistory, activeSearchFocused states
+- Added levelDistRevealRef via useScrollReveal
+- Added search history localStorage load effect (key: toh-lb-search-history)
+- Added levelDistribution useMemo computing 11 level range buckets from filteredActive
+- Added search history management callbacks (saveSearchToHistory, handleActiveSearchChange, handleActiveSearchBlur, clearSearchHistory, applySearchHistoryChip)
+- Added searchSaveTimerRef for 1-second debounce
+- Added Level Distribution Chart JSX between podium and country distribution panel
+- Added search history chips dropdown below search input (shows when focused and empty)
+- Added toh-lb-row-even class for zebra striping on even table rows
+- Added ~380 lines of new CSS to globals.css with toh-* prefix
+- All new CSS classes include light theme overrides, responsive breakpoints, and reduced motion support
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Level Distribution Chart with collapsible panel, 11 level ranges, gradient bars
+- Search History with localStorage persistence, clickable chips, clear button, debounced saving
+- Zebra striping on even table rows with hover/top-3 compatibility
+- All new CSS uses toh-* prefix convention
+- Full light theme support, responsive breakpoints, reduced motion support
+- 0 lint errors, no runtime errors
+
+---
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, activity feed, breadcrumb navigation, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~11,288 lines.
+
+### Round 15 Development Summary (Task 3 - Enhanced Navigation)
+
+**New Features Implemented:**
+
+1. ✅ **Breadcrumb Navigation Bar** — Replaced the simple page title indicator (`toh-page-title-bar`) with a full breadcrumb navigation bar (`toh-breadcrumb-bar`) that:
+   - Shows "Home > Current Page" when not on the home page
+   - Has a clickable "← Back" button that navigates to the previous page in history
+   - Back button is hidden (but takes up space) on the home page for layout stability
+   - Shows each breadcrumb item with its emoji and label
+   - Has animated underlines that slide in from left on hover/active state
+   - Active page underline has a gradient glow (indigo→violet)
+   - Uses a vertical separator between back button and breadcrumb trail
+   - ChevronRight icon separates breadcrumb levels
+   - Entrance animation on mount (slide-down + fade-in)
+
+2. ✅ **Page History Tracking** — Added `pageHistoryRef` that tracks visited pages:
+   - Uses a ref (not state) to avoid unnecessary re-renders
+   - Initialized with `['home']` as the starting page
+   - `navigate()` pushes new pages to the history array
+   - `goBack()` pops the current page and navigates to the previous one
+   - Hashchange listener also tracks page history for browser back/forward
+   - Back button uses `goBack()` instead of browser history
+
+3. ✅ **Enhanced Page Transitions** — Updated `PageTransition` component with directional slide:
+   - Added `direction` prop (`'forward' | 'back'`)
+   - When going forward (higher page index): slides in from right (+40px)
+   - When going back (lower page index): slides in from left (-40px)
+   - Uses `cubic-bezier(0.16, 1, 0.3, 1)` for smooth spring-like easing
+   - Combined with subtle Y-axis offset (8px) for depth
+   - Direction detected by comparing `PAGE_INDEX` of current vs target page
+   - `navigateDirection` state tracks direction across the component
+
+4. ✅ **Alt+Left Keyboard Shortcut** — Added Alt+ArrowLeft to go back to previous page
+   - Added to keyboard shortcuts help panel with proper key display
+   - New `toh-kb-plus` CSS class for the "+" separator between modifier keys
+
+**CSS Additions (~275 lines):**
+- `.toh-breadcrumb-bar` — Glassmorphism bar with blur, animation on entrance
+- `.toh-breadcrumb-inner` — Flex layout for back button, separator, trail
+- `.toh-breadcrumb-back` — Back button with hover glow, translateX animation
+- `.toh-breadcrumb-back-hidden` — Invisible but space-preserving state for home page
+- `.toh-breadcrumb-separator-v` — Vertical 1px divider
+- `.toh-breadcrumb-trail` — Flex row for breadcrumb items
+- `.toh-breadcrumb-item` — Clickable breadcrumb item with emoji + text
+- `.toh-breadcrumb-item-active` — Active/current page (non-clickable)
+- `.toh-breadcrumb-underline` — Animated underline with scaleX transform
+- `.toh-breadcrumb-chevron` — ChevronRight separator between levels
+- `.toh-page-transition-wrapper` — Wrapper with will-change optimization
+- `.toh-kb-plus` — Plus sign styling for keyboard shortcut combinations
+- `@keyframes toh-breadcrumb-in` — Entrance animation
+- Light theme overrides for all breadcrumb components (html.light selectors)
+- Responsive breakpoint at 640px (hide "Back" text on mobile, compact sizing)
+- Reduced motion support (disable animations/transitions)
+
+**Component Changes:**
+- `page.tsx`: Added `NavigateDirection` type, `PAGE_INDEX` and `PAGE_META` constants. Added `navigateDirection` state and `pageHistoryRef`. Updated `navigate()` to track history and detect direction. Added `goBack()` function. Updated `PageTransition` to accept `direction` prop and use directional slide. Replaced page title bar with breadcrumb navigation JSX. Added Alt+Left keyboard shortcut. Updated keyboard shortcuts panel with new shortcut row.
+
+---
+
+## Previous Project Status (Round 14)
 
 **QA Testing Results:**
 - All 4 pages tested with agent-browser and VLM analysis

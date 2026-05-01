@@ -5,11 +5,21 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell, ChevronRight, ArrowLeft } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
+type NavigateDirection = 'forward' | 'back';
 
 const VALID_PAGES: PageType[] = ['home', 'commands', 'race', 'leaderboard'];
+
+const PAGE_INDEX: Record<PageType, number> = { home: 0, commands: 1, race: 2, leaderboard: 3 };
+
+const PAGE_META: Record<PageType, { emoji: string; label: string }> = {
+  home: { emoji: '🏠', label: 'Home' },
+  commands: { emoji: '⌨️', label: 'Commands' },
+  race: { emoji: '🏁', label: 'Race Mode' },
+  leaderboard: { emoji: '🏆', label: 'Leaderboard' },
+};
 
 interface Notification {
   id: number;
@@ -115,15 +125,25 @@ function ParticlesCanvas() {
 }
 
 /* ════════════════════════════════════════════
-   Page Transition Wrapper
+   Page Transition Wrapper (with directional slide)
 ══════════════════════════════ */
-function PageTransition({ children, pageKey }: { children: React.ReactNode; pageKey: string }) {
+function PageTransition({
+  children,
+  pageKey,
+  direction,
+}: {
+  children: React.ReactNode;
+  pageKey: string;
+  direction: NavigateDirection;
+}) {
   const [visible, setVisible] = useState(false);
   const [displayChildren, setDisplayChildren] = useState(children);
   const [currentKey, setCurrentKey] = useState(pageKey);
+  const [animDirection, setAnimDirection] = useState<NavigateDirection>(direction);
 
   useEffect(() => {
     if (pageKey !== currentKey) {
+      queueMicrotask(() => setAnimDirection(direction));
       const hideTimer = setTimeout(() => setVisible(false), 0);
       const showTimer = setTimeout(() => {
         setDisplayChildren(children);
@@ -138,14 +158,17 @@ function PageTransition({ children, pageKey }: { children: React.ReactNode; page
       const timer = setTimeout(() => setVisible(true), 10);
       return () => clearTimeout(timer);
     }
-  }, [pageKey, currentKey, children]);
+  }, [pageKey, currentKey, children, direction]);
+
+  const slideX = animDirection === 'forward' ? 40 : -40;
 
   return (
     <div
+      className="toh-page-transition-wrapper"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(12px)',
-        transition: 'opacity 300ms ease, transform 300ms ease',
+        transform: visible ? 'translateX(0) translateY(0)' : `translateX(${slideX}px) translateY(8px)`,
+        transition: 'opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       {displayChildren}
@@ -195,8 +218,10 @@ export default function MainPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [navigateDirection, setNavigateDirection] = useState<NavigateDirection>('forward');
 
   const notifRef = useRef<HTMLDivElement>(null);
+  const pageHistoryRef = useRef<PageType[]>(['home']);
 
   // Scroll progress tracker
   useEffect(() => {
@@ -262,7 +287,16 @@ export default function MainPage() {
     const onHashChange = () => {
       const hash = window.location.hash.slice(1);
       if (hash && VALID_PAGES.includes(hash as PageType)) {
-        setCurrentPage(hash as PageType);
+        const target = hash as PageType;
+        setCurrentPage((prev) => {
+          if (prev !== target) {
+            const prevIdx = PAGE_INDEX[prev];
+            const nextIdx = PAGE_INDEX[target];
+            setNavigateDirection(nextIdx > prevIdx ? 'forward' : 'back');
+            pageHistoryRef.current = [...pageHistoryRef.current, target];
+          }
+          return target;
+        });
       }
     };
     window.addEventListener('hashchange', onHashChange);
@@ -278,11 +312,36 @@ export default function MainPage() {
   }, []);
 
   const navigate = useCallback((page: string) => {
-    setCurrentPage(page as PageType);
+    const target = page as PageType;
+    setCurrentPage((prev) => {
+      if (prev !== target) {
+        const prevIdx = PAGE_INDEX[prev];
+        const nextIdx = PAGE_INDEX[target];
+        setNavigateDirection(nextIdx > prevIdx ? 'forward' : 'back');
+        pageHistoryRef.current = [...pageHistoryRef.current, target];
+      }
+      return target;
+    });
     setMobileMenuOpen(false);
     window.location.hash = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const goBack = useCallback(() => {
+    const history = pageHistoryRef.current;
+    if (history.length <= 1) {
+      navigate('home');
+      return;
+    }
+    // Remove current page from history
+    history.pop();
+    const prevPage = history[history.length - 1];
+    setNavigateDirection('back');
+    setCurrentPage(prevPage);
+    setMobileMenuOpen(false);
+    window.location.hash = prevPage;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [navigate]);
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -297,10 +356,16 @@ export default function MainPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
 
-  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help, / focuses search
+  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help, / focuses search, Alt+Left goes back
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      // Alt+Left arrow: go back in page history
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goBack();
+        return;
+      }
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       const keyMap: Record<string, PageType> = { '1': 'home', '2': 'commands', '3': 'race', '4': 'leaderboard' };
       if (keyMap[e.key]) {
@@ -331,7 +396,7 @@ export default function MainPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate, mobileMenuOpen, showKbHelp, showNotifications, currentPage]);
+  }, [navigate, goBack, mobileMenuOpen, showKbHelp, showNotifications, currentPage]);
 
   // Notification handlers
   const markAsRead = useCallback((id: number) => {
@@ -514,29 +579,59 @@ export default function MainPage() {
         </div>
       </nav>
 
-      {/* Page Title Indicator */}
-      <div className="toh-page-title-bar">
+      {/* Breadcrumb Navigation Bar */}
+      <div className="toh-breadcrumb-bar">
         <div className="toh-container">
-          <div className="toh-page-title-inner">
-            <span className="toh-page-title-icon">
-              {currentPage === 'home' && '🏠'}
-              {currentPage === 'commands' && '⌨️'}
-              {currentPage === 'race' && '🏁'}
-              {currentPage === 'leaderboard' && '🏆'}
-            </span>
-            <span className="toh-page-title-text">
-              {currentPage === 'home' && 'Home'}
-              {currentPage === 'commands' && 'Commands'}
-              {currentPage === 'race' && 'Race Mode'}
-              {currentPage === 'leaderboard' && 'Leaderboard'}
-            </span>
+          <div className="toh-breadcrumb-inner">
+            {/* Back button */}
+            {currentPage !== 'home' ? (
+              <button
+                className="toh-breadcrumb-back"
+                onClick={goBack}
+                aria-label="Go back to previous page"
+                title="Go back"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+            ) : (
+              <span className="toh-breadcrumb-back toh-breadcrumb-back-hidden">
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </span>
+            )}
+
+            <div className="toh-breadcrumb-separator-v" />
+
+            {/* Breadcrumb trail */}
+            <nav className="toh-breadcrumb-trail" aria-label="Breadcrumb">
+              <button
+                className="toh-breadcrumb-item"
+                onClick={() => navigate('home')}
+              >
+                <span className="toh-breadcrumb-item-emoji">🏠</span>
+                <span className="toh-breadcrumb-item-text">Home</span>
+                <span className="toh-breadcrumb-underline" />
+              </button>
+
+              {currentPage !== 'home' && (
+                <>
+                  <ChevronRight size={12} className="toh-breadcrumb-chevron" />
+                  <span className="toh-breadcrumb-item toh-breadcrumb-item-active">
+                    <span className="toh-breadcrumb-item-emoji">{PAGE_META[currentPage].emoji}</span>
+                    <span className="toh-breadcrumb-item-text">{PAGE_META[currentPage].label}</span>
+                    <span className="toh-breadcrumb-underline" />
+                  </span>
+                </>
+              )}
+            </nav>
           </div>
         </div>
       </div>
 
       {/* Page Content with Transitions */}
       <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
-        <PageTransition pageKey={currentPage}>
+        <PageTransition pageKey={currentPage} direction={navigateDirection}>
           {currentPage === 'home' && <HomePage onNavigate={navigate} />}
           {currentPage === 'commands' && <CommandsPage />}
           {currentPage === 'race' && <RaceModePage />}
@@ -545,7 +640,7 @@ export default function MainPage() {
       </main>
 
       {/* Footer */}
-      <footer className="toh-footer" style={{ position: 'relative', zIndex: 1 }}>
+      <footer className="toh-footer toh-footer-enhanced" style={{ position: 'relative', zIndex: 1 }}>
         <div className="toh-container">
           <div className="toh-footer-grid">
             {/* Branding Column */}
@@ -557,6 +652,15 @@ export default function MainPage() {
               <p className="toh-footer-desc">
                 The ultimate Discord bot for the Tower of Hell community. Track leaderboards, race friends, and climb the ranks.
               </p>
+              <div className="toh-footer-newsletter">
+                <input
+                  type="email"
+                  className="toh-footer-newsletter-input"
+                  placeholder="Stay updated — enter email"
+                  aria-label="Email for newsletter"
+                />
+                <button className="toh-footer-newsletter-btn">Subscribe</button>
+              </div>
             </div>
 
             {/* Quick Links Column */}
@@ -645,6 +749,10 @@ export default function MainPage() {
               <div className="toh-kb-row">
                 <div className="toh-kb-keys"><kbd className="toh-kb-key">/</kbd></div>
                 <div className="toh-kb-desc">Focus search (Commands &amp; Leaderboard)</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">Alt</kbd><span className="toh-kb-plus">+</span><kbd className="toh-kb-key">&larr;</kbd></div>
+                <div className="toh-kb-desc">Go back to previous page</div>
               </div>
               <div className="toh-kb-row">
                 <div className="toh-kb-keys"><kbd className="toh-kb-key">Esc</kbd></div>

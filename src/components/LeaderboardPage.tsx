@@ -550,6 +550,9 @@ export default function LeaderboardPage() {
   const [showCompare, setShowCompare] = useState(false);
   const [countryExpanded, setCountryExpanded] = useState(true);
   const [deviceExpanded, setDeviceExpanded] = useState(true);
+  const [levelDistExpanded, setLevelDistExpanded] = useState(true);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [activeSearchFocused, setActiveSearchFocused] = useState(false);
 
   /* Listen for global search focus event */
   useEffect(() => {
@@ -566,9 +569,13 @@ export default function LeaderboardPage() {
 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [hoveredPlayer, setHoveredPlayer] = useState<Player | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; above: boolean }>({ top: 0, left: 0, above: false });
+  const tableWrapRef = useRef<HTMLDivElement>(null);
   const statsRevealRef = useScrollReveal();
   const countryRevealRef = useScrollReveal();
   const deviceRevealRef = useScrollReveal();
+  const levelDistRevealRef = useScrollReveal();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -603,6 +610,18 @@ export default function LeaderboardPage() {
     }
   }, []);
 
+  // Load search history from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('toh-lb-search-history');
+      if (stored) {
+        queueMicrotask(() => setSearchHistory(JSON.parse(stored)));
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
   // Toggle favorite player
   const toggleFavorite = useCallback((username: string) => {
     setFavorites((prev) => {
@@ -612,6 +631,27 @@ export default function LeaderboardPage() {
       localStorage.setItem('toh-favorites', JSON.stringify(next));
       return next;
     });
+  }, []);
+
+  // Player hover tooltip handlers
+  const handleRowMouseEnter = useCallback((player: Player, event: React.MouseEvent<HTMLTableRowElement>) => {
+    const row = event.currentTarget;
+    const rect = row.getBoundingClientRect();
+    const wrapRect = tableWrapRef.current?.getBoundingClientRect();
+    const tooltipHeight = 200; // estimated tooltip height
+    const spaceAbove = rect.top - (wrapRect?.top ?? 0);
+    const spaceBelow = (wrapRect?.bottom ?? window.innerHeight) - rect.bottom;
+    const above = spaceAbove > tooltipHeight || spaceAbove > spaceBelow;
+    setTooltipPos({
+      top: above ? rect.top - 8 : rect.bottom + 8,
+      left: rect.left + rect.width / 2,
+      above,
+    });
+    setHoveredPlayer(player);
+  }, []);
+
+  const handleRowMouseLeave = useCallback(() => {
+    setHoveredPlayer(null);
   }, []);
 
   // Filtered and sorted active players
@@ -702,6 +742,76 @@ export default function LeaderboardPage() {
       total,
     };
   }, [filteredActive]);
+
+  // Level distribution from active filtered players
+  const levelDistribution = useMemo(() => {
+    const total = filteredActive.length;
+    const ranges = [
+      { label: '0–100', min: 0, max: 100 },
+      { label: '101–200', min: 101, max: 200 },
+      { label: '201–300', min: 201, max: 300 },
+      { label: '301–400', min: 301, max: 400 },
+      { label: '401–500', min: 401, max: 500 },
+      { label: '501–600', min: 501, max: 600 },
+      { label: '601–700', min: 601, max: 700 },
+      { label: '701–800', min: 701, max: 800 },
+      { label: '801–900', min: 801, max: 900 },
+      { label: '901–1000', min: 901, max: 1000 },
+      { label: '1001+', min: 1001, max: Infinity },
+    ];
+    const buckets = ranges.map((r) => {
+      const count = filteredActive.filter((p) => p.level >= r.min && p.level <= r.max).length;
+      return {
+        label: r.label,
+        count,
+        percentage: total > 0 ? (count / total) * 100 : 0,
+      };
+    });
+    const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+    return { buckets, total, maxCount };
+  }, [filteredActive]);
+
+  // Save search to history (debounced via blur/timeout)
+  const searchSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSearchToHistory = useCallback((term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((s) => s.toLowerCase() !== trimmed.toLowerCase());
+      const next = [trimmed, ...filtered].slice(0, 5);
+      localStorage.setItem('toh-lb-search-history', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const handleActiveSearchChange = useCallback((value: string) => {
+    setActiveSearch(value);
+    if (searchSaveTimerRef.current) clearTimeout(searchSaveTimerRef.current);
+    if (value.trim().length >= 2) {
+      searchSaveTimerRef.current = setTimeout(() => {
+        saveSearchToHistory(value);
+      }, 1000);
+    }
+  }, [saveSearchToHistory]);
+
+  const handleActiveSearchBlur = useCallback(() => {
+    setActiveSearchFocused(false);
+    if (activeSearch.trim().length >= 2) {
+      if (searchSaveTimerRef.current) clearTimeout(searchSaveTimerRef.current);
+      saveSearchToHistory(activeSearch);
+    }
+  }, [activeSearch, saveSearchToHistory]);
+
+  const clearSearchHistory = useCallback(() => {
+    setSearchHistory([]);
+    localStorage.removeItem('toh-lb-search-history');
+  }, []);
+
+  const applySearchHistoryChip = useCallback((term: string) => {
+    setActiveSearch(term);
+    saveSearchToHistory(term);
+    activeSearchRef.current?.focus();
+  }, [saveSearchToHistory]);
 
   // Country distribution from active filtered players
   const countryDistribution = useMemo(() => {
@@ -991,6 +1101,49 @@ export default function LeaderboardPage() {
           )
         )}
 
+        {/* Level Distribution */}
+        {!loading && tab === 'active' && levelDistribution.total > 0 && (
+          <div className="toh-level-dist-panel toh-reveal" ref={levelDistRevealRef}>
+            <button
+              className="toh-level-dist-header"
+              onClick={() => setLevelDistExpanded((v) => !v)}
+              aria-expanded={levelDistExpanded}
+              aria-label="Toggle level distribution"
+            >
+              <span className="toh-level-dist-title">
+                <span className="toh-level-dist-title-icon">📊</span>
+                Level Distribution
+              </span>
+              <span className="toh-level-dist-meta">
+                <span className="toh-level-dist-total-badge">
+                  {levelDistribution.total} players
+                </span>
+                <span className={`toh-level-dist-chevron ${levelDistExpanded ? 'expanded' : ''}`}>▾</span>
+              </span>
+            </button>
+            <div className={`toh-level-dist-body ${levelDistExpanded ? 'expanded' : 'collapsed'}`}>
+              <div className="toh-level-dist-chart">
+                {levelDistribution.buckets.map((item, i) => (
+                  <div className="toh-level-dist-row" key={item.label} style={{ animationDelay: `${i * 50}ms` }}>
+                    <span className="toh-level-dist-label">{item.label}</span>
+                    <div className="toh-level-dist-bar-track">
+                      <div
+                        className="toh-level-dist-bar-fill"
+                        style={{ width: `${levelDistribution.maxCount > 0 ? (item.count / levelDistribution.maxCount) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="toh-level-dist-count">{item.count}</span>
+                    <span className="toh-level-dist-pct">{item.percentage.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+              <div className="toh-level-dist-footer">
+                {levelDistribution.total} players · 11 level ranges
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Country Distribution */}
         {!loading && tab === 'active' && countryDistribution.countries.length > 0 && (
           <div className="toh-country-panel toh-reveal" ref={countryRevealRef}>
@@ -1148,15 +1301,36 @@ export default function LeaderboardPage() {
         {tab === 'active' && (
           <div>
             <div className="toh-lb-controls">
-              <div className="toh-lb-search-box">
+              <div className="toh-lb-search-box" style={{ position: 'relative' }}>
                 <Search size={16} className="toh-lb-search-icon" />
                 <input
                   ref={activeSearchRef}
                   type="text"
                   placeholder="Search username or country…"
                   value={activeSearch}
-                  onChange={(e) => setActiveSearch(e.target.value)}
+                  onChange={(e) => handleActiveSearchChange(e.target.value)}
+                  onFocus={() => setActiveSearchFocused(true)}
+                  onBlur={handleActiveSearchBlur}
                 />
+                {activeSearchFocused && !activeSearch.trim() && searchHistory.length > 0 && (
+                  <div className="toh-lb-search-history">
+                    {searchHistory.map((term) => (
+                      <button
+                        key={term}
+                        className="toh-lb-search-history-chip"
+                        onMouseDown={(e) => { e.preventDefault(); applySearchHistoryChip(term); }}
+                      >
+                        {term}
+                      </button>
+                    ))}
+                    <button
+                      className="toh-lb-search-history-clear"
+                      onMouseDown={(e) => { e.preventDefault(); clearSearchHistory(); }}
+                    >
+                      Clear history
+                    </button>
+                  </div>
+                )}
               </div>
               <select
                 className="toh-lb-filter-select"
@@ -1265,7 +1439,7 @@ export default function LeaderboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="toh-lb-table-wrap toh-lb-table-mobile">
+              <div className="toh-lb-table-wrap toh-lb-table-mobile" ref={tableWrapRef}>
                 <table className="toh-lb-table">
                   <thead>
                     <tr>
@@ -1310,9 +1484,11 @@ export default function LeaderboardPage() {
                       activePaged.map((player, i) => (
                         <tr
                           key={player.rank}
-                          className={`toh-lb-row toh-lb-row-enhanced ${player.rank <= 3 ? 'top-3' : ''} ${favorites.includes(player.username) ? 'toh-fav-row' : ''}`}
+                          className={`toh-lb-row toh-lb-row-enhanced ${player.rank <= 3 ? 'top-3' : ''} ${favorites.includes(player.username) ? 'toh-fav-row' : ''} ${i % 2 === 0 ? 'toh-lb-row-even' : ''}`}
                           style={{ animationDelay: `${i * 30}ms` }}
                           onClick={() => setSelectedPlayer(player)}
+                          onMouseEnter={(e) => handleRowMouseEnter(player, e)}
+                          onMouseLeave={handleRowMouseLeave}
                         >
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1410,6 +1586,60 @@ export default function LeaderboardPage() {
               <span className="toh-lb-milestone-legend-item">🔥 Level 1000+</span>
               <span className="toh-lb-milestone-legend-item">⭐ Level 500+</span>
               <span className="toh-lb-milestone-legend-item">✦ Level 100+</span>
+            </div>
+          </div>
+        )}
+
+        {/* Player Hover Tooltip */}
+        {hoveredPlayer && tab === 'active' && (
+          <div
+            className="toh-player-tooltip"
+            style={{
+              top: tooltipPos.above ? 'auto' : tooltipPos.top,
+              bottom: tooltipPos.above ? window.innerHeight - tooltipPos.top : 'auto',
+              left: tooltipPos.left,
+              transform: 'translateX(-50%)',
+            }}
+            onMouseEnter={() => {}} // keep tooltip visible if mouse moves to it
+            onMouseLeave={handleRowMouseLeave}
+          >
+            <div className="toh-player-tooltip-header">
+              <div className="toh-player-tooltip-avatar">{hoveredPlayer.username[0]}</div>
+              <div>
+                <div className="toh-player-tooltip-name">{hoveredPlayer.username}</div>
+                <div className="toh-player-tooltip-rank">
+                  #{hoveredPlayer.rank} · Rank
+                </div>
+              </div>
+              {getMilestoneBadge(hoveredPlayer.level) && (
+                <span className="toh-player-tooltip-badge">{getMilestoneBadge(hoveredPlayer.level)}</span>
+              )}
+            </div>
+            <div className="toh-player-tooltip-stats">
+              <div className="toh-player-tooltip-stat">
+                <span className="toh-player-tooltip-stat-label">Level</span>
+                <span className="toh-player-tooltip-stat-value">Lv. {hoveredPlayer.level.toLocaleString()}</span>
+              </div>
+              <div className="toh-player-tooltip-stat">
+                <span className="toh-player-tooltip-stat-label">Country</span>
+                <span className="toh-player-tooltip-stat-value">{hoveredPlayer.country === '-' ? '—' : hoveredPlayer.country}</span>
+              </div>
+              <div className="toh-player-tooltip-stat">
+                <span className="toh-player-tooltip-stat-label">Device</span>
+                <span className="toh-player-tooltip-stat-value">{hoveredPlayer.device === '-' ? '—' : hoveredPlayer.device.trim()}</span>
+              </div>
+            </div>
+            <div className="toh-player-tooltip-bar-section">
+              <div className="toh-player-tooltip-bar-label">
+                <span>Progress</span>
+                <span>{Math.min(100, (hoveredPlayer.level / maxLevel) * 100).toFixed(1)}%</span>
+              </div>
+              <div className="toh-player-tooltip-bar">
+                <div
+                  className="toh-player-tooltip-bar-fill"
+                  style={{ width: `${Math.min(100, (hoveredPlayer.level / maxLevel) * 100)}%` }}
+                />
+              </div>
             </div>
           </div>
         )}
