@@ -5,11 +5,28 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 
 const VALID_PAGES: PageType[] = ['home', 'commands', 'race', 'leaderboard'];
+
+interface Notification {
+  id: number;
+  emoji: string;
+  title: string;
+  desc: string;
+  time: string;
+  unread: boolean;
+}
+
+const INITIAL_NOTIFICATIONS: Notification[] = [
+  { id: 1, emoji: '🏆', title: 'New #1 Player', desc: 'Skyourain reached Level 1,341!', time: '2m ago', unread: true },
+  { id: 2, emoji: '🏁', title: 'Race Completed', desc: 'wilder270522 won a race', time: '15m ago', unread: true },
+  { id: 3, emoji: '📊', title: 'Leaderboard Update', desc: '300 players now tracked', time: '1h ago', unread: false },
+  { id: 4, emoji: '⚡', title: 'New Milestone', desc: 'chatgris31 hit Level 900!', time: '3h ago', unread: false },
+  { id: 5, emoji: '🤖', title: 'Bot Update', desc: 'v2.4 Race Mode is live!', time: '1d ago', unread: false },
+];
 
 /* ════════════════════════════════════════════
    Background Particles Canvas
@@ -174,6 +191,28 @@ export default function MainPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLight, setIsLight] = useState(false);
   const [showKbHelp, setShowKbHelp] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Scroll progress tracker
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const viewHeight = window.innerHeight;
+      const maxScroll = docHeight - viewHeight;
+      const progress = maxScroll > 0 ? (scrollY / maxScroll) * 100 : 0;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial calculation
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Theme: read from localStorage on mount
   useEffect(() => {
@@ -184,6 +223,14 @@ export default function MainPage() {
     } else {
       queueMicrotask(() => setIsLight(false));
       document.documentElement.classList.remove('light');
+    }
+  }, []);
+
+  // Cookie consent: check localStorage on mount
+  useEffect(() => {
+    const consent = localStorage.getItem('toh-cookie-consent');
+    if (!consent) {
+      queueMicrotask(() => setShowCookieBanner(true));
     }
   }, []);
 
@@ -237,7 +284,20 @@ export default function MainPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help
+  // Close notification dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
+  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help, / focuses search
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -250,18 +310,47 @@ export default function MainPage() {
       if (e.key === 'Escape') {
         if (showKbHelp) {
           setShowKbHelp(false);
+        } else if (showNotifications) {
+          setShowNotifications(false);
         } else if (mobileMenuOpen) {
           setMobileMenuOpen(false);
         }
       }
-      if (e.key === '?' || e.key === '/') {
+      if (e.key === '?') {
         e.preventDefault();
         setShowKbHelp((prev) => !prev);
+      }
+      if (e.key === '/') {
+        e.preventDefault();
+        if (currentPage === 'commands' || currentPage === 'leaderboard') {
+          window.dispatchEvent(new CustomEvent('toh-focus-search'));
+        } else {
+          setShowKbHelp((prev) => !prev);
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate, mobileMenuOpen, showKbHelp]);
+  }, [navigate, mobileMenuOpen, showKbHelp, showNotifications, currentPage]);
+
+  // Notification handlers
+  const markAsRead = useCallback((id: number) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
+    );
+  }, []);
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  }, []);
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  // Cookie consent handlers
+  const acceptCookies = useCallback(() => {
+    localStorage.setItem('toh-cookie-consent', 'accepted');
+    setShowCookieBanner(false);
+  }, []);
 
   const navLinks: { key: PageType; label: string }[] = [
     { key: 'home', label: 'Home' },
@@ -274,6 +363,17 @@ export default function MainPage() {
     <div className="toh-content" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Background Particles */}
       <ParticlesCanvas />
+
+      {/* Scroll Progress Indicator */}
+      <div
+        className="toh-scroll-progress"
+        style={{ width: `${scrollProgress}%` }}
+        role="progressbar"
+        aria-valuenow={Math.round(scrollProgress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Page scroll progress"
+      />
 
       {/* Navigation */}
       <nav className={`toh-nav ${scrolled ? 'scrolled' : ''}`}>
@@ -298,6 +398,53 @@ export default function MainPage() {
           </div>
 
           <div className="toh-nav-actions">
+            {/* Notification Bell */}
+            <div ref={notifRef} style={{ position: 'relative' }}>
+              <button
+                className="toh-notif-btn"
+                onClick={() => setShowNotifications((v) => !v)}
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                title="Notifications"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && <span className="toh-notif-badge">{unreadCount}</span>}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="toh-notif-dropdown">
+                  <div className="toh-notif-header">
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <button className="toh-notif-mark-all" onClick={markAllAsRead}>
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="toh-notif-list">
+                    {notifications.map((notif) => (
+                      <button
+                        key={notif.id}
+                        className={`toh-notif-item ${notif.unread ? 'toh-notif-item-unread' : ''}`}
+                        onClick={() => markAsRead(notif.id)}
+                      >
+                        <span className="toh-notif-item-emoji">{notif.emoji}</span>
+                        <div className="toh-notif-item-content">
+                          <div className="toh-notif-item-title">{notif.title}</div>
+                          <div className="toh-notif-item-desc">{notif.desc}</div>
+                        </div>
+                        <span className="toh-notif-item-time">{notif.time}</span>
+                        {notif.unread && <span className="toh-notif-item-dot" />}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="toh-notif-footer">
+                    <span className="toh-notif-footer-text">That&apos;s all for now!</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               className="toh-kb-toggle toh-theme-toggle"
               onClick={() => setShowKbHelp((v) => !v)}
@@ -336,45 +483,35 @@ export default function MainPage() {
           </button>
         </div>
 
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="toh-mobile-menu open" style={{
-            maxWidth: 1200,
-            margin: '0 auto',
-            padding: '12px 22px 16px',
-            background: 'rgba(5, 5, 5, 0.95)',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '0 0 999px 999px',
-          }}>
-            {navLinks.map((link) => (
-              <button
-                key={link.key}
-                className={`toh-nav-link ${currentPage === link.key ? 'active' : ''}`}
-                onClick={() => navigate(link.key)}
-                style={{ padding: '10px 14px', width: '100%', textAlign: 'left' }}
-              >
-                {link.label}
-              </button>
-            ))}
-            <a
-              href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="toh-btn-primary"
-              style={{ marginTop: 8, justifyContent: 'center', width: '100%' }}
-            >
-              Add to Server
-            </a>
+        {/* Mobile menu - always rendered, CSS transition controls visibility */}
+        <div className={`toh-mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+          {navLinks.map((link) => (
             <button
-              className="toh-theme-toggle"
-              onClick={toggleTheme}
-              aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-              style={{ margin: '0 auto' }}
+              key={link.key}
+              className={`toh-nav-link ${currentPage === link.key ? 'active' : ''}`}
+              onClick={() => navigate(link.key)}
             >
-              {isLight ? <Moon size={18} /> : <Sun size={18} />}
+              {link.label}
             </button>
-          </div>
-        )}
+          ))}
+          <a
+            href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="toh-btn-primary"
+            style={{ marginTop: 8, justifyContent: 'center', width: '100%' }}
+          >
+            Add to Server
+          </a>
+          <button
+            className="toh-theme-toggle"
+            onClick={toggleTheme}
+            aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+            style={{ margin: '0 auto' }}
+          >
+            {isLight ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </div>
       </nav>
 
       {/* Page Title Indicator */}
@@ -464,13 +601,13 @@ export default function MainPage() {
           {/* Bottom Bar */}
           <div className="toh-footer-bottom">
             <p className="toh-footer-copy">
-              © {new Date().getFullYear()} TOH Bot — Built for the{' '}
+              &copy; {new Date().getFullYear()} TOH Bot &mdash; Built for the{' '}
               <a href="https://www.roblox.com/games/1962086868" target="_blank" rel="noopener noreferrer">
                 Tower of Hell
               </a>{' '}
               community.
             </p>
-            <p className="toh-footer-love">Made with ❤️ · Powered by Next.js</p>
+            <p className="toh-footer-love">Made with ❤️ &middot; Powered by Next.js</p>
           </div>
         </div>
       </footer>
@@ -506,6 +643,10 @@ export default function MainPage() {
                 <div className="toh-kb-desc">Navigate to Leaderboard</div>
               </div>
               <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">/</kbd></div>
+                <div className="toh-kb-desc">Focus search (Commands &amp; Leaderboard)</div>
+              </div>
+              <div className="toh-kb-row">
                 <div className="toh-kb-keys"><kbd className="toh-kb-key">Esc</kbd></div>
                 <div className="toh-kb-desc">Close menu / panel</div>
               </div>
@@ -516,6 +657,30 @@ export default function MainPage() {
             </div>
             <div className="toh-kb-footer">
               Press <kbd className="toh-kb-key toh-kb-key-sm">?</kbd> or <kbd className="toh-kb-key toh-kb-key-sm">Esc</kbd> to close
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cookie Consent Banner */}
+      {showCookieBanner && (
+        <div className="toh-cookie-banner">
+          <div className="toh-cookie-content">
+            <p className="toh-cookie-text">
+              We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
+            </p>
+            <div className="toh-cookie-actions">
+              <a
+                href="https://www.cookiesandyou.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="toh-cookie-learn"
+              >
+                Learn More
+              </a>
+              <button className="toh-cookie-accept" onClick={acceptCookies}>
+                Accept
+              </button>
             </div>
           </div>
         </div>

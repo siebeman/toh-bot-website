@@ -184,6 +184,20 @@ const ACHIEVEMENTS = [
 ];
 
 /* ════════════════════════════════════════════
+   Live Activity Feed Data
+══════════════════════════════ */
+const ACTIVITIES = [
+  { emoji: '🏆', user: 'Skyourain', action: 'reached Level 1,341', time: '2 min ago', type: 'level' },
+  { emoji: '🏁', user: 'wilder270522', action: 'won a Race Mode match', time: '15 min ago', type: 'race' },
+  { emoji: '⬆️', user: 'chatgris31', action: 'moved to Rank #3', time: '32 min ago', type: 'rank' },
+  { emoji: '🔥', user: 'RealMorri', action: 'hit Level 900 milestone', time: '1 hr ago', type: 'milestone' },
+  { emoji: '🤝', user: 'xXGamerXx', action: 'joined the leaderboard', time: '2 hr ago', type: 'join' },
+  { emoji: '📊', user: 'ProClimber99', action: 'achieved 500 XP in one day', time: '3 hr ago', type: 'xp' },
+  { emoji: '🏁', user: 'TowerKing', action: 'set a new race record', time: '4 hr ago', type: 'race' },
+  { emoji: '⬆️', user: 'SkyClimber', action: 'climbed 15 ranks today', time: '5 hr ago', type: 'rank' },
+];
+
+/* ════════════════════════════════════════════
    Animated Counter for XP Calculator
 ══════════════════════════════ */
 function AnimatedCounter({ target, duration = 800 }: { target: number; duration?: number }) {
@@ -213,8 +227,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const changelogRevealRef = useScrollReveal();
   const faqRevealRef = useScrollReveal();
   const dykRevealRef = useScrollReveal();
+  const activityRevealRef = useScrollReveal();
   const achieveRevealRef = useScrollReveal();
   const calcRevealRef = useScrollReveal();
+
+  // Activity Feed — auto-rotation breathing highlight
+  const [highlightIndex, setHighlightIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHighlightIndex((prev) => (prev + 1) % ACTIVITIES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Did You Know — rotating tips
   const [dykIndex, setDykIndex] = useState(0);
@@ -559,6 +584,40 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   }}
                   aria-label={`Go to tip ${i + 1}`}
                 />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Activity Feed */}
+      <section className="toh-activity-section toh-reveal" ref={activityRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">
+              <span className="toh-activity-live-dot" />
+              Live Feed
+            </div>
+            <h2 className="toh-section-title">Recent Activity</h2>
+            <p className="toh-section-subtitle">
+              See what&apos;s happening in the Tower of Hell community right now.
+            </p>
+          </div>
+          <div className="toh-activity-card">
+            <div className="toh-activity-list">
+              {ACTIVITIES.map((act, i) => (
+                <div
+                  key={`${act.user}-${act.action}`}
+                  className={`toh-activity-item toh-activity-item-stagger ${i === highlightIndex ? 'toh-activity-item-highlight' : ''}`}
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="toh-activity-item-emoji">{act.emoji}</div>
+                  <div className="toh-activity-item-content">
+                    <span className="toh-activity-item-user">{act.user}</span>{' '}
+                    <span className="toh-activity-item-action">{act.action}</span>
+                  </div>
+                  <div className="toh-activity-item-time">{act.time}</div>
+                </div>
               ))}
             </div>
           </div>

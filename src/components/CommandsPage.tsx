@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Search, Copy, Check } from 'lucide-react';
 
 interface Command {
@@ -96,6 +96,18 @@ export default function CommandsPage() {
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /* Listen for global search focus event */
+  useEffect(() => {
+    const onFocusSearch = () => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    };
+    window.addEventListener('toh-focus-search', onFocusSearch);
+    return () => window.removeEventListener('toh-focus-search', onFocusSearch);
+  }, []);
 
   /* Load recently viewed from localStorage on mount */
   useEffect(() => {
@@ -226,6 +238,7 @@ export default function CommandsPage() {
         <div className="toh-cmd-search-wrap">
           <Search size={16} className="toh-cmd-search-icon" />
           <input
+            ref={searchInputRef}
             type="text"
             className="toh-cmd-search"
             placeholder="Search commands, usage syntax..."

@@ -539,6 +539,8 @@ export default function LeaderboardPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [activePage, setActivePage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  const activeSearchRef = useRef<HTMLInputElement>(null);
+  const bannedSearchRef = useRef<HTMLInputElement>(null);
 
   const [bannedSearch, setBannedSearch] = useState('');
   const [banReasonFilter, setBanReasonFilter] = useState('');
@@ -548,6 +550,20 @@ export default function LeaderboardPage() {
   const [showCompare, setShowCompare] = useState(false);
   const [countryExpanded, setCountryExpanded] = useState(true);
   const [deviceExpanded, setDeviceExpanded] = useState(true);
+
+  /* Listen for global search focus event */
+  useEffect(() => {
+    const onFocusSearch = () => {
+      if (tab === 'active' && activeSearchRef.current) {
+        activeSearchRef.current.focus();
+      } else if (tab === 'banned' && bannedSearchRef.current) {
+        bannedSearchRef.current.focus();
+      }
+    };
+    window.addEventListener('toh-focus-search', onFocusSearch);
+    return () => window.removeEventListener('toh-focus-search', onFocusSearch);
+  }, [tab]);
+
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const statsRevealRef = useScrollReveal();
@@ -705,6 +721,24 @@ export default function LeaderboardPage() {
       }));
     return { countries: sorted, totalCountries: map.size, totalWithCountry };
   }, [filteredActive]);
+
+  // Simulated rank changes (generated once based on players)
+  const rankChanges = useMemo(() => {
+    const changes: Record<string, { direction: 'up' | 'down' | 'same'; amount: number }> = {};
+    // Use a simple deterministic seed based on username for consistency within a session
+    for (const p of players) {
+      const hash = p.username.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      const roll = hash % 10; // 0-9
+      if (roll < 6) {
+        changes[p.username] = { direction: 'same', amount: 0 };
+      } else if (roll < 8) {
+        changes[p.username] = { direction: 'up', amount: (hash % 5) + 1 };
+      } else {
+        changes[p.username] = { direction: 'down', amount: (hash % 3) + 1 };
+      }
+    }
+    return changes;
+  }, [players]);
 
   // Pagination
   const activeTotalPages = Math.max(1, Math.ceil(filteredActive.length / pageSize));
@@ -1117,6 +1151,7 @@ export default function LeaderboardPage() {
               <div className="toh-lb-search-box">
                 <Search size={16} className="toh-lb-search-icon" />
                 <input
+                  ref={activeSearchRef}
                   type="text"
                   placeholder="Search username or country…"
                   value={activeSearch}
@@ -1150,7 +1185,7 @@ export default function LeaderboardPage() {
                 <option value="updated-desc">Sort: Last Updated</option>
               </select>
               <button
-                className={`toh-fav-filter-btn ${showFavoritesOnly ? 'toh-fav-filter-active' : ''}`}
+                className={`toh-lb-fav-filter ${showFavoritesOnly ? 'toh-lb-fav-filter-active' : ''}`}
                 onClick={() => setShowFavoritesOnly((v) => !v)}
               >
                 <Star size={14} fill={showFavoritesOnly ? 'var(--toh-gold)' : 'none'} />
@@ -1275,11 +1310,12 @@ export default function LeaderboardPage() {
                       activePaged.map((player, i) => (
                         <tr
                           key={player.rank}
-                          className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''} ${favorites.includes(player.username) ? 'toh-fav-row' : ''}`}
+                          className={`toh-lb-row toh-lb-row-enhanced ${player.rank <= 3 ? 'top-3' : ''} ${favorites.includes(player.username) ? 'toh-fav-row' : ''}`}
                           style={{ animationDelay: `${i * 30}ms` }}
                           onClick={() => setSelectedPlayer(player)}
                         >
                           <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             {player.rank <= 3 ? (
                               <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
                                 #{player.rank}
@@ -1293,15 +1329,22 @@ export default function LeaderboardPage() {
                                 #{player.rank}
                               </span>
                             )}
+                            {rankChanges[player.username]?.direction === 'up' && (
+                              <span className="toh-lb-rank-change toh-lb-rank-up">↑+{rankChanges[player.username].amount}</span>
+                            )}
+                            {rankChanges[player.username]?.direction === 'down' && (
+                              <span className="toh-lb-rank-change toh-lb-rank-down">↓-{rankChanges[player.username].amount}</span>
+                            )}
+                            </div>
                           </td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <button
-                                className={`toh-fav-star-btn ${favorites.includes(player.username) ? 'toh-fav-star-active' : ''}`}
+                                className={`toh-lb-star-btn ${favorites.includes(player.username) ? 'toh-lb-star-btn-active' : ''}`}
                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(player.username); }}
                                 aria-label={favorites.includes(player.username) ? 'Remove from favorites' : 'Add to favorites'}
                               >
-                                <Star size={14} fill={favorites.includes(player.username) ? 'var(--toh-gold)' : 'none'} />
+                                <Star size={16} fill={favorites.includes(player.username) ? 'var(--toh-gold)' : 'none'} />
                               </button>
                               <span className="toh-lb-username">{player.username}</span>
                             </div>
@@ -1378,6 +1421,7 @@ export default function LeaderboardPage() {
               <div className="toh-lb-search-box">
                 <Search size={16} className="toh-lb-search-icon" />
                 <input
+                  ref={bannedSearchRef}
                   type="text"
                   placeholder="Search username…"
                   value={bannedSearch}

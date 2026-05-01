@@ -1,6 +1,339 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 9 - Latest)
+## Current Project Status (Round 14 - Latest)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, activity feed, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~11,012 lines.
+
+### Round 14 QA Assessment & Development Summary
+
+**QA Testing Results:**
+- All 4 pages tested with agent-browser and VLM analysis
+- 0 lint errors, 0 runtime errors
+- No critical bugs found
+- Minor VLM observations: nav shortcut numbers visible on hover (by design), cookie banner overlaps slightly with content (expected behavior)
+
+**New Features Implemented (Round 14):**
+1. ✅ **Scroll Progress Indicator** — Thin 3px indigo→violet gradient bar at top of page, fills from left to right as user scrolls
+2. ✅ **Notification Center** — Bell icon in nav with red badge, glassmorphism dropdown with 5 mock notifications, mark-as-read functionality
+3. ✅ **Cookie Consent Banner** — Fixed bottom banner on first visit, localStorage persistence, slide-up animation
+4. ✅ **Search Keyboard Shortcut (/)** — Press `/` to focus search on Commands/Leaderboard pages via custom events
+5. ✅ **Enhanced Mobile Menu** — CSS-based slide animation instead of conditional rendering
+6. ✅ **Favorite/Star Button on Leaderboard** — Star icon in table rows, gold fill when favorited, localStorage persistence
+7. ✅ **Filter by Favorites** — Toggle button to show only favorited players
+8. ✅ **Rank Change Indicators** — Simulated ↑/↓ arrows next to rank numbers (green for up, red for down)
+9. ✅ **Live Activity Feed** — 8 mock activities with auto-rotation highlight effect, glassmorphism card, green pulsing dot
+10. ✅ **Card 3D Tilt Enhancement** — Feature cards tilt slightly on hover with perspective transform
+11. ✅ **Button Press Effect** — Primary and ghost buttons scale down on active/press state
+12. ✅ **Enhanced Row Hover** — Left border accent and gradient background on leaderboard table rows
+
+**Styling Improvements:**
+- ~1000 lines of new CSS with toh-* prefix convention
+- Complete light theme support for all new components
+- Responsive breakpoints for all new features
+- Reduced motion support for accessibility
+
+### Unresolved Issues / Next Phase Priorities
+
+1. **globals.css is ~11,000 lines** — could benefit from CSS splitting or PurgeCSS in production build (medium priority)
+2. **Particle canvas performance** on low-end devices - could benefit from requestAnimationFrame throttling (low priority)
+3. **FAQ accessibility** — collapsed answers still present in DOM for screen readers (aria-hidden recommended)
+4. **Keyboard shortcuts panel** — no focus trapping when open (accessibility concern)
+5. **WebSocket integration** for live leaderboard updates — would require backend changes (nice-to-have)
+6. **Social media share buttons** on player profiles (nice-to-have)
+7. **Mobile leaderboard** — hidden columns reduce usability, consider tap-to-expand detail rows
+8. **Real-time notification updates** — connect notification center to actual data source
+
+---
+
+## Previous Project Status (Round 13)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~11,012 lines.
+
+### Completed Work (Round 13 - Task 4e)
+
+**Enhanced CSS Styles for globals.css:**
+1. ✅ **Scroll Progress Bar** — Enhanced `.toh-scroll-progress` with `--indigo-glow` variable in box-shadow, `border-radius: 0 2px 2px 0`, `pointer-events: none`. Light theme override with softer glow.
+2. ✅ **Notification Center** — Complete set of enhanced CSS classes:
+   - `.toh-notif-btn` — 36px circle with semi-transparent bg, border, hover glow effect
+   - `.toh-notif-badge` — 8px red pulsing dot positioned at top-right
+   - `.toh-notif-dropdown` — 360px glass panel, position absolute, right-aligned, backdrop blur 24px, border-radius 16px
+   - `.toh-notif-header` — Flex header with title and mark-all-read button
+   - `.toh-notif-mark-read` — Text-style button, indigo color, hover effect
+   - `.toh-notif-list` — Scrollable list, max-height 360px
+   - `.toh-notif-item` — 14px padding, border-bottom, flex layout, hover bg
+   - `.toh-notif-item-unread` — Left accent border (3px solid indigo), slightly brighter bg
+   - `.toh-notif-item-emoji` — 36px circle, semi-transparent bg, flex center
+   - `.toh-notif-item-content` — Flex 1, min-width 0
+   - `.toh-notif-item-title` — Font-weight 600
+   - `.toh-notif-item-desc` — Font-size 13px, dim color
+   - `.toh-notif-item-time` — Font-size 11px, monospace, very dim
+   - `.toh-notif-footer` — Footer with border-top
+   - All notification classes include light theme overrides
+3. ✅ **Cookie Consent Banner** — Enhanced with:
+   - `.toh-cookie-banner` — Fixed bottom, z-index 9998, gradient border-top, padding 20px, slide-up animation
+   - `.toh-cookie-inner` — Max-width 960px, flex layout with content and buttons
+   - `.toh-cookie-text` — Font-size 14px, dimmed color
+   - `.toh-cookie-actions` — Flex buttons area with gap
+   - `.toh-cookie-accept` — Indigo gradient button, smaller size
+   - `.toh-cookie-learn` — Ghost style link
+   - `@keyframes toh-cookie-slide-up` — Slide from bottom with cubic-bezier
+   - Light theme overrides for all cookie classes
+4. ✅ **Leaderboard Star/Favorite Button** — `.toh-lb-star-btn` (16px, transparent bg, border-radius 50%), `.toh-lb-star-btn:hover` (gold color, scale 1.15), `.toh-lb-star-btn-active` (gold #ffd700), `.toh-lb-star-btn-active:hover` (slightly different shade #ffed4a)
+5. ✅ **Leaderboard Favorites Filter** — `.toh-lb-fav-filter` (pill style, dim color), `.toh-lb-fav-filter-active` (indigo bg, star highlight)
+6. ✅ **Rank Change Indicators** — `.toh-lb-rank-change` (inline-flex), `.toh-lb-rank-up` (green #4ade80), `.toh-lb-rank-down` (red #f87171)
+7. ✅ **Enhanced Leaderboard Row Hover** — `.toh-lb-row-enhanced` (position relative, transition), `.toh-lb-row-enhanced:hover` (3px left border accent indigo, background gradient)
+8. ✅ **Activity Feed** — Complete set:
+   - `.toh-activity-section` — Padding 80px 0
+   - `.toh-activity-card` — Glass card, border-radius 20px, backdrop blur
+   - `.toh-activity-list` — Max-height 320px, overflow-y auto, custom scrollbar
+   - `.toh-activity-item` — Flex, gap 14px, border-left 3px transparent, hover effect
+   - `.toh-activity-item-emoji` — 36px circle, semi-transparent bg
+   - `.toh-activity-item-content` — Flex 1, min-width 0
+   - `.toh-activity-item-user` — Font-weight 600, white color
+   - `.toh-activity-item-action` — Dim, font-size 13px
+   - `.toh-activity-item-time` — Dim, font-size 11px, monospace
+   - `.toh-activity-live-dot` — 8px green circle, pulsing animation
+   - `.toh-activity-item-stagger` — Fade-in animation with variable delay
+   - `.toh-activity-item-highlight` — Subtle pulsing indigo background
+   - `@keyframes toh-activity-highlight` — Background pulse from rgba(139,124,246,0.08) to transparent
+   - `@keyframes toh-activity-live-pulse` — Green dot pulsing with opacity + box-shadow
+   - `@keyframes toh-activity-stagger-in` — Fade-in + slide-up
+9. ✅ **Mobile Menu Animation** — `.toh-mobile-menu` with CSS transitions for max-height (0→400px), opacity (0→1), padding. `.toh-mobile-menu.open` with smooth transition.
+10. ✅ **Card 3D Tilt Enhancement** — `.toh-feature-card` with `transform-style: preserve-3d`. `.toh-feature-card:hover` with `perspective(1000px) rotateX(1deg) rotateY(-1deg) translateY(-4px)`.
+11. ✅ **Button Ripple Effect** — `.toh-btn-primary:active` and `.toh-btn-ghost:active` with `scale(0.97)` and `transition: transform 0.1s ease`.
+12. ✅ **Light Theme Overrides** — `html.light` selectors for ALL new classes with appropriate light mode colors (white/light backgrounds, dark text, adjusted colors).
+13. ✅ **Responsive Breakpoints** — `@media (max-width: 640px)` for all new components (notification dropdown, cookie inner, star btn, fav filter, rank change, activity section/card/list/items, enhanced row).
+14. ✅ **Reduced Motion Support** — `@media (prefers-reduced-motion: reduce)` for all animated components, including feature card 3D tilt reset and activity item stagger reset.
+
+---
+
+Task ID: 4e
+Agent: CSS Enhancement Agent
+Task: Add new CSS styles to globals.css with toh- prefix, light theme overrides, responsive breakpoints, and reduced motion support
+
+Work Log:
+- Read worklog.md for project history and context
+- Read end of globals.css (lines 9550-10012) to understand existing structure and where to append
+- Identified existing CSS classes that overlap with task (scroll progress, notif center, cookie consent, mobile menu, feature card, buttons)
+- Identified CSS variables available (--indigo-glow, --indigo, --violet, --dim, --toh-white, --toh-text)
+- Appended ~1000 lines of new/enhanced CSS at end of globals.css (after line 10012, before final closing)
+- All 12 categories of CSS added with proper toh- prefix convention
+- Light theme overrides (html.light selectors) for all new/enhanced classes
+- Responsive breakpoints (@media max-width: 640px) for all new components
+- Reduced motion support (@media prefers-reduced-motion: reduce) for all animated elements
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- All 12 CSS categories successfully appended to globals.css
+- Enhanced existing classes (scroll progress, notif center, cookie consent) with updated styling via CSS cascade
+- New classes added (activity feed, leaderboard star/fav/rank/row, cookie-inner, notif-mark-read)
+- 3D tilt effect on feature cards, button press/ripple effects
+- Complete light theme support via html.light selectors
+- Full responsive and reduced motion support
+- 0 lint errors, no runtime errors
+
+---
+
+## Previous Project Status (Round 12)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Completed Work (Round 12 - Task 4f)
+
+**Live Activity Feed (Home Page):**
+1. ✅ **Activity Feed Data** — Added `ACTIVITIES` array with 8 mock activities (Skyourain reached Level 1,341; wilder270522 won a Race Mode match; chatgris31 moved to Rank #3; RealMorri hit Level 900 milestone; xXGamerXx joined the leaderboard; ProClimber99 achieved 500 XP in one day; TowerKing set a new race record; SkyClimber climbed 15 ranks today). Each activity has emoji, user, action, time, and type fields.
+2. ✅ **Section Layout** — Added between the "Did You Know" section and the "Achievements" section. Uses the same section-header pattern: eyebrow "Live Feed" with green pulsing dot, title "Recent Activity", subtitle about community activity.
+3. ✅ **Activity Feed Design** — Glass-morphism card (`toh-activity-card`) containing a scrollable list (`toh-activity-list`, max-height 320px) of activity items. Each item has: emoji, username (bold/white via `toh-activity-item-user`), action text (dimmed via `toh-activity-item-action`), time (right-aligned, very dim via `toh-activity-item-time`). Green pulsing dot next to "Live Feed" eyebrow (`toh-activity-live-dot`). Subtle left border accent on each item (indigo/violet gradient). Staggered entrance animation (`toh-activity-item-stagger`). Hover effect on items (subtle background change).
+4. ✅ **CSS Classes Added** — All using `toh-` prefix: `toh-activity-section`, `toh-activity-card`, `toh-activity-list`, `toh-activity-item`, `toh-activity-item-emoji`, `toh-activity-item-content`, `toh-activity-item-user`, `toh-activity-item-action`, `toh-activity-item-time`, `toh-activity-live-dot`, `toh-activity-item-stagger`, `toh-activity-item-highlight`.
+5. ✅ **Auto-rotation** — Added `highlightIndex` state with 4-second interval that cycles through activities. The currently highlighted item gets the `toh-activity-item-highlight` class, creating a "breathing" effect that makes the feed feel alive.
+6. ✅ **useScrollReveal** — Added `activityRevealRef` using the existing `useScrollReveal` hook for entrance animation.
+
+**Component Changes:**
+- `HomePage.tsx`: Added `ACTIVITIES` data array (8 mock activities). Added `activityRevealRef` via `useScrollReveal`. Added `highlightIndex` state and `useEffect` with 4-second interval for auto-rotation breathing effect. Added Live Activity Feed section JSX between DYK and Achievements sections.
+
+**CSS Classes to Add to globals.css (by separate agent):**
+- `.toh-activity-section` — section wrapper (padding, relative position)
+- `.toh-activity-card` — glass card container (glassmorphism, backdrop blur, border)
+- `.toh-activity-list` — scrollable list (max-height 320px, overflow-y auto, custom scrollbar)
+- `.toh-activity-item` — individual activity item (flex row, left border accent indigo/violet gradient, padding, hover background change, transition)
+- `.toh-activity-item-emoji` — emoji icon (flex-shrink 0, font-size)
+- `.toh-activity-item-content` — text content (flex-grow 1, min-width 0)
+- `.toh-activity-item-user` — username (bold, white color)
+- `.toh-activity-item-action` — action description (dimmed color)
+- `.toh-activity-item-time` — timestamp (right-aligned, very dim, flex-shrink 0, small font)
+- `.toh-activity-live-dot` — pulsing green dot (8px circle, green bg, pulse animation)
+- `.toh-activity-item-stagger` — staggered entrance animation (fade-in + slide-up with delay)
+- `.toh-activity-item-highlight` — breathing highlight effect (subtle glow/pulse on the highlighted item)
+- Light theme overrides for all activity feed components (html.light selectors)
+- Responsive breakpoints for mobile
+- Reduced motion support for animations
+
+---
+
+Task ID: 4f
+Agent: Activity Feed Agent
+Task: Add Live Activity Feed section to HomePage between DYK and Achievements sections
+
+Work Log:
+- Read worklog.md for project history and context
+- Read HomePage.tsx (810 lines) to understand existing structure (Hero, Community Stats, DYK, Achievements, Features, XP Calculator, Changelog, FAQ sections)
+- Added ACTIVITIES data array with 8 mock activities after ACHIEVEMENTS array
+- Added activityRevealRef using existing useScrollReveal hook
+- Added highlightIndex state and useEffect with 4-second interval for auto-rotation breathing effect
+- Added Live Activity Feed section JSX between DYK section and Achievements section
+- Section includes: section-header with Live Feed eyebrow + pulsing green dot, Recent Activity title, subtitle
+- Activity card with scrollable list of 8 items, each with emoji, user, action, time
+- Staggered entrance animations (80ms delay per item)
+- Auto-rotation highlight class (toh-activity-item-highlight) applied to currently cycling item
+- All CSS classes use toh-* prefix convention
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Live Activity Feed section added between DYK and Achievements on Home page
+- 8 mock activities with emoji, user, action, time, and type fields
+- Green pulsing dot next to "Live Feed" eyebrow
+- Glass-morphism card with scrollable list (max-height 320px)
+- Staggered entrance animations for items
+- Auto-rotation breathing highlight effect (4-second interval)
+- All new CSS class references use toh-* prefix convention
+- 0 lint errors, no runtime errors
+
+---
+
+### Completed Work (Round 11 - Task 4c-4d)
+
+**Leaderboard Page Enhancements:**
+1. ✅ **Favorite/Star Button in Table Rows** — Updated star button in active player table rows to use new CSS class names (`toh-lb-star-btn` / `toh-lb-star-btn-active`). Star icon size increased from 14px to 16px. Star icon shows filled gold when favorited, outlined when not. Click handler uses `e.stopPropagation()` to prevent row click. Button positioned at the start of the username cell alongside the player name.
+2. ✅ **Filter by Favorites** — Updated the "Show Favorites Only" toggle button to use new CSS class names (`toh-lb-fav-filter` / `toh-lb-fav-filter-active`). Button shows Star icon, "Favorites" label, and count badge. When active, table shows only favorited players. State `showFavoritesOnly` already existed and was connected to the filter logic.
+3. ✅ **Rank Change Indicators** — Added `rankChanges` useMemo that generates deterministic simulated rank changes for all players based on a hash of their username. Distribution: 60% no change (no indicator), 20% rank up (green ↑ arrow with text like "+2"), 20% rank down (red ↓ arrow with text like "-1"). Stored as `Record<string, { direction: 'up' | 'down' | 'same'; amount: number }>`. Displayed next to the rank number in the active players table using `toh-lb-rank-change`, `toh-lb-rank-up`, and `toh-lb-rank-down` CSS classes.
+4. ✅ **Search Focus on Custom Event** — Already implemented in prior round. The `toh-focus-search` custom event listener was already present (lines 554-565), routing focus to the active or banned search input based on the current tab. No changes needed.
+5. ✅ **Enhanced Row Hover Effects** — Added `toh-lb-row-enhanced` class to active player table rows for CSS-based enhanced hover effects (left border accent slide-in, subtle background gradient shift). The actual visual styling will be handled by CSS in globals.css.
+
+**Component Changes:**
+- `LeaderboardPage.tsx`: Updated star button CSS classes from `toh-fav-star-btn`/`toh-fav-star-active` to `toh-lb-star-btn`/`toh-lb-star-btn-active`, increased Star icon size from 14px to 16px. Updated favorites filter button CSS classes from `toh-fav-filter-btn`/`toh-fav-filter-active` to `toh-lb-fav-filter`/`toh-lb-fav-filter-active`. Added `rankChanges` useMemo with deterministic hash-based rank change generation. Added rank change indicator display next to rank numbers in table rows. Added `toh-lb-row-enhanced` class to table row className.
+
+**CSS Classes to Add to globals.css (by separate agent):**
+- `.toh-lb-star-btn` — star button in table row (16px, hover scale, color transitions)
+- `.toh-lb-star-btn-active` — active/favorited state (gold filled star)
+- `.toh-lb-fav-filter` — favorites filter button
+- `.toh-lb-fav-filter-active` — active favorites filter state
+- `.toh-lb-rank-change` — rank change indicator container (small, subtle)
+- `.toh-lb-rank-up` — rank up indicator (green)
+- `.toh-lb-rank-down` — rank down indicator (red)
+- `.toh-lb-row-enhanced` — enhanced row hover (left border accent, background gradient)
+
+---
+
+Task ID: 4c-4d
+Agent: Leaderboard Enhancement Agent
+Task: Add favorite/star button updates, filter by favorites, rank change indicators, search focus event, and enhanced row hover effects to LeaderboardPage.tsx
+
+Work Log:
+- Read worklog.md for project history and context
+- Read LeaderboardPage.tsx (1503 lines) to understand existing structure
+- Identified existing star button in username cell (toh-fav-star-btn) and favorites filter button (toh-fav-filter-btn)
+- Identified existing toh-focus-search event listener already implemented
+- Updated star button CSS classes from toh-fav-star-btn/toh-fav-star-active to toh-lb-star-btn/toh-lb-star-btn-active
+- Increased Star icon size from 14px to 16px
+- Updated favorites filter button CSS classes from toh-fav-filter-btn/toh-fav-filter-active to toh-lb-fav-filter/toh-lb-fav-filter-active
+- Added rankChanges useMemo with deterministic hash-based generation: 60% same, 20% up, 20% down
+- Added rank change indicator JSX next to rank numbers in active player table rows (toh-lb-rank-change, toh-lb-rank-up, toh-lb-rank-down)
+- Added toh-lb-row-enhanced class to active player table rows for CSS hover enhancements
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Star button in table rows updated with new CSS classes and 16px icon size
+- Favorites filter button updated with new CSS classes
+- Rank change indicators displayed next to rank numbers (simulated, deterministic by username)
+- Search focus event listener already existed (no changes needed)
+- Enhanced row hover class added for CSS styling
+- All new CSS class references use toh-* prefix convention
+- 0 lint errors, no runtime errors
+
+---
+
+## Previous Project Status (Round 10)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Completed Work (Round 10 - Task 4a-4h)
+
+**New Global Features:**
+1. ✅ **Scroll Progress Indicator** — Thin indigo→violet gradient bar (3px) at the very top of the page (z-index 9999, above nav). Width = (scrollY / (docHeight - viewportHeight)) * 100%. Smooth 100ms ease-out transition. Uses `.toh-scroll-progress` class with box-shadow glow.
+2. ✅ **Notification Center** — Bell icon (lucide-react) in `.toh-nav-actions` with red dot badge showing unread count. Dropdown panel with glassmorphism (backdrop blur 24px, semi-transparent dark background, border-radius 16px). 5 mock notifications with emoji, title, desc, time, unread state. Click notification to mark as read. "Mark all as read" button. Outside-click to close. Escape key closes dropdown. Badge pulses animation. Responsive (340px width, full-width on small screens).
+3. ✅ **Cookie Consent Banner** — Fixed at bottom, appears on first visit. Dismissal stored in localStorage ('toh-cookie-consent'). Semi-transparent dark background with backdrop blur. Text about cookies, "Accept" button (indigo gradient matching toh-btn-primary), "Learn More" ghost link. Slide-up entrance animation (0.4s cubic-bezier). Responsive (stacks on mobile).
+4. ✅ **Search Keyboard Shortcut (/)** — Pressing `/` on Commands or Leaderboard page dispatches `window.dispatchEvent(new CustomEvent('toh-focus-search'))`. CommandsPage listens and focuses `.toh-cmd-search` input. LeaderboardPage listens and focuses active or banned search input based on current tab. `?` still toggles keyboard help. Added `/` shortcut row to keyboard help panel.
+5. ✅ **Enhanced Mobile Menu** — Always rendered (no conditional rendering), uses CSS class toggle (`open` class) for show/hide. CSS transitions for max-height (0.35s), opacity (0.25s), and padding (0.35s). Removed inline styles that were overriding the CSS transitions. Menu now slides down/up smoothly.
+
+**CSS Additions to globals.css (~400 lines):**
+- `.toh-scroll-progress` — fixed top bar with indigo→violet gradient, z-index 9999, box-shadow glow
+- `.toh-notif-btn` — bell button with hover effects
+- `.toh-notif-badge` — red count badge with pulse animation
+- `.toh-notif-dropdown` — glassmorphism dropdown with slide-in animation
+- `.toh-notif-header` / `.toh-notif-mark-all` — header with mark-all-as-read button
+- `.toh-notif-list` / `.toh-notif-item` / `.toh-notif-item-unread` — notification items with hover/unread states
+- `.toh-notif-item-emoji` / `.toh-notif-item-content` / `.toh-notif-item-title` / `.toh-notif-item-desc` / `.toh-notif-item-time` — item layout
+- `.toh-notif-item-dot` — indigo unread dot indicator
+- `.toh-notif-footer` / `.toh-notif-footer-text` — footer
+- `.toh-cookie-banner` — fixed bottom banner with slide-up animation
+- `.toh-cookie-content` / `.toh-cookie-text` — banner layout
+- `.toh-cookie-actions` / `.toh-cookie-learn` / `.toh-cookie-accept` — accept/learn-more buttons
+- Light theme overrides for all new components (html.light selectors)
+- Responsive breakpoints for cookie banner and notification dropdown
+- Reduced motion support for new animations
+
+**Component Changes:**
+- `page.tsx`: Added Bell import, scrollProgress/showNotifications/notifications/showCookieBanner states, scroll progress tracker useEffect, cookie consent useEffect, notification handlers (markAsRead, markAllAsRead, acceptCookies), outside-click handler, modified keyboard shortcut logic (/ → focus search, ? → toggle help), mobile menu always rendered with class toggle, notification dropdown JSX, cookie banner JSX, scroll progress bar JSX
+- `CommandsPage.tsx`: Added useRef import, searchInputRef, useEffect for toh-focus-search custom event listener, ref on search input
+- `LeaderboardPage.tsx`: Added activeSearchRef and bannedSearchRef refs, useEffect for toh-focus-search custom event listener (routes to correct ref based on tab), refs on both search inputs
+
+---
+
+Task ID: 4a-4h
+Agent: Global Features Agent
+Task: Add scroll progress indicator, notification center, cookie consent banner, search keyboard shortcut, enhanced mobile menu
+
+Work Log:
+- Read worklog.md for project history and context
+- Read page.tsx (528 lines) to understand current structure (nav, mobile menu, theme toggle, keyboard shortcuts, scroll-to-top, footer)
+- Read CommandsPage.tsx and LeaderboardPage.tsx to understand search input structure and refs
+- Read globals.css (9616 lines) to understand design tokens and toh-* prefix conventions
+- Updated page.tsx with 5 new features:
+  1. Scroll progress: scrollProgress state, useEffect with scroll listener, fixed div with gradient bar at top
+  2. Notification center: Bell icon, showNotifications state, notifications state with INITIAL_NOTIFICATIONS array, dropdown with glassmorphism, markAsRead/markAllAsRead handlers, red badge with count, outside-click close
+  3. Cookie consent: showCookieBanner state, localStorage check on mount, slide-up banner with Accept button and Learn More link
+  4. Search shortcut: `/` key dispatches toh-focus-search custom event on commands/leaderboard pages, `?` toggles help; added `/` row to keyboard help panel
+  5. Mobile menu: always rendered with CSS class toggle instead of conditional rendering, removed inline styles that overrode transitions
+- Added ~400 lines of CSS to globals.css with toh-* prefix:
+  - Scroll progress bar styles with indigo→violet gradient and glow
+  - Notification center styles (button, badge, dropdown, items, footer) with glassmorphism
+  - Cookie consent banner styles with slide-up animation
+  - Light theme overrides for all new components
+  - Responsive breakpoints
+  - Reduced motion support
+- Updated CommandsPage.tsx: added useRef, searchInputRef, toh-focus-search event listener, ref on search input
+- Updated LeaderboardPage.tsx: added activeSearchRef/bannedSearchRef, toh-focus-search event listener (routes by tab), refs on search inputs
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- All 5 global features implemented and working
+- Scroll progress indicator with gradient bar at top of page
+- Notification center with bell icon, dropdown, mock data, mark-as-read functionality
+- Cookie consent banner with localStorage persistence and slide-up animation
+- Search keyboard shortcut (/) focuses search on Commands and Leaderboard pages via custom events
+- Mobile menu now uses CSS transitions instead of conditional rendering
+- All new CSS uses toh-* prefix convention
+- Full light theme support via html.light selectors
+- Reduced motion support for new animations
+- 0 lint errors, no runtime errors
+
+---
+
+## Previous Project Status (Round 9)
 
 The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total codebase: ~13,400 lines across 6 key files.
 
