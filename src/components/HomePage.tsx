@@ -1,9 +1,72 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Trophy } from 'lucide-react';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
+}
+
+/* ════════════════════════════════════════════
+   Animated Stat Component
+══════════════════════════════ */
+function AnimatedStat({ target, duration, suffix, label }: { target: number; duration: number; suffix: string; label: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [value, setValue] = useState('0' + suffix);
+  const hasAnimated = useRef(false);
+
+  const animate = useCallback(() => {
+    if (hasAnimated.current) return;
+    hasAnimated.current = true;
+
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      if (suffix === 'K+' || suffix === '%') {
+        if (target >= 1000) {
+          const kVal = Math.round((eased * target) / 100) / 10;
+          setValue(kVal.toFixed(target % 1000 === 0 ? 0 : 1) + suffix);
+        } else {
+          setValue((eased * target).toFixed(target % 1 === 0 ? 0 : 1) + suffix);
+        }
+      } else {
+        const current = Math.round(eased * target);
+        setValue(current.toLocaleString() + suffix);
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, suffix]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          animate();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [animate]);
+
+  return (
+    <div className="toh-hero-stat" ref={ref}>
+      <div className="toh-hero-stat-num">{value}</div>
+      <div className="toh-hero-stat-label">{label}</div>
+      <div className="toh-hero-stat-glow" />
+    </div>
+  );
 }
 
 export default function HomePage({ onNavigate }: HomePageProps) {
@@ -57,7 +120,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <div className="toh-hero-eyebrow">
                 <span>🔥</span> Now with Race Mode
               </div>
-              <h1>
+              <h1 className="toh-hero-shimmer">
                 The Ultimate{' '}
                 <span>Tower of Hell</span>
                 {' '}Bot
@@ -80,25 +143,20 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <button className="toh-btn-ghost" onClick={() => onNavigate('commands')}>
                   View Commands →
                 </button>
+                <button className="toh-btn-ghost toh-btn-leaderboard-cta" onClick={() => onNavigate('leaderboard')}>
+                  <Trophy size={15} />
+                  View Leaderboard
+                </button>
               </div>
               <div className="toh-hero-stats">
-                <div className="toh-hero-stat">
-                  <div className="toh-hero-stat-num">5K+</div>
-                  <div className="toh-hero-stat-label">Servers</div>
-                </div>
-                <div className="toh-hero-stat">
-                  <div className="toh-hero-stat-num">50K+</div>
-                  <div className="toh-hero-stat-label">Users</div>
-                </div>
-                <div className="toh-hero-stat">
-                  <div className="toh-hero-stat-num">99.9%</div>
-                  <div className="toh-hero-stat-label">Uptime</div>
-                </div>
+                <AnimatedStat target={5000} duration={1500} suffix="K+" label="Servers" />
+                <AnimatedStat target={50000} duration={1500} suffix="K+" label="Users" />
+                <AnimatedStat target={99.9} duration={1500} suffix="%" label="Uptime" />
               </div>
             </div>
 
             {/* Discord Mockup */}
-            <div className="toh-mockup">
+            <div className="toh-mockup toh-mockup-float">
               <div className="toh-mockup-bar">
                 <div className="toh-mockup-dot" style={{ background: '#ff5f57' }} />
                 <div className="toh-mockup-dot" style={{ background: '#febc2e' }} />
@@ -160,10 +218,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </p>
           </div>
           <div className="toh-features-grid">
-            {features.map((f) => (
+            {features.map((f, i) => (
               <div
                 key={f.title}
-                className="toh-feature-card"
+                className="toh-feature-card toh-feature-card-stagger"
+                style={{ animationDelay: `${i * 100}ms` }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = ((e.clientX - rect.left) / rect.width) * 100;

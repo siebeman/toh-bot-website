@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, X } from 'lucide-react';
 
 interface Player {
   rank: number;
@@ -24,8 +24,6 @@ interface BannedPlayer {
 type SortField = 'rank' | 'level' | 'username' | 'updated';
 type TabType = 'active' | 'banned';
 
-const PAGE_SIZE = 50;
-
 const BAN_REASONS = [
   'Alts Abusement',
   'Exploiting',
@@ -38,6 +36,103 @@ const BAN_REASONS = [
   'Unknown',
 ];
 
+const PER_PAGE_OPTIONS = [25, 50, 100];
+
+/* ════════════════════════════════════════════
+   Player Detail Modal
+══════════════════════════════ */
+function PlayerModal({ player, onClose }: { player: Player; onClose: () => void }) {
+  const maxLevel = 1341;
+  const nextMilestone = Math.ceil((player.level + 1) / 100) * 100;
+  const milestoneProgress = ((player.level % 100) / 100) * 100;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="toh-modal-overlay" onClick={onClose}>
+      <div className="toh-modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="toh-modal-close" onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
+
+        <div className="toh-modal-header">
+          <div className="toh-modal-avatar">{player.username[0]}</div>
+          <div>
+            <div className="toh-modal-name">{player.username}</div>
+            <div className="toh-modal-rank">
+              {player.rank <= 3 && (
+                <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`} style={{ width: 24, height: 24, fontSize: '0.6rem', display: 'inline-flex', marginRight: 8 }}>
+                  {player.rank}
+                </span>
+              )}
+              {player.rank > 3 && <span style={{ color: 'var(--dim)', marginRight: 8 }}>#{player.rank}</span>}
+              Rank
+            </div>
+          </div>
+        </div>
+
+        <div className="toh-modal-section">
+          <div className="toh-modal-label">Level</div>
+          <div className="toh-modal-level-row">
+            <span className="toh-modal-level-num">Lv. {player.level.toLocaleString()}</span>
+            <span className="toh-modal-level-max">/ {maxLevel.toLocaleString()}</span>
+          </div>
+          <div className="toh-modal-level-bar-bg">
+            <div
+              className="toh-modal-level-bar-fill"
+              style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="toh-modal-section">
+          <div className="toh-modal-label">Next Milestone</div>
+          <div className="toh-modal-milestone">
+            <span>Level {nextMilestone}</span>
+            <span style={{ color: 'var(--dim)', fontSize: 13 }}>
+              {milestoneProgress.toFixed(0)}% there
+            </span>
+          </div>
+          <div className="toh-modal-level-bar-bg" style={{ height: 6 }}>
+            <div
+              className="toh-modal-level-bar-fill"
+              style={{ width: `${milestoneProgress}%`, background: 'linear-gradient(90deg, var(--indigo), #a78bfa)' }}
+            />
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 6 }}>
+            {nextMilestone - player.level} levels to go
+          </div>
+        </div>
+
+        <div className="toh-modal-grid">
+          <div className="toh-modal-field">
+            <div className="toh-modal-label">Country</div>
+            <div className="toh-modal-value">{player.country === '-' ? '—' : player.country}</div>
+          </div>
+          <div className="toh-modal-field">
+            <div className="toh-modal-label">Device</div>
+            <div className="toh-modal-value">{player.device === '-' ? '—' : player.device.trim()}</div>
+          </div>
+        </div>
+
+        <div className="toh-modal-section" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+          <div className="toh-modal-label">Last Updated</div>
+          <div className="toh-modal-value" style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: 13, color: 'var(--dim)' }}>
+            {player.last_updated === '-' ? '—' : player.last_updated}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
+   Leaderboard Page
+════════════════════════════════════════════ */
 export default function LeaderboardPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [banned, setBanned] = useState<BannedPlayer[]>([]);
@@ -51,10 +146,13 @@ export default function LeaderboardPage() {
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [activePage, setActivePage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   const [bannedSearch, setBannedSearch] = useState('');
   const [banReasonFilter, setBanReasonFilter] = useState('');
   const [bannedPage, setBannedPage] = useState(1);
+
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -139,14 +237,14 @@ export default function LeaderboardPage() {
   }, [banned, bannedSearch, banReasonFilter]);
 
   // Pagination
-  const activeTotalPages = Math.max(1, Math.ceil(filteredActive.length / PAGE_SIZE));
-  const activePaged = filteredActive.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE);
+  const activeTotalPages = Math.max(1, Math.ceil(filteredActive.length / pageSize));
+  const activePaged = filteredActive.slice((activePage - 1) * pageSize, activePage * pageSize);
 
-  const bannedTotalPages = Math.max(1, Math.ceil(filteredBanned.length / PAGE_SIZE));
-  const bannedPaged = filteredBanned.slice((bannedPage - 1) * PAGE_SIZE, bannedPage * PAGE_SIZE);
+  const bannedTotalPages = Math.max(1, Math.ceil(filteredBanned.length / pageSize));
+  const bannedPaged = filteredBanned.slice((bannedPage - 1) * pageSize, bannedPage * pageSize);
 
   // Reset page when filters change
-  useEffect(() => { setActivePage(1); }, [activeSearch, deviceFilter, sortField, sortDir]);
+  useEffect(() => { setActivePage(1); }, [activeSearch, deviceFilter, sortField, sortDir, pageSize]);
   useEffect(() => { setBannedPage(1); }, [bannedSearch, banReasonFilter]);
 
   const handleSort = (field: SortField) => {
@@ -186,14 +284,27 @@ export default function LeaderboardPage() {
       pages.push(totalPages);
     }
 
-    const startIdx = (currentPage - 1) * PAGE_SIZE + 1;
-    const endIdx = Math.min(currentPage * PAGE_SIZE, totalItems);
+    const startIdx = (currentPage - 1) * pageSize + 1;
+    const endIdx = Math.min(currentPage * pageSize, totalItems);
 
     return (
       <div className="toh-lb-pagination">
-        <span className="toh-lb-page-info">
-          Showing {startIdx}–{endIdx} of {totalItems}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="toh-lb-page-info">
+            Showing {startIdx}–{endIdx} of {totalItems}
+          </span>
+          <div className="toh-lb-perpage">
+            <select
+              className="toh-lb-perpage-select"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              {PER_PAGE_OPTIONS.map((n) => (
+                <option key={n} value={n}>{n}/page</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="toh-lb-page-btns">
           <button
             className="toh-lb-page-btn"
@@ -227,6 +338,23 @@ export default function LeaderboardPage() {
     );
   };
 
+  // Top 3 for podium
+  const top3 = filteredActive.slice(0, 3);
+  const podiumOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3; // 2nd, 1st, 3rd
+  const medalEmoji = ['🥇', '🥈', '🥉'];
+  const podiumHeights = ['140px', '180px', '120px'];
+  const podiumLabels = ['2nd', '1st', '3rd'];
+  const podiumColors = [
+    'linear-gradient(135deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.04))',
+    'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.04))',
+    'linear-gradient(135deg, rgba(205, 127, 50, 0.12), rgba(205, 127, 50, 0.04))',
+  ];
+  const podiumBorders = [
+    'rgba(192, 192, 192, 0.25)',
+    'rgba(255, 215, 0, 0.35)',
+    'rgba(205, 127, 50, 0.25)',
+  ];
+
   return (
     <section style={{ padding: '120px 0 80px' }}>
       <div className="toh-container">
@@ -237,10 +365,47 @@ export default function LeaderboardPage() {
           <p className="toh-lb-subtitle">Official Community Rankings · Top 300</p>
         </div>
 
+        {/* Top 3 Podium */}
+        {tab === 'active' && top3.length >= 3 && !activeSearch && !deviceFilter && (
+          <div className="toh-podium">
+            {podiumOrder.map((player, i) => {
+              const actualIndex = i === 0 ? 1 : i === 1 ? 0 : 2;
+              return (
+                <div
+                  key={player.username}
+                  className="toh-podium-card"
+                  style={{
+                    background: podiumColors[i],
+                    borderColor: podiumBorders[i],
+                    animationDelay: `${i * 100}ms`,
+                  }}
+                  onClick={() => setSelectedPlayer(player)}
+                >
+                  <div className="toh-podium-medal">{medalEmoji[actualIndex]}</div>
+                  <div className="toh-podium-avatar" style={{
+                    borderColor: podiumBorders[i],
+                  }}>
+                    {player.username[0]}
+                  </div>
+                  <div className="toh-podium-name">{player.username}</div>
+                  <div className="toh-podium-rank">{podiumLabels[i]}</div>
+                  <div className="toh-podium-level">Lv. {player.level.toLocaleString()}</div>
+                  <div className="toh-podium-bar-bg">
+                    <div className="toh-podium-bar-fill" style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }} />
+                  </div>
+                  {player.country !== '-' && (
+                    <div className="toh-podium-country">{player.country}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Status Bar */}
         <div className="toh-lb-status-bar">
           <div className="toh-lb-status-item">
-            <span className={`toh-lb-status-dot ${loading ? 'updating' : error ? 'error' : ''}`} />
+            <span className={`toh-lb-status-dot toh-pulse-prominent ${loading ? 'updating' : error ? 'error' : ''}`} />
             <span>
               {loading ? 'Loading data...' : error ? 'Error loading data' : 'Data loaded'}
             </span>
@@ -322,7 +487,7 @@ export default function LeaderboardPage() {
               </select>
             </div>
 
-            <div className="toh-lb-table-wrap">
+            <div className="toh-lb-table-wrap toh-lb-table-mobile">
               <table className="toh-lb-table">
                 <thead>
                   <tr>
@@ -364,8 +529,13 @@ export default function LeaderboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    activePaged.map((player) => (
-                      <tr key={player.rank} className={player.rank <= 3 ? 'top-3' : ''}>
+                    activePaged.map((player, i) => (
+                      <tr
+                        key={player.rank}
+                        className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''}`}
+                        style={{ animationDelay: `${i * 30}ms` }}
+                        onClick={() => setSelectedPlayer(player)}
+                      >
                         <td>
                           {player.rank <= 3 ? (
                             <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
@@ -416,6 +586,10 @@ export default function LeaderboardPage() {
             </div>
 
             {renderPagination(activePage, activeTotalPages, setActivePage, filteredActive.length)}
+
+            <div className="toh-lb-data-source">
+              Data sourced from official community records
+            </div>
           </div>
         )}
 
@@ -444,7 +618,7 @@ export default function LeaderboardPage() {
               </select>
             </div>
 
-            <div className="toh-lb-table-wrap">
+            <div className="toh-lb-table-wrap toh-lb-table-mobile">
               <table className="toh-lb-table">
                 <thead>
                   <tr>
@@ -466,8 +640,12 @@ export default function LeaderboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    bannedPaged.map((player) => (
-                      <tr key={player.rank}>
+                    bannedPaged.map((player, i) => (
+                      <tr
+                        key={player.rank}
+                        className="toh-lb-row"
+                        style={{ animationDelay: `${i * 30}ms` }}
+                      >
                         <td>
                           <span style={{
                             fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
@@ -514,6 +692,11 @@ export default function LeaderboardPage() {
           </div>
         )}
       </div>
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <PlayerModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      )}
     </section>
   );
 }

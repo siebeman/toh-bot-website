@@ -45,7 +45,28 @@ const COMMANDS: Command[] = [
   { name: '/prefix', desc: 'Change the bot\'s prefix', category: 'Admin' },
 ];
 
-const CATEGORIES = ['General', 'XP & Levels', 'Race', 'Leaderboard', 'Admin'];
+const CATEGORIES = [
+  { name: 'General', icon: '⚡' },
+  { name: 'XP & Levels', icon: '⚡' },
+  { name: 'Race', icon: '🏁' },
+  { name: 'Leaderboard', icon: '🏆' },
+  { name: 'Admin', icon: '⚙️' },
+];
+
+/* Highlight matching text */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const q = query.toLowerCase();
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="toh-highlight">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 export default function CommandsPage() {
   const [search, setSearch] = useState('');
@@ -62,13 +83,17 @@ export default function CommandsPage() {
   const grouped = useMemo(() => {
     const map: Record<string, Command[]> = {};
     for (const cat of CATEGORIES) {
-      const cmds = filtered.filter((c) => c.category === cat);
+      const cmds = filtered.filter((c) => c.category === cat.name);
       if (cmds.length > 0) {
-        map[cat] = cmds;
+        map[cat.name] = cmds;
       }
     }
     return map;
   }, [filtered]);
+
+  const getCategoryIcon = (name: string) => {
+    return CATEGORIES.find(c => c.name === name)?.icon || '⚡';
+  };
 
   return (
     <section style={{ padding: '120px 0 80px' }}>
@@ -95,13 +120,21 @@ export default function CommandsPage() {
         <div className="toh-cmd-categories">
           {Object.entries(grouped).map(([category, cmds]) => (
             <div key={category}>
-              <div className="toh-cmd-category-title">{category}</div>
+              <div className="toh-cmd-category-title">
+                <span className="toh-cmd-category-icon">{getCategoryIcon(category)}</span>
+                {category}
+                <span className="toh-cmd-count-badge">{cmds.length}</span>
+              </div>
               <div className="toh-cmd-grid">
                 {cmds.map((cmd) => (
-                  <div key={cmd.name} className="toh-cmd-card">
+                  <div key={cmd.name} className="toh-cmd-card toh-cmd-card-hover">
                     <div>
-                      <div className="toh-cmd-name">{cmd.name}</div>
-                      <div className="toh-cmd-desc">{cmd.desc}</div>
+                      <div className="toh-cmd-name">
+                        <HighlightText text={cmd.name} query={search} />
+                      </div>
+                      <div className="toh-cmd-desc">
+                        <HighlightText text={cmd.desc} query={search} />
+                      </div>
                     </div>
                   </div>
                 ))}

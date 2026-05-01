@@ -1,18 +1,198 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 
+const VALID_PAGES: PageType[] = ['home', 'commands', 'race', 'leaderboard'];
+
+/* ════════════════════════════════════════════
+   Background Particles Canvas
+══════════════════════════════ */
+function ParticlesCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let particles: { x: number; y: number; vx: number; vy: number; r: number; o: number; hue: number }[] = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const count = Math.min(60, Math.floor(window.innerWidth / 25));
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.5 + 0.5,
+        o: Math.random() * 0.25 + 0.1,
+        hue: Math.random() > 0.5 ? 250 + Math.random() * 30 : 0,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        if (p.hue > 0) {
+          ctx.fillStyle = `hsla(${p.hue}, 60%, 75%, ${p.o})`;
+        } else {
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.o * 0.6})`;
+        }
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+        if (p.hue > 0) {
+          ctx.fillStyle = `hsla(${p.hue}, 60%, 75%, ${p.o * 0.15})`;
+        } else {
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.o * 0.08})`;
+        }
+        ctx.fill();
+      }
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+      }}
+    />
+  );
+}
+
+/* ════════════════════════════════════════════
+   Page Transition Wrapper
+══════════════════════════════ */
+function PageTransition({ children, pageKey }: { children: React.ReactNode; pageKey: string }) {
+  const [visible, setVisible] = useState(false);
+  const [displayChildren, setDisplayChildren] = useState(children);
+  const [currentKey, setCurrentKey] = useState(pageKey);
+
+  useEffect(() => {
+    if (pageKey !== currentKey) {
+      const hideTimer = setTimeout(() => setVisible(false), 0);
+      const showTimer = setTimeout(() => {
+        setDisplayChildren(children);
+        setCurrentKey(pageKey);
+        setVisible(true);
+      }, 150);
+      return () => {
+        clearTimeout(hideTimer);
+        clearTimeout(showTimer);
+      };
+    } else {
+      const timer = setTimeout(() => setVisible(true), 10);
+      return () => clearTimeout(timer);
+    }
+  }, [pageKey, currentKey, children]);
+
+  return (
+    <div
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(12px)',
+        transition: 'opacity 300ms ease, transform 300ms ease',
+      }}
+    >
+      {displayChildren}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
+   Scroll-to-Top Button
+══════════════════════════════ */
+function ScrollToTop() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  if (!show) return null;
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="toh-scroll-top"
+      aria-label="Scroll to top"
+      style={{
+        opacity: show ? 1 : 0,
+        transform: show ? 'translateY(0)' : 'translateY(10px)',
+      }}
+    >
+      <ArrowUp size={18} />
+    </button>
+  );
+}
+
+/* ════════════════════════════════════════════
+   Main Page Component
+══════════════════════════════ */
 export default function MainPage() {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Hash-based routing: read hash on mount
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash && VALID_PAGES.includes(hash as PageType)) {
+      // Use microtask to avoid synchronous setState in effect
+      queueMicrotask(() => setCurrentPage(hash as PageType));
+    }
+  }, []);
+
+  // Listen for hashchange (back/forward)
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash && VALID_PAGES.includes(hash as PageType)) {
+        setCurrentPage(hash as PageType);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,11 +202,12 @@ export default function MainPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navigate = (page: string) => {
+  const navigate = useCallback((page: string) => {
     setCurrentPage(page as PageType);
     setMobileMenuOpen(false);
+    window.location.hash = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   const navLinks: { key: PageType; label: string }[] = [
     { key: 'home', label: 'Home' },
@@ -37,6 +218,9 @@ export default function MainPage() {
 
   return (
     <div className="toh-content" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Background Particles */}
+      <ParticlesCanvas />
+
       {/* Navigation */}
       <nav className={`toh-nav ${scrolled ? 'scrolled' : ''}`}>
         <div className="toh-nav-inner">
@@ -114,26 +298,42 @@ export default function MainPage() {
         )}
       </nav>
 
-      {/* Page Content */}
-      <main style={{ flex: 1 }}>
-        {currentPage === 'home' && <HomePage onNavigate={navigate} />}
-        {currentPage === 'commands' && <CommandsPage />}
-        {currentPage === 'race' && <RaceModePage />}
-        {currentPage === 'leaderboard' && <LeaderboardPage />}
+      {/* Page Content with Transitions */}
+      <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+        <PageTransition pageKey={currentPage}>
+          {currentPage === 'home' && <HomePage onNavigate={navigate} />}
+          {currentPage === 'commands' && <CommandsPage />}
+          {currentPage === 'race' && <RaceModePage />}
+          {currentPage === 'leaderboard' && <LeaderboardPage />}
+        </PageTransition>
       </main>
 
       {/* Footer */}
-      <footer className="toh-footer">
+      <footer className="toh-footer" style={{ position: 'relative', zIndex: 1 }}>
         <div className="toh-container">
-          <p>
-            © {new Date().getFullYear()} TOH Bot — Built for the{' '}
-            <a href="https://www.roblox.com/games/1962086868" target="_blank" rel="noopener noreferrer">
-              Tower of Hell
-            </a>{' '}
-            community.
-          </p>
+          <div className="toh-footer-content">
+            <div className="toh-footer-links">
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                <MessageCircle size={18} />
+              </a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <Github size={18} />
+              </a>
+            </div>
+            <p>
+              © {new Date().getFullYear()} TOH Bot — Built for the{' '}
+              <a href="https://www.roblox.com/games/1962086868" target="_blank" rel="noopener noreferrer">
+                Tower of Hell
+              </a>{' '}
+              community.
+            </p>
+            <p className="toh-footer-love">Made with ❤️</p>
+          </div>
         </div>
       </footer>
+
+      {/* Scroll to Top */}
+      <ScrollToTop />
     </div>
   );
 }

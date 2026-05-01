@@ -1,14 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function RaceModePage() {
+  const [seconds, setSeconds] = useState(227); // 3:47 = 227 seconds
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((s) => s + 1);
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const timerDisplay = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
   const racers = [
-    { name: 'Skyourain', level: 1341, progress: 100, medal: '🥇', status: 'done', time: '2:34' },
-    { name: 'wilder270522', level: 1067, progress: 87, medal: '🥈', status: 'racing', time: '-' },
-    { name: 'chatgris31', level: 933, progress: 72, medal: '🥉', status: 'racing', time: '-' },
-    { name: 'RealMorri', level: 900, progress: 54, medal: '', status: 'racing', time: '-' },
+    { name: 'Skyourain', level: 1341, progress: 100, medal: '🥇', status: 'done', time: '2:34', position: 1 },
+    { name: 'wilder270522', level: 1067, progress: 87, medal: '🥈', status: 'racing', time: '-', position: 2 },
+    { name: 'chatgris31', level: 933, progress: 72, medal: '🥉', status: 'racing', time: '-', position: 3 },
+    { name: 'RealMorri', level: 900, progress: 54, medal: '', status: 'racing', time: '-', position: 4 },
   ];
+
+  const positionColors: Record<number, string> = {
+    1: 'rgba(255, 215, 0, 0.2)',
+    2: 'rgba(192, 192, 192, 0.15)',
+    3: 'rgba(205, 127, 50, 0.15)',
+    4: 'rgba(139, 124, 246, 0.1)',
+  };
+
+  const positionBorders: Record<number, string> = {
+    1: 'rgba(255, 215, 0, 0.3)',
+    2: 'rgba(192, 192, 192, 0.25)',
+    3: 'rgba(205, 127, 50, 0.25)',
+    4: 'rgba(139, 124, 246, 0.15)',
+  };
+
+  const positionLabels: Record<number, string> = {
+    1: '1st',
+    2: '2nd',
+    3: '3rd',
+    4: '4th',
+  };
 
   return (
     <section className="toh-race-hero">
@@ -16,7 +52,7 @@ export default function RaceModePage() {
       <div className="toh-race-glow-2" />
       <div className="toh-container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="toh-live-badge">
-          <span className="toh-live-dot" />
+          <span className="toh-live-dot toh-pulse-prominent" />
           Race Mode Live
         </div>
         <h1 style={{
@@ -96,15 +132,15 @@ export default function RaceModePage() {
             Demo Race
           </h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span className="toh-chip live">
-              <span className="toh-live-dot" /> Live
+            <span className="toh-chip live toh-pulse-prominent-wrap">
+              <span className="toh-live-dot toh-pulse-prominent" /> Live
             </span>
             <span className="toh-chip">4 Racers</span>
             <span className="toh-chip waiting">Waiting for finish</span>
           </div>
         </div>
 
-        {/* Timer */}
+        {/* Timer with live animation */}
         <div style={{
           background: 'var(--surface)',
           border: '1px solid var(--toh-border)',
@@ -118,14 +154,18 @@ export default function RaceModePage() {
           <div style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: 1.5 }}>
             Elapsed
           </div>
-          <div style={{
-            fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-            fontSize: 28,
-            fontWeight: 600,
-            color: 'var(--indigo)',
-            letterSpacing: 2,
-          }}>
-            03:47
+          <div
+            className={`toh-timer ${tick % 2 === 0 ? 'toh-timer-pulse' : ''}`}
+            style={{
+              fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+              fontSize: 28,
+              fontWeight: 600,
+              color: 'var(--indigo)',
+              letterSpacing: 2,
+              transition: 'transform 0.15s ease',
+            }}
+          >
+            {timerDisplay}
           </div>
         </div>
 
@@ -134,15 +174,19 @@ export default function RaceModePage() {
           {racers.map((racer, i) => (
             <div
               key={racer.name}
-              className="toh-racer-card"
+              className="toh-racer-card toh-racer-enter"
               style={{
-                animationDelay: `${i * 0.1}s`,
-                borderColor: i === 0 ? 'rgba(34, 197, 94, 0.2)' : undefined,
+                animationDelay: `${i * 120}ms`,
+                borderColor: positionBorders[racer.position] || undefined,
+                background: i === 0 ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.03), var(--surface))' : undefined,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                <div style={{ fontSize: 22, width: 30, textAlign: 'center', flexShrink: 0 }}>
-                  {racer.medal || `#${i + 1}`}
+                <div className="toh-position-badge" style={{
+                  background: positionColors[racer.position],
+                  border: `1px solid ${positionBorders[racer.position]}`,
+                }}>
+                  {positionLabels[racer.position]}
                 </div>
                 <div className="toh-racer-avatar">
                   {racer.name[0]}
@@ -186,7 +230,7 @@ export default function RaceModePage() {
                 </div>
                 <div className="toh-progress-track">
                   <div
-                    className={`toh-progress-fill ${racer.progress >= 100 ? 'complete' : ''}`}
+                    className={`toh-progress-fill toh-progress-animate ${racer.progress >= 100 ? 'complete' : ''}`}
                     style={{ width: `${racer.progress}%` }}
                   />
                 </div>
