@@ -122,7 +122,7 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
             <div className="toh-modal-rank">
               {player.rank <= 3 && (
                 <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`} style={{ width: 24, height: 24, fontSize: '0.6rem', display: 'inline-flex', marginRight: 8 }}>
-                  {player.rank}
+                  #{player.rank}
                 </span>
               )}
               {player.rank > 3 && <span style={{ color: 'var(--dim)', marginRight: 8 }}>#{player.rank}</span>}
@@ -423,14 +423,14 @@ function ComparePlayersModal({
               'Rank',
               <div className="toh-compare-rank-cell">
                 {selectedA.rank <= 3 ? (
-                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedA.rank}`}>{selectedA.rank}</span>
+                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedA.rank}`}>#{selectedA.rank}</span>
                 ) : (
                   <span>#{selectedA.rank}</span>
                 )}
               </div>,
               <div className="toh-compare-rank-cell">
                 {selectedB.rank <= 3 ? (
-                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedB.rank}`}>{selectedB.rank}</span>
+                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedB.rank}`}>#{selectedB.rank}</span>
                 ) : (
                   <span>#{selectedB.rank}</span>
                 )}
@@ -1282,7 +1282,7 @@ export default function LeaderboardPage() {
                           <td>
                             {player.rank <= 3 ? (
                               <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
-                                {player.rank}
+                                #{player.rank}
                               </span>
                             ) : (
                               <span style={{

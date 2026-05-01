@@ -21,6 +21,57 @@ const INITIAL_RACERS: RacerState[] = [
   { name: 'RealMorri', level: 900, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
 ];
 
+/* ════════════════════════════════════════════
+   Racer Color Map
+══════════════════════════════ */
+const RACER_COLORS: Record<string, { class: string; color: string; glow: string; progress: string }> = {
+  Skyourain: { class: 'toh-racer-color-gold', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.3)', progress: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
+  wilder270522: { class: 'toh-racer-color-blue', color: '#3b82f6', glow: 'rgba(59, 130, 246, 0.3)', progress: 'linear-gradient(90deg, #3b82f6, #60a5fa)' },
+  chatgris31: { class: 'toh-racer-color-green', color: '#22c55e', glow: 'rgba(34, 197, 94, 0.3)', progress: 'linear-gradient(90deg, #22c55e, #4ade80)' },
+  RealMorri: { class: 'toh-racer-color-orange', color: '#f97316', glow: 'rgba(249, 115, 22, 0.3)', progress: 'linear-gradient(90deg, #f97316, #fb923c)' },
+};
+
+/* ════════════════════════════════════════════
+   Confetti Component
+══════════════════════════════ */
+const CONFETTI_COLORS = ['#f59e0b', '#3b82f6', '#22c55e', '#f97316', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#fbbf24', '#a78bfa'];
+
+function Confetti() {
+  const pieces = useRef(
+    Array.from({ length: 35 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.8,
+      duration: 1.5 + Math.random() * 1.5,
+      size: 6 + Math.random() * 8,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      rotation: Math.random() * 360,
+      drift: (Math.random() - 0.5) * 100,
+    }))
+  ).current;
+
+  return (
+    <div className="toh-confetti-container">
+      {pieces.map((p) => (
+        <div
+          key={p.id}
+          className="toh-confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            width: `${p.size}px`,
+            height: `${p.size * 0.6}px`,
+            backgroundColor: p.color,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            '--confetti-rotation': `${p.rotation}deg`,
+            '--confetti-drift': `${p.drift}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
 const MOCK_HISTORY = [
   { date: 'Mar 4, 2026', winner: 'Skyourain', racers: 6, bestTime: '2:14', avatar: 'S' },
   { date: 'Mar 3, 2026', winner: 'wilder270522', racers: 4, bestTime: '2:38', avatar: 'W' },
@@ -53,6 +104,7 @@ export default function RaceModePage() {
   const [finishedOrder, setFinishedOrder] = useState<string[]>([]);
   const [raceElapsed, setRaceElapsed] = useState<number>(0);
   const [onlinePlayers, setOnlinePlayers] = useState(47);
+  const [showConfetti, setShowConfetti] = useState(false);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -108,6 +160,7 @@ export default function RaceModePage() {
     setFinishedOrder([]);
     setRaceStartTime(0);
     setRaceElapsed(0);
+    setShowConfetti(false);
   }, []);
 
   const startRace = useCallback(() => {
@@ -179,6 +232,9 @@ export default function RaceModePage() {
                 animRef.current = null;
               }
               setPhase('finished');
+              setShowConfetti(true);
+              // Auto-remove confetti after 3 seconds
+              setTimeout(() => setShowConfetti(false), 3000);
             }
 
             return updated;
@@ -406,10 +462,11 @@ export default function RaceModePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {racers.map((racer, i) => {
             const pos = getRacerPosition(racer.name);
+            const racerColor = RACER_COLORS[racer.name];
             return (
               <div
                 key={racer.name}
-                className="toh-racer-card toh-racer-enter"
+                className={`toh-racer-card toh-racer-enter ${racerColor?.class || ''}`}
                 style={{
                   animationDelay: `${i * 120}ms`,
                   borderColor: racer.status === 'done' ? positionBorders[pos] || undefined : undefined,
@@ -423,7 +480,10 @@ export default function RaceModePage() {
                   }}>
                     {positionLabels[pos] || `${pos}th`}
                   </div>
-                  <div className="toh-racer-avatar">
+                  <div className="toh-racer-avatar" style={{
+                    boxShadow: racerColor ? `0 0 12px ${racerColor.glow}, 0 0 4px ${racerColor.glow}` : undefined,
+                    border: racerColor ? `2px solid ${racerColor.color}` : undefined,
+                  }}>
                     {racer.name[0]}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -485,7 +545,11 @@ export default function RaceModePage() {
                   <div className="toh-progress-track">
                     <div
                       className={`toh-progress-fill ${racer.progress >= 100 ? 'complete' : ''} ${racer.status === 'racing' ? 'racing' : ''}`}
-                      style={{ width: `${racer.progress}%`, transition: racer.status === 'racing' ? 'width 0.05s linear' : 'width 0.7s cubic-bezier(0.34, 1.4, 0.64, 1)' }}
+                      style={{
+                        width: `${racer.progress}%`,
+                        transition: racer.status === 'racing' ? 'width 0.05s linear' : 'width 0.7s cubic-bezier(0.34, 1.4, 0.64, 1)',
+                        background: racerColor ? racerColor.progress : undefined,
+                      }}
                     />
                   </div>
                 </div>
@@ -579,6 +643,9 @@ export default function RaceModePage() {
           )}
         </div>
       )}
+
+      {/* Confetti */}
+      {showConfetti && <Confetti />}
     </section>
   );
 }

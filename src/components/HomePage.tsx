@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Search } from 'lucide-react';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -171,12 +171,50 @@ const DYK_TIPS = [
   { emoji: '🔧', title: 'Admin Tools', desc: 'Server admins can configure TOH Bot with custom prefixes and channel settings.' },
 ];
 
+/* ════════════════════════════════════════════
+   Achievements Data
+══════════════════════════════ */
+const ACHIEVEMENTS = [
+  { emoji: '🏆', title: 'Tower Champion', desc: 'Reach Level 1000', pct: 87, complete: false },
+  { emoji: '🌍', title: 'World Traveler', desc: 'Players from 50+ countries', pct: 100, complete: true },
+  { emoji: '🏁', title: 'Race Veteran', desc: 'Complete 1000 races', pct: 80, complete: false },
+  { emoji: '⚡', title: 'Speed Demon', desc: 'Finish a race under 2 minutes', pct: 100, complete: true },
+  { emoji: '📊', title: 'Data Master', desc: 'Track 300+ active players', pct: 100, complete: true },
+  { emoji: '🤝', title: 'Community Builder', desc: 'Reach 5000 servers', pct: 92, complete: false },
+];
+
+/* ════════════════════════════════════════════
+   Animated Counter for XP Calculator
+══════════════════════════════ */
+function AnimatedCounter({ target, duration = 800 }: { target: number; duration?: number }) {
+  const [value, setValue] = useState(0);
+  const prevTarget = useRef(target);
+
+  useEffect(() => {
+    if (target === prevTarget.current && value === 0) return;
+    prevTarget.current = target;
+    const start = performance.now();
+    const startVal = value;
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(startVal + (target - startVal) * eased));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, value]);
+
+  return <>{value.toLocaleString()}</>;
+}
+
 export default function HomePage({ onNavigate }: HomePageProps) {
   const statsRevealRef = useScrollReveal();
   const featuresRevealRef = useScrollReveal();
   const changelogRevealRef = useScrollReveal();
   const faqRevealRef = useScrollReveal();
   const dykRevealRef = useScrollReveal();
+  const achieveRevealRef = useScrollReveal();
+  const calcRevealRef = useScrollReveal();
 
   // Did You Know — rotating tips
   const [dykIndex, setDykIndex] = useState(0);
@@ -194,6 +232,51 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     }, 5000);
     return () => clearInterval(timer);
   }, [dykPaused]);
+
+  // Quick Search
+  const [quickSearch, setQuickSearch] = useState('');
+  const [playerNames, setPlayerNames] = useState<string[]>([]);
+  const [quickSearchFocused, setQuickSearchFocused] = useState(false);
+  const quickSearchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/leaderboard')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.players) {
+          setPlayerNames(data.players.map((p: { username: string }) => p.username));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (quickSearchRef.current && !quickSearchRef.current.contains(e.target as Node)) {
+        setQuickSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const quickSearchMatches = quickSearch.length >= 3
+    ? playerNames.filter((n) => n.toLowerCase().includes(quickSearch.toLowerCase())).slice(0, 5)
+    : [];
+
+  // XP Calculator
+  const [calcCurrent, setCalcCurrent] = useState('');
+  const [calcTarget, setCalcTarget] = useState('');
+  const currentLevel = parseInt(calcCurrent) || 0;
+  const targetLevel = parseInt(calcTarget) || 0;
+  const xpNeeded = targetLevel > currentLevel ? (targetLevel - currentLevel) * 500 : 0;
+  const avgXpPerHour = 750;
+  const estimatedHours = xpNeeded > 0 ? Math.round(xpNeeded / avgXpPerHour) : 0;
+  const calcPct = targetLevel > currentLevel && currentLevel > 0
+    ? Math.min(100, Math.round((currentLevel / targetLevel) * 100))
+    : 0;
+
   const features = [
     {
       icon: '⚡',
@@ -272,6 +355,50 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   View Leaderboard
                 </button>
               </div>
+
+              {/* Quick Player Search */}
+              <div className="toh-quick-search-wrap" ref={quickSearchRef}>
+                <div className="toh-quick-search-box">
+                  <Search size={16} className="toh-quick-search-icon" />
+                  <input
+                    type="text"
+                    className="toh-quick-search-input"
+                    placeholder="Quick lookup: Search a player..."
+                    value={quickSearch}
+                    onChange={(e) => setQuickSearch(e.target.value)}
+                    onFocus={() => setQuickSearchFocused(true)}
+                    aria-label="Quick player search"
+                  />
+                  {quickSearch && (
+                    <button
+                      className="toh-quick-search-clear"
+                      onClick={() => { setQuickSearch(''); setQuickSearchFocused(false); }}
+                      aria-label="Clear search"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                {quickSearchFocused && quickSearchMatches.length > 0 && (
+                  <div className="toh-quick-search-dropdown">
+                    {quickSearchMatches.map((name) => (
+                      <button
+                        key={name}
+                        className="toh-quick-search-result"
+                        onClick={() => {
+                          setQuickSearch('');
+                          setQuickSearchFocused(false);
+                          onNavigate('leaderboard');
+                        }}
+                      >
+                        <Search size={12} />
+                        <span>{name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="toh-hero-stats">
                 <AnimatedStat target={5000} duration={1500} suffix="K+" label="Servers" />
                 <AnimatedStat target={50000} duration={1500} suffix="K+" label="Users" />
@@ -438,6 +565,48 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
+      {/* Achievements / Milestones Showcase */}
+      <section className="toh-achieve-section toh-reveal" ref={achieveRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">Milestones</div>
+            <h2 className="toh-section-title">Achievements</h2>
+            <p className="toh-section-subtitle">
+              Track our community milestones — see what we&apos;ve accomplished together.
+            </p>
+          </div>
+          <div className="toh-achieve-grid">
+            {ACHIEVEMENTS.map((a, i) => (
+              <div
+                key={a.title}
+                className={`toh-achieve-card ${a.complete ? 'toh-achieve-complete' : 'toh-achieve-progress'}`}
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <div className="toh-achieve-emoji">{a.emoji}</div>
+                <div className="toh-achieve-info">
+                  <div className="toh-achieve-title">{a.title}</div>
+                  <div className="toh-achieve-desc">{a.desc}</div>
+                </div>
+                {a.complete ? (
+                  <div className="toh-achieve-check">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="toh-achieve-bar-wrap">
+                    <div className="toh-achieve-bar-track">
+                      <div className="toh-achieve-bar-fill" style={{ width: `${a.pct}%` }} />
+                    </div>
+                    <div className="toh-achieve-bar-label">{a.pct}%</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section style={{ padding: '80px 0' }} className="toh-reveal" ref={featuresRevealRef}>
         <div className="toh-container">
@@ -472,6 +641,77 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* XP Level-Up Calculator */}
+      <section className="toh-calc-section toh-reveal" ref={calcRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">Tools</div>
+            <h2 className="toh-section-title">XP Calculator</h2>
+            <p className="toh-section-subtitle">
+              Calculate how much XP you need to reach your target level and estimate the time required.
+            </p>
+          </div>
+          <div className="toh-calc-card">
+            <div className="toh-calc-inputs">
+              <div className="toh-calc-field">
+                <label className="toh-calc-label" htmlFor="calc-current">Current Level</label>
+                <input
+                  id="calc-current"
+                  type="number"
+                  className="toh-calc-input"
+                  placeholder="e.g. 100"
+                  value={calcCurrent}
+                  onChange={(e) => setCalcCurrent(e.target.value.replace(/[^0-9]/g, ''))}
+                  min="0"
+                />
+              </div>
+              <div className="toh-calc-arrow">→</div>
+              <div className="toh-calc-field">
+                <label className="toh-calc-label" htmlFor="calc-target">Target Level</label>
+                <input
+                  id="calc-target"
+                  type="number"
+                  className="toh-calc-input"
+                  placeholder="e.g. 500"
+                  value={calcTarget}
+                  onChange={(e) => setCalcTarget(e.target.value.replace(/[^0-9]/g, ''))}
+                  min="0"
+                />
+              </div>
+            </div>
+            {xpNeeded > 0 && (
+              <div className="toh-calc-results">
+                <div className="toh-calc-result-row">
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value"><AnimatedCounter target={xpNeeded} /></div>
+                    <div className="toh-calc-result-label">XP Needed</div>
+                  </div>
+                  <div className="toh-calc-result-divider" />
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value">~<AnimatedCounter target={estimatedHours} />h</div>
+                    <div className="toh-calc-result-label">Estimated Time</div>
+                  </div>
+                  <div className="toh-calc-result-divider" />
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value">{targetLevel - currentLevel}</div>
+                    <div className="toh-calc-result-label">Levels to Go</div>
+                  </div>
+                </div>
+                <div className="toh-calc-progress-wrap">
+                  <div className="toh-calc-progress-track">
+                    <div className="toh-calc-progress-fill" style={{ width: `${calcPct}%` }} />
+                  </div>
+                  <div className="toh-calc-progress-label">{calcPct}% complete</div>
+                </div>
+              </div>
+            )}
+            {currentLevel > 0 && targetLevel > 0 && targetLevel <= currentLevel && (
+              <div className="toh-calc-error">Target level must be greater than current level.</div>
+            )}
           </div>
         </div>
       </section>

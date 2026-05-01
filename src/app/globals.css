@@ -1885,9 +1885,7 @@ button {
   color: var(--indigo);
   opacity: 0.65;
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .toh-cmd-card:hover .toh-cmd-usage {
@@ -8352,5 +8350,1267 @@ html.light .toh-fav-count-badge {
   }
   .toh-fav-card {
     width: 100%;
+  }
+}
+
+/* ════════════════════════════════════════════
+   ACHIEVEMENTS / MILESTONES SECTION
+══════════════════════════════ */
+
+.toh-achieve-section {
+  padding: 80px 0;
+  position: relative;
+}
+
+.toh-achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.toh-achieve-card {
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  animation: toh-achieve-stagger 0.5s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-achieve-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
+}
+
+.toh-achieve-complete::before {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+}
+
+.toh-achieve-progress::before {
+  background: linear-gradient(90deg, var(--indigo), var(--violet));
+}
+
+.toh-achieve-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+
+.toh-achieve-complete:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.toh-achieve-progress:hover {
+  border-color: rgba(139, 124, 246, 0.3);
+}
+
+.toh-achieve-emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.toh-achieve-info {
+  flex: 1;
+}
+
+.toh-achieve-title {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--toh-white);
+  margin-bottom: 4px;
+}
+
+.toh-achieve-desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.toh-achieve-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.toh-achieve-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toh-achieve-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.toh-achieve-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--indigo), var(--violet));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.toh-achieve-bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--violet);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+@keyframes toh-achieve-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Achievements responsive */
+@media (max-width: 768px) {
+  .toh-achieve-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .toh-achieve-grid {
+    grid-template-columns: 1fr;
+  }
+  .toh-achieve-card {
+    padding: 18px;
+  }
+}
+
+/* Achievements light theme */
+html.light .toh-achieve-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-achieve-card:hover {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-achieve-complete:hover {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+html.light .toh-achieve-progress:hover {
+  border-color: rgba(139, 124, 246, 0.25);
+}
+
+html.light .toh-achieve-bar-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-achieve-bar-label {
+  color: #7c6ed6;
+}
+
+/* ════════════════════════════════════════════
+   QUICK PLAYER SEARCH
+══════════════════════════════ */
+
+.toh-quick-search-wrap {
+  position: relative;
+  margin-top: 20px;
+  max-width: 400px;
+}
+
+.toh-quick-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.toh-quick-search-box:focus-within {
+  border-color: rgba(139, 124, 246, 0.35);
+  box-shadow: 0 0 0 3px rgba(139, 124, 246, 0.1);
+}
+
+.toh-quick-search-icon {
+  color: var(--dim);
+  flex-shrink: 0;
+}
+
+.toh-quick-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--toh-white);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.toh-quick-search-input::placeholder {
+  color: var(--dim);
+  opacity: 0.7;
+}
+
+.toh-quick-search-clear {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--dim);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.toh-quick-search-clear:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--toh-white);
+}
+
+.toh-quick-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface2);
+  border: 1px solid var(--toh-border);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 50;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  animation: toh-quick-search-in 0.15s ease;
+}
+
+@keyframes toh-quick-search-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toh-quick-search-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--toh-white);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.toh-quick-search-result:hover {
+  background: rgba(139, 124, 246, 0.1);
+}
+
+.toh-quick-search-result svg {
+  color: var(--dim);
+  flex-shrink: 0;
+}
+
+/* Quick Search light theme */
+html.light .toh-quick-search-box {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-quick-search-box:focus-within {
+  border-color: rgba(139, 124, 246, 0.35);
+}
+
+html.light .toh-quick-search-input {
+  color: var(--toh-white);
+}
+
+html.light .toh-quick-search-input::placeholder {
+  color: #6b6b82;
+}
+
+html.light .toh-quick-search-dropdown {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-quick-search-result:hover {
+  background: rgba(139, 124, 246, 0.06);
+}
+
+/* ════════════════════════════════════════════
+   XP LEVEL-UP CALCULATOR
+══════════════════════════════ */
+
+.toh-calc-section {
+  padding: 80px 0;
+  position: relative;
+}
+
+.toh-calc-card {
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 640px;
+  margin: 0 auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.toh-calc-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.toh-calc-field {
+  flex: 1;
+}
+
+.toh-calc-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.toh-calc-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--toh-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--toh-white);
+  font-size: 18px;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.toh-calc-input::placeholder {
+  color: var(--dim);
+  opacity: 0.5;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.toh-calc-input:focus {
+  border-color: rgba(139, 124, 246, 0.4);
+  box-shadow: 0 0 0 3px rgba(139, 124, 246, 0.1);
+}
+
+.toh-calc-arrow {
+  font-size: 24px;
+  color: var(--indigo);
+  font-weight: 700;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.toh-calc-results {
+  animation: toh-calc-in 0.3s ease;
+  border-top: 1px solid var(--toh-border);
+  padding-top: 24px;
+}
+
+@keyframes toh-calc-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toh-calc-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.toh-calc-result-item {
+  text-align: center;
+  flex: 1;
+}
+
+.toh-calc-result-value {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--toh-white);
+  line-height: 1.2;
+}
+
+.toh-calc-result-label {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+.toh-calc-result-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--toh-border);
+}
+
+.toh-calc-progress-wrap {
+  margin-top: 16px;
+}
+
+.toh-calc-progress-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.toh-calc-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--indigo), var(--violet));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.toh-calc-progress-label {
+  font-size: 12px;
+  color: var(--dim);
+  text-align: right;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-calc-error {
+  color: #ef4444;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* XP Calculator responsive */
+@media (max-width: 480px) {
+  .toh-calc-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .toh-calc-arrow {
+    text-align: center;
+    padding-bottom: 0;
+    transform: rotate(90deg);
+  }
+  .toh-calc-result-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .toh-calc-result-divider {
+    width: 40px;
+    height: 1px;
+  }
+  .toh-calc-card {
+    padding: 20px;
+  }
+}
+
+/* XP Calculator light theme */
+html.light .toh-calc-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-calc-input {
+  background: rgba(248, 249, 250, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-calc-input:focus {
+  border-color: rgba(139, 124, 246, 0.35);
+}
+
+html.light .toh-calc-progress-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-calc-result-divider {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ════════════════════════════════════════════
+   CONFETTI ANIMATION
+══════════════════════════════ */
+
+.toh-confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.toh-confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: toh-confetti-fall linear forwards;
+  transform: rotate(var(--confetti-rotation, 0deg));
+  opacity: 0.9;
+}
+
+@keyframes toh-confetti-fall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(var(--confetti-rotation, 0deg));
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) translateX(var(--confetti-drift, 0px)) rotate(calc(var(--confetti-rotation, 0deg) + 720deg));
+    opacity: 0;
+  }
+}
+
+/* Confetti light theme — no change needed, colors are absolute */
+
+/* ════════════════════════════════════════════
+   RACER COLOR AVATARS
+══════════════════════════════ */
+
+.toh-racer-color-gold .toh-racer-avatar {
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35), 0 0 4px rgba(245, 158, 11, 0.2);
+  border: 2px solid #f59e0b;
+}
+
+.toh-racer-color-blue .toh-racer-avatar {
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.35), 0 0 4px rgba(59, 130, 246, 0.2);
+  border: 2px solid #3b82f6;
+}
+
+.toh-racer-color-green .toh-racer-avatar {
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.35), 0 0 4px rgba(34, 197, 94, 0.2);
+  border: 2px solid #22c55e;
+}
+
+.toh-racer-color-orange .toh-racer-avatar {
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.35), 0 0 4px rgba(249, 115, 22, 0.2);
+  border: 2px solid #f97316;
+}
+
+/* Racer color progress bar glow on hover */
+.toh-racer-color-gold:hover {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.toh-racer-color-blue:hover {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.toh-racer-color-green:hover {
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+.toh-racer-color-orange:hover {
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+/* Racer color light theme */
+html.light .toh-racer-color-gold .toh-racer-avatar {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+}
+
+html.light .toh-racer-color-blue .toh-racer-avatar {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+}
+
+html.light .toh-racer-color-green .toh-racer-avatar {
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+}
+
+html.light .toh-racer-color-orange .toh-racer-avatar {
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+  border-color: #f97316;
+}
+
+/* ════════════════════════════════════════════
+   R9 — STYLING POLISH UTILITIES
+════════════════════════════════════════════ */
+
+/* ── 1. Glassmorphism Depth Enhancement ── */
+
+.toh-glass-deep {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 40%, rgba(139, 124, 246, 0.02)),
+    linear-gradient(135deg, rgba(139, 124, 246, 0.06), rgba(196, 181, 253, 0.03)),
+    linear-gradient(180deg, rgba(15, 15, 20, 0.85), rgba(10, 10, 15, 0.92));
+  border: 1px solid rgba(196, 181, 253, 0.15);
+  border-radius: 24px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(139, 124, 246, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.3s, box-shadow 0.3s, backdrop-filter 0.3s;
+}
+
+.toh-glass-deep:hover {
+  border-color: rgba(196, 181, 253, 0.28);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(139, 124, 246, 0.12),
+    0 0 24px rgba(139, 124, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+.toh-glass-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 40%),
+    rgba(15, 15, 20, 0.78);
+  border: 1px solid rgba(196, 181, 253, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+
+.toh-glass-card:hover {
+  border-color: rgba(196, 181, 253, 0.2);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(139, 124, 246, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ── 2. Gradient Border Animation ── */
+
+@keyframes toh-border-glow-shift {
+  0% {
+    border-color: #8b7cf6;
+    box-shadow: 0 0 12px rgba(139, 124, 246, 0.15);
+  }
+  33% {
+    border-color: #a78bfa;
+    box-shadow: 0 0 16px rgba(167, 139, 250, 0.2);
+  }
+  66% {
+    border-color: #9333ea;
+    box-shadow: 0 0 14px rgba(147, 51, 234, 0.18);
+  }
+  100% {
+    border-color: #8b7cf6;
+    box-shadow: 0 0 12px rgba(139, 124, 246, 0.15);
+  }
+}
+
+.toh-border-glow {
+  border: 1px solid #8b7cf6;
+  animation: toh-border-glow-shift 5s ease-in-out infinite;
+}
+
+.toh-podium-card.toh-border-glow {
+  animation: toh-border-glow-shift 5s ease-in-out infinite;
+}
+
+.toh-border-glow-subtle {
+  border: 1px solid rgba(139, 124, 246, 0.2);
+  animation: toh-border-glow-shift 5s ease-in-out infinite;
+}
+
+@keyframes toh-border-glow-subtle-shift {
+  0% {
+    border-color: rgba(139, 124, 246, 0.2);
+  }
+  33% {
+    border-color: rgba(167, 139, 250, 0.3);
+  }
+  66% {
+    border-color: rgba(147, 51, 234, 0.25);
+  }
+  100% {
+    border-color: rgba(139, 124, 246, 0.2);
+  }
+}
+
+.toh-border-glow-subtle {
+  animation: toh-border-glow-subtle-shift 5s ease-in-out infinite;
+}
+
+/* ── 3. Floating Animation Utility ── */
+
+@keyframes toh-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes toh-float-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.toh-float {
+  animation: toh-float 2s ease-in-out infinite;
+}
+
+.toh-float-slow {
+  animation: toh-float-slow 4s ease-in-out infinite;
+}
+
+/* ── 4. Glow Pulse Utility ── */
+
+@keyframes toh-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(139, 124, 246, 0.2), 0 0 20px rgba(139, 124, 246, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(139, 124, 246, 0.35), 0 0 40px rgba(139, 124, 246, 0.15);
+  }
+}
+
+@keyframes toh-glow-pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.2), 0 0 20px rgba(46, 204, 113, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.35), 0 0 40px rgba(46, 204, 113, 0.15);
+  }
+}
+
+@keyframes toh-glow-pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2), 0 0 20px rgba(255, 215, 0, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.35), 0 0 40px rgba(255, 215, 0, 0.15);
+  }
+}
+
+.toh-glow-pulse {
+  animation: toh-glow-pulse 2s ease-in-out infinite;
+}
+
+.toh-glow-pulse-green {
+  animation: toh-glow-pulse-green 2s ease-in-out infinite;
+}
+
+.toh-glow-pulse-gold {
+  animation: toh-glow-pulse-gold 2s ease-in-out infinite;
+}
+
+/* ── 5. Text Gradient Utility Classes ── */
+
+.toh-text-gradient {
+  background: linear-gradient(135deg, #8b7cf6 0%, #c4b5fd 50%, #8b7cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.toh-text-gradient-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #ffd700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.toh-text-gradient-green {
+  background: linear-gradient(135deg, #2ecc71 0%, #10b981 50%, #2ecc71 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── 6. Enhanced Section Dividers ── */
+
+.toh-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--indigo) 50%, transparent 100%);
+  border: none;
+  margin: 48px 0;
+  opacity: 0.3;
+}
+
+.toh-divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--indigo) 50%, transparent 100%);
+  border: none;
+  margin: 48px 0;
+  opacity: 0.4;
+  position: relative;
+}
+
+.toh-divider-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px 10% -2px 10%;
+  background: linear-gradient(90deg, transparent, rgba(139, 124, 246, 0.15), transparent);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* ── 7. Skeleton Shimmer Enhancement ── */
+
+@keyframes toh-shimmer-purple-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.toh-shimmer-purple {
+  position: relative;
+  overflow: hidden;
+  background: rgba(139, 124, 246, 0.06);
+}
+
+.toh-shimmer-purple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 124, 246, 0.1) 20%,
+    rgba(167, 139, 250, 0.15) 40%,
+    rgba(196, 181, 253, 0.12) 60%,
+    rgba(139, 124, 246, 0.1) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: toh-shimmer-purple-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+.toh-shimmer-light {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.toh-shimmer-light::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0.04) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: toh-shimmer-purple-sweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+/* ── 8. Interactive Card Spotlight Effect Enhancement ── */
+
+.toh-spotlight-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-spotlight-effect::before {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  background: radial-gradient(
+    circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(139, 124, 246, 0.14) 0%,
+    rgba(167, 139, 250, 0.06) 25%,
+    transparent 50%
+  );
+  pointer-events: none;
+  transition: opacity 0.3s;
+  opacity: 0;
+  z-index: 1;
+}
+
+.toh-spotlight-effect:hover::before {
+  opacity: 1;
+}
+
+/* ── 9. Tooltip Utility ── */
+
+.toh-tooltip {
+  position: relative;
+}
+
+.toh-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 6px 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    rgba(15, 15, 20, 0.92);
+  border: 1px solid rgba(196, 181, 253, 0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--toh-text);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.toh-tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── 10. Micro-typography Improvements ── */
+
+.toh-text-balance {
+  text-wrap: balance;
+}
+
+.toh-text-pretty {
+  text-wrap: pretty;
+}
+
+.toh-font-display {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+}
+
+.toh-font-mono {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-text-muted {
+  color: var(--dim);
+}
+
+.toh-text-accent {
+  color: var(--indigo);
+}
+
+/* ════════════════════════════════════════════
+   R9 — LIGHT THEME OVERRIDES
+════════════════════════════════════════════ */
+
+html.light .toh-glass-deep {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85) 40%, rgba(248, 249, 250, 0.9)),
+    linear-gradient(135deg, rgba(139, 124, 246, 0.04), rgba(139, 124, 246, 0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95));
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+html.light .toh-glass-deep:hover {
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(139, 124, 246, 0.08),
+    0 0 24px rgba(139, 124, 246, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .toh-glass-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.75) 40%),
+    rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+}
+
+html.light .toh-glass-card:hover {
+  border-color: rgba(139, 124, 246, 0.18);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.07),
+    0 0 16px rgba(139, 124, 246, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+}
+
+html.light .toh-border-glow {
+  animation-name: toh-border-glow-shift-light;
+}
+
+@keyframes toh-border-glow-shift-light {
+  0% {
+    border-color: rgba(139, 124, 246, 0.3);
+    box-shadow: 0 0 8px rgba(139, 124, 246, 0.08);
+  }
+  33% {
+    border-color: rgba(167, 139, 250, 0.4);
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.1);
+  }
+  66% {
+    border-color: rgba(147, 51, 234, 0.35);
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.09);
+  }
+  100% {
+    border-color: rgba(139, 124, 246, 0.3);
+    box-shadow: 0 0 8px rgba(139, 124, 246, 0.08);
+  }
+}
+
+html.light .toh-border-glow-subtle {
+  animation-name: toh-border-glow-subtle-shift-light;
+}
+
+@keyframes toh-border-glow-subtle-shift-light {
+  0% {
+    border-color: rgba(139, 124, 246, 0.15);
+  }
+  33% {
+    border-color: rgba(167, 139, 250, 0.22);
+  }
+  66% {
+    border-color: rgba(147, 51, 234, 0.18);
+  }
+  100% {
+    border-color: rgba(139, 124, 246, 0.15);
+  }
+}
+
+html.light .toh-glow-pulse {
+  animation-name: toh-glow-pulse-light;
+}
+
+@keyframes toh-glow-pulse-light {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(139, 124, 246, 0.1), 0 0 14px rgba(139, 124, 246, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(139, 124, 246, 0.2), 0 0 28px rgba(139, 124, 246, 0.08);
+  }
+}
+
+html.light .toh-glow-pulse-green {
+  animation-name: toh-glow-pulse-green-light;
+}
+
+@keyframes toh-glow-pulse-green-light {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.1), 0 0 14px rgba(46, 204, 113, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.2), 0 0 28px rgba(46, 204, 113, 0.08);
+  }
+}
+
+html.light .toh-glow-pulse-gold {
+  animation-name: toh-glow-pulse-gold-light;
+}
+
+@keyframes toh-glow-pulse-gold-light {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.1), 0 0 14px rgba(255, 215, 0, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2), 0 0 28px rgba(255, 215, 0, 0.08);
+  }
+}
+
+html.light .toh-text-gradient {
+  background: linear-gradient(135deg, #7c6ed6 0%, #a78bfa 50%, #7c6ed6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.light .toh-text-gradient-gold {
+  background: linear-gradient(135deg, #d4a800 0%, #e09500 50%, #d4a800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.light .toh-text-gradient-green {
+  background: linear-gradient(135deg, #28a745 0%, #0d9668 50%, #28a745 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.light .toh-divider {
+  opacity: 0.2;
+}
+
+html.light .toh-divider-glow {
+  opacity: 0.25;
+}
+
+html.light .toh-divider-glow::after {
+  background: linear-gradient(90deg, transparent, rgba(139, 124, 246, 0.06), transparent);
+  filter: blur(3px);
+}
+
+html.light .toh-shimmer-purple {
+  background: rgba(139, 124, 246, 0.04);
+}
+
+html.light .toh-shimmer-purple::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 124, 246, 0.06) 20%,
+    rgba(167, 139, 250, 0.1) 40%,
+    rgba(196, 181, 253, 0.08) 60%,
+    rgba(139, 124, 246, 0.06) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+html.light .toh-shimmer-light {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light .toh-shimmer-light::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.02) 20%,
+    rgba(0, 0, 0, 0.04) 40%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.04) 60%,
+    rgba(0, 0, 0, 0.02) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+html.light .toh-spotlight-effect::before {
+  background: radial-gradient(
+    circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(139, 124, 246, 0.08) 0%,
+    rgba(167, 139, 250, 0.03) 25%,
+    transparent 50%
+  );
+}
+
+html.light .toh-tooltip::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88)),
+    rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-text-muted {
+  color: var(--dim);
+}
+
+html.light .toh-text-accent {
+  color: var(--indigo);
+}
+
+/* ── R9 Reduced Motion Support ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .toh-glass-deep,
+  .toh-glass-card,
+  .toh-border-glow,
+  .toh-border-glow-subtle,
+  .toh-podium-card.toh-border-glow,
+  .toh-float,
+  .toh-float-slow,
+  .toh-glow-pulse,
+  .toh-glow-pulse-green,
+  .toh-glow-pulse-gold,
+  .toh-shimmer-purple::after,
+  .toh-shimmer-light::after,
+  .toh-tooltip::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

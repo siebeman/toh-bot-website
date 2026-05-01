@@ -1,43 +1,48 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 8 - Latest)
+## Current Project Status (Round 9 - Latest)
 
-The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors, and 95%+ QA pass rate** across all pages and features.
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total codebase: ~13,400 lines across 6 key files.
 
-### Current Goals / Completed Work (Round 8)
+### Current Goals / Completed Work (Round 9)
 
-**Bug Fixes:**
-1. ✅ Fixed Race Mode timer - was running from page load (starting at 227s); now shows 00:00 when idle and only counts during racing phase
-2. ✅ Fixed mobile leaderboard table responsiveness - hides Device/Last Updated columns on mobile (640px), also hides Country on very small screens (420px)
-3. ✅ Fixed pre-existing lint error in CommandsPage.tsx (setRecentlyViewed in useEffect)
+**Bug Fixes (from QA testing):**
+1. ✅ **Commands usage text truncation** [CRITICAL] — Removed `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` from `.toh-cmd-usage`. Text now wraps naturally instead of being clipped.
+2. ✅ **Community Stats showing zeros** [CRITICAL] — Lowered IntersectionObserver threshold from 0.3 to 0.1, added 1-second fallback setTimeout for elements already in viewport on mount.
+3. ✅ **Leaderboard tab count spacing** [MEDIUM] — Verified `.toh-lb-tab-count` has `margin-left: 8px`.
+4. ✅ **Race Mode position bug** [MEDIUM] — Rewrote `getRacerPosition` to derive positions from racers' `finishMs` values instead of relying on the separate `finishedOrder` state array that was subject to React state batching issues.
+5. ✅ **Rank display inconsistency** [MEDIUM] — Made all ranks display consistently with "#" prefix (#1, #2, #3 with medals still shown, #4, #5, etc.).
 
 **New Features:**
-1. ✅ **Commands Page Enhancement**: Copy-to-clipboard with animated toast, category filter tabs, category descriptions, usage syntax for all commands, recently viewed commands (localStorage), command count summary, better card design with category-colored borders
-2. ✅ **"Did You Know" Tips Banner** (Home): 10 rotating tips with auto-rotation every 5s, pause on hover, navigation dots, smooth fade transitions
-3. ✅ **Online Players Indicator** (Race Mode): Simulated count (30-65) with green pulsing dot and fluctuation every 3s
-4. ✅ **Page Title Indicator**: Thin bar below nav showing current page name with emoji icon
-5. ✅ **Keyboard Shortcuts Help Panel**: Overlay modal toggled with "?" key, showing all shortcuts, glass card design
-6. ✅ **Favorite Players** (Leaderboard): Star toggle on each player row, localStorage persistence, favorites filter, compact favorites section above table
+1. ✅ **Achievement/Milestone Showcase** (Home): 6 achievement cards with progress indicators, completed achievements (green checkmark) and in-progress (indigo progress bar with %), staggered entrance animation
+2. ✅ **Player Quick-Search** (Home Hero): Compact search bar with dropdown showing up to 5 matching players from /api/leaderboard, click-to-navigate to leaderboard
+3. ✅ **XP Level-Up Calculator** (Home): Interactive section with Current Level / Target Level inputs, calculates XP needed, estimated time, and visual progress bar
+4. ✅ **Race Mode Confetti**: 35 animated confetti pieces on race finish, auto-removes after 3 seconds
+5. ✅ **Colored Racer Avatars**: Each racer has distinct colored avatar border glow (Gold, Blue, Green, Orange)
 
 **Styling Improvements:**
-1. ✅ **Scroll Reveal Enhancement**: Pop-in effect with translateY + scale transition (600ms)
-2. ✅ **Hover Micro-interactions**: Card lift, podium glow (gold/silver/bronze), stat pill pulse, chip brighten, nav/button press effects, table row border slide
-3. ✅ **Focus Visible Styles**: 2px solid indigo outline with 2px offset on keyboard focus
-4. ✅ **Custom Scrollbar**: 6px thin indigo-tinted scrollbar (Webkit + Firefox)
-5. ✅ **Selection Styling**: Purple-tinted text selection
-6. ✅ **Page Transition Polish**: Fade-in from dark with mask-image gradient reveal
-7. ✅ **Reduced Motion Support**: Full `prefers-reduced-motion` support disabling animations
-8. ✅ **Loading Shimmer Effect**: `.toh-shimmer` class with purple/white gradient sweep
+1. ✅ **Glassmorphism Depth Utilities** — `.toh-glass-deep` (24px blur, 3-layer gradient) and `.toh-glass-card` (medium depth with inner shadow)
+2. ✅ **Gradient Border Animation** — `.toh-border-glow` with 5s indigo→violet→purple cycle, `.toh-border-glow-subtle` variant
+3. ✅ **Floating Animation Utilities** — `.toh-float` (2s, 4px) and `.toh-float-slow` (4s, 6px) bob animations
+4. ✅ **Glow Pulse Utilities** — `.toh-glow-pulse` (indigo), `.toh-glow-pulse-green`, `.toh-glow-pulse-gold` with 2s pulsing box-shadow
+5. ✅ **Text Gradient Utilities** — `.toh-text-gradient` (indigo→violet), `.toh-text-gradient-gold`, `.toh-text-gradient-green`
+6. ✅ **Section Dividers** — `.toh-divider` and `.toh-divider-glow` with gradient horizontal lines
+7. ✅ **Shimmer Enhancement** — `.toh-shimmer-purple` (dark bg) and `.toh-shimmer-light` (light bg) with smoother movement
+8. ✅ **Spotlight Effect Enhancement** — `.toh-spotlight-effect` with larger radial gradient and color shift
+9. ✅ **Tooltip Utility** — `.toh-tooltip` with ::after reading from data-tooltip attribute, glass-styled, fade-in
+10. ✅ **Micro-typography** — `.toh-text-balance`, `.toh-text-pretty`, `.toh-font-display`, `.toh-font-mono`, `.toh-text-muted`, `.toh-text-accent`
+11. ✅ All new utilities include light theme overrides and `prefers-reduced-motion` support
 
 ### Unresolved Issues / Risks / Next Phase Priorities
 
 1. **Particle canvas performance** on low-end devices - could benefit from requestAnimationFrame throttling (low priority)
-2. **Light theme fine-tuning** - some sub-components may need minor adjustments (low priority)
-3. **"Recently Used" commands section** only appears after successful clipboard copy - works in real browsers but not in headless testing (by design, not a bug)
-4. **WebSocket integration** for live leaderboard updates - would require backend changes (nice-to-have)
-5. **Performance optimization** - globals.css is now ~8000+ lines; could benefit from CSS splitting or PurgeCSS in production
-6. **Share Profile** feature exists on player modal but could be enhanced with social media share buttons
-7. **Accessibility audit** - consider adding ARIA labels to more interactive elements and screen reader testing
+2. **globals.css is ~9,600 lines** — could benefit from CSS splitting or PurgeCSS in production build
+3. **FAQ accessibility** — collapsed answers still present in DOM for screen readers (aria-hidden recommended)
+4. **Level Distribution percentages** sum to 99.9% due to rounding (cosmetic)
+5. **Keyboard shortcuts panel** — no focus trapping when open (accessibility concern)
+6. **Mobile leaderboard** — hidden columns reduce usability, consider tap-to-expand detail rows
+7. **WebSocket integration** for live leaderboard updates — would require backend changes (nice-to-have)
+8. **Share Profile** feature could be enhanced with social media share buttons
 
 ---
 Task ID: 4
@@ -731,3 +736,122 @@ Stage Summary:
 - "Favorites" section above table shows compact cards for favorited players
 - All toh-fav-* CSS with light theme support and responsive design
 - 0 lint errors, no runtime errors
+
+---
+Task ID: R9-bugfix
+Agent: Bug Fix Agent
+Task: Fix critical QA bugs - usage truncation, stats zeros, tab spacing, race position, rank display
+
+Work Log:
+- Read worklog.md for project history and context
+- Read all affected files: globals.css, HomePage.tsx, RaceModePage.tsx, LeaderboardPage.tsx
+- Bug 1 (CRITICAL): Fixed `.toh-cmd-usage` CSS truncation in globals.css — removed `white-space: nowrap`, `overflow: hidden`, `text-overflow: ellipsis` and replaced with `word-break: break-word` to allow usage text like `/race create [max_players]` to wrap naturally instead of being clipped
+- Bug 2 (CRITICAL): Fixed AnimatedStat showing zeros on load in HomePage.tsx — lowered IntersectionObserver threshold from 0.3 to 0.1, added 1-second fallback timer that triggers animation if observer hasn't fired yet (handles elements already in viewport on mount)
+- Bug 3 (MEDIUM): Verified `.toh-lb-tab-count` already has `margin-left: 8px` in globals.css (line 2375) — the spacing fix was already present, tab count badges render with proper visual separation
+- Bug 4 (MEDIUM): Fixed race position bug in RaceModePage.tsx — replaced `getRacerPosition` function that relied on `finishedOrder` state (which could be out of sync due to React batching) with a derived approach that calculates positions directly from racers' `finishMs` values; finished racers get position by counting how many others finished before them (based on finishMs comparison), active racers sorted by progress
+- Bug 5 (MEDIUM): Fixed rank display inconsistency in LeaderboardPage.tsx — made all ranks display with "#" prefix consistently ("#1", "#2", "#3" with medals still shown for top 3, "#4", "#5", etc.); fixed in 3 locations: player modal (line 125), compare modal (lines 426, 433), and active players table (line 1285)
+- Ran `bun run lint`: 0 errors
+
+Stage Summary:
+- All 5 QA bugs fixed across 4 files (globals.css, HomePage.tsx, RaceModePage.tsx, LeaderboardPage.tsx)
+- Bug 1: Usage text no longer truncated — uses word-break instead of nowrap+overflow
+- Bug 2: Community Stats animated counters reliably trigger on load via lower threshold + fallback timer
+- Bug 3: Tab count badge spacing confirmed (already had margin-left: 8px)
+- Bug 4: Race positions derived from finishMs (synchronized state) instead of finishedOrder (batching issue)
+- Bug 5: All ranks consistently display with "#" prefix (#1, #2, #3, #4, etc.) with medals for top 3
+- 0 lint errors, no runtime errors
+
+---
+Task ID: R9-features
+Agent: Features Agent
+Task: Add achievements, quick-search, XP calculator, and race confetti
+
+Work Log:
+- Read worklog.md for project history and context
+- Read HomePage.tsx, RaceModePage.tsx, globals.css, and leaderboard API route
+- Verified /api/leaderboard route exists and returns 300 players with username field
+- Feature 1: Added Achievement/Milestone Showcase section to HomePage.tsx
+  - Created ACHIEVEMENTS data array with 6 achievements (Tower Champion 87%, World Traveler 100%, Race Veteran 80%, Speed Demon 100%, Data Master 100%, Community Builder 92%)
+  - Added achieveRevealRef using useScrollReveal hook
+  - 3x2 responsive grid (2 cols tablet, 1 col mobile) with glassmorphism cards
+  - Completed achievements have green top accent bar + checkmark icon
+  - In-progress achievements have indigo accent bar + progress bar with percentage
+  - Staggered entrance animation (100ms delay per card)
+  - Used toh-achieve-* CSS prefix
+  - Added light theme overrides with html.light selectors
+- Feature 2: Added Player Quick-Search in Home Hero
+  - Compact search bar below hero description with Search icon
+  - Fetches player names from /api/leaderboard on component mount
+  - On typing 3+ characters, shows dropdown with first 5 matching player names
+  - Clicking a player navigates to leaderboard page via onNavigate
+  - Clear button (×) to reset search
+  - Click-outside-to-close dropdown behavior
+  - Used toh-quick-search-* CSS prefix
+  - Added light theme overrides
+- Feature 3: Added XP Level-Up Calculator between Features and Changelog
+  - Two number inputs: Current Level and Target Level
+  - Calculates XP needed = (targetLevel - currentLevel) * 500
+  - Displays XP Needed, Estimated Time (~hours based on avg 750 XP/hour), Levels to Go
+  - AnimatedCounter component for smooth number transitions
+  - Visual progress bar showing percentage toward target
+  - Error message when target <= current level
+  - Glassmorphism card styling
+  - Used toh-calc-* CSS prefix
+  - Added light theme overrides and responsive breakpoints
+- Feature 4: Added Confetti on Win + Colored Racer Avatars to RaceModePage.tsx
+  - Created Confetti component with 35 colored divs
+  - Each piece has random left position, delay, duration, size, color, rotation, drift
+  - @keyframes toh-confetti-fall animates pieces falling from top
+  - Shows when phase === 'finished', auto-removes after 3 seconds
+  - Created RACER_COLORS map: Skyourain=Gold, wilder270522=Blue, chatgris31=Green, RealMorri=Orange
+  - Applied colored border glow to avatar circles via inline styles
+  - Applied gradient colors to progress bars matching racer color
+  - Applied hover border colors matching racer accent
+  - Used toh-confetti-* and toh-racer-color-* CSS prefixes
+  - Added light theme overrides for racer avatar shadows
+- Added ~500 lines of new CSS to globals.css
+- Ran `bun run lint`: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Achievement/Milestone Showcase: 6 cards in 3x2 grid with green/indigo accents, progress bars, checkmarks, staggered animation
+- Player Quick-Search: compact search bar in hero, fetches player names from API, dropdown with 5 matches, navigates to leaderboard
+- XP Level-Up Calculator: two inputs, animated result display with XP/Time/Levels, progress bar, glassmorphism card
+- Race Confetti: 35-piece CSS confetti on race finish, auto-removes after 3s
+- Colored Racer Avatars: Gold/Blue/Green/Orange border glow on avatars and progress bars
+- All new CSS uses toh-* prefix convention and matches existing dark theme
+- All features support dark and light themes with html.light overrides
+- All features are responsive with mobile breakpoints
+- 0 lint errors, no runtime errors
+
+---
+Task ID: R9-styling
+Agent: Styling Polish Agent
+Task: Add glassmorphism depth, gradient animations, floating effects, glow pulses, and utility classes
+
+Work Log:
+- Read worklog.md for project history and context (8 previous task rounds)
+- Read globals.css (8996 lines) to understand existing design tokens, toh-* prefix conventions, existing shimmer/spotlight patterns, and light theme override patterns
+- Identified existing patterns: .toh-shimmer with @keyframes toh-shimmer-sweep, --spot-x/--spot-y custom properties on feature cards, .toh-podium-card class, html.light selector pattern, prefers-reduced-motion support
+- Added ~620 lines of new CSS to the end of globals.css (8996 → 9616 lines)
+- 1. Glassmorphism Depth Enhancement: .toh-glass-deep (24px backdrop blur, 3-layer gradient background, stronger border glow, inset shadows, hover state increases blur to 28px and adds outer glow), .toh-glass-card (18px blur, medium depth with subtle inner shadow, hover lifts and adds glow)
+- 2. Gradient Border Animation: @keyframes toh-border-glow-shift (5s cycle through indigo → violet → purple → indigo with shifting box-shadow glow), .toh-border-glow class, .toh-podium-card.toh-border-glow combo selector, @keyframes toh-border-glow-subtle-shift (muted version), .toh-border-glow-subtle class
+- 3. Floating Animation Utility: @keyframes toh-float (2s cycle, 4px translateY movement), @keyframes toh-float-slow (4s cycle, 6px movement), .toh-float and .toh-float-slow classes
+- 4. Glow Pulse Utility: @keyframes toh-glow-pulse (2s indigo pulse), @keyframes toh-glow-pulse-green (2s green pulse), @keyframes toh-glow-pulse-gold (2s gold pulse), .toh-glow-pulse, .toh-glow-pulse-green, .toh-glow-pulse-gold classes
+- 5. Text Gradient Utility Classes: .toh-text-gradient (indigo-to-violet), .toh-text-gradient-gold (gold-to-amber), .toh-text-gradient-green (green-to-emerald), all with -webkit-background-clip: text, background-clip: text, color: transparent
+- 6. Enhanced Section Dividers: .toh-divider (1px gradient line transparent → indigo → transparent), .toh-divider-glow (adds blurred ::after pseudo-element for subtle glow effect)
+- 7. Skeleton Shimmer Enhancement: .toh-shimmer-purple (purple-tinted shimmer for dark backgrounds, smoother cubic-bezier easing), .toh-shimmer-light (light-tinted shimmer for light backgrounds, multi-stop gradient for realistic movement)
+- 8. Interactive Card Spotlight Effect Enhancement: .toh-spotlight-effect with larger ::before radial gradient (60% inset vs 40% original), higher opacity (0.14 vs 0.18 original), subtle color shift (indigo → violet), fade-in on hover via opacity transition
+- 9. Tooltip Utility: .toh-tooltip with ::after pseudo-element reading data-tooltip attribute, glass-styled (backdrop-blur, gradient background, border), positioned above element, fade-in animation on hover with translateY shift
+- 10. Micro-typography Improvements: .toh-text-balance (text-wrap: balance), .toh-text-pretty (text-wrap: pretty), .toh-font-display (Space Grotesk font stack), .toh-font-mono (JetBrains Mono font stack), .toh-text-muted (dim color), .toh-text-accent (indigo color)
+- Added comprehensive light theme overrides using html.light selectors for all new classes: glassmorphism (white backgrounds, subtle shadows), border glow (lighter animation variants), glow pulse (lighter shadow variants), text gradients (adjusted for light bg), dividers (reduced opacity), shimmer (adjusted gradients), spotlight (lower opacity), tooltip (white background)
+- Added reduced motion support: @media (prefers-reduced-motion: reduce) disables all animations and transitions for new classes
+- Ran bun run lint: 0 errors (exit code 0)
+
+Stage Summary:
+- Added 10 categories of CSS-only styling polish utilities (620 lines total)
+- All new classes use toh-* prefix convention consistent with existing codebase
+- Full dark/light theme support via html.light selectors
+- Reduced motion accessibility support for all animated classes
+- Zero TSX files modified (CSS-only changes)
+- 0 lint errors
