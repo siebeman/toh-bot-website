@@ -352,3 +352,100 @@ Stage Summary:
 - Responsive across all breakpoints
 - Consistent with site's dark theme and glass-morphism style
 - 0 lint errors, no runtime errors
+
+---
+Task ID: 7-b
+Agent: Device Breakdown & Footer Agent
+Task: Add Device Breakdown visualization to Leaderboard page and enhance the footer
+
+Work Log:
+- Read worklog.md for project history and context
+- Read LeaderboardPage.tsx to understand existing structure (country distribution pattern with collapsible panel)
+- Read page.tsx to understand current footer structure (simple links + copyright)
+- Read globals.css to understand design tokens and toh-* prefix conventions
+- Added `deviceExpanded` state (default true) and `deviceRevealRef` to LeaderboardPage component
+- Added `deviceBreakdown` useMemo computation that counts players by device type (PC, Mobile, Controller, Other/Unknown) with color mapping
+- Added Device Breakdown collapsible panel JSX below Country Distribution section with:
+  - Header with 🖥️ icon, "Device Breakdown" title, total players badge, expand/collapse chevron
+  - Body with 4 device rows (PC/blue, Mobile/green, Controller/orange, Other/Unknown/gray)
+  - Each row has emoji icon badge, device name, horizontal bar chart, count + percentage
+  - Footer with "players analyzed" note
+- Enhanced footer in page.tsx with 3-column layout:
+  - Branding column: Logo icon + "TOH Bot" text + description
+  - Quick Links column: Home, Commands, Race Mode, Leaderboard (using navigate function)
+  - Community column: Discord, GitHub, Add to Server links
+  - Bottom bar: Copyright + "Made with ❤️ · Powered by Next.js"
+- Added ~300 lines of device breakdown CSS with toh-device-* prefix to globals.css:
+  - toh-device-panel, toh-device-header, toh-device-title, toh-device-meta, toh-device-total-badge
+  - toh-device-chevron with expanded/collapsed rotation animation
+  - toh-device-body with max-height expand/collapse transition
+  - toh-device-chart, toh-device-row with slide-in animation
+  - toh-device-icon-badge with color variants (blue, green, orange, gray)
+  - toh-device-bar-track, toh-device-bar-fill with grow animation and shimmer effect
+  - toh-device-bar-{blue,green,orange,gray} gradient colors
+  - Responsive breakpoints at 720px and 480px
+- Added ~150 lines of enhanced footer CSS with toh-footer-* prefix:
+  - toh-footer-grid with 3-column layout (2fr 1fr 1fr)
+  - toh-footer-logo, toh-footer-logo-icon, toh-footer-logo-text
+  - toh-footer-desc, toh-footer-col-title
+  - toh-footer-links-list, toh-footer-link, toh-footer-link-external with hover effects
+  - toh-footer-bottom with flex between layout
+  - Responsive: stacks vertically at 720px
+- Added light theme overrides for both features using html.light selector
+- Fixed parsing error (missing closing `}` for device breakdown JSX conditional)
+- Ran lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Device Breakdown visualization fully implemented on Leaderboard page
+- Collapsible panel matching Country Distribution styling pattern
+- 4 device types with color-coded horizontal bar charts (PC=blue, Mobile=green, Controller=orange, Other/Unknown=gray)
+- Shimmer animation on bars, slide-in row animations
+- Recomputes in real-time when search/device filters change
+- Enhanced footer with 3-column layout (Branding, Quick Links, Community)
+- Quick Links use navigate function for internal routing
+- Community links (Discord, GitHub, Add to Server) open externally
+- Bottom bar with copyright and "Made with ❤️ · Powered by Next.js"
+- Both features support dark and light themes
+- Responsive design (stacks vertically on mobile)
+- 0 lint errors, no runtime errors
+
+---
+Task ID: 7-a
+Agent: Skeleton Loading Agent
+Task: Add skeleton loading states to the Leaderboard page
+
+Work Log:
+- Read worklog.md for project history and context
+- Read LeaderboardPage.tsx (1262 lines) to understand the full layout: header with stats bar, podium section, country distribution, status bar, tabs, active players table, banned table, pagination, modals
+- Read globals.css (5768 lines) to understand design tokens and toh-* prefix conventions
+- Added ~350 lines of skeleton CSS to globals.css with toh-* prefix:
+  - @keyframes toh-skeleton-shimmer (1.5s ease-in-out infinite)
+  - .toh-skeleton base class with ::after shimmer gradient
+  - Size variants: .toh-skeleton-sm, .toh-skeleton-md, .toh-skeleton-lg
+  - Circle variants: .toh-skeleton-circle, .toh-skeleton-circle-lg
+  - .toh-skeleton-row with .toh-skeleton-cell for table rows
+  - .toh-skeleton-wrapper for fade transitions
+  - .toh-skeleton-stat-item/icon/value/label for stats bar skeleton
+  - .toh-skeleton-podium-card/medal/bar for podium skeleton
+  - .toh-skeleton-thead with .toh-skeleton-th for table header
+  - .toh-skeleton-pagination/info/btns/btn for pagination skeleton
+  - .toh-skeleton-level-bar for level progress skeleton
+  - Light theme overrides: html.light .toh-skeleton and all sub-components with rgba(0,0,0) backgrounds
+- Modified LeaderboardPage.tsx to render skeletons when loading=true:
+  - Stats bar: 3 skeleton stat items with icon circle, value rectangle, label rectangle + dividers
+  - Podium: 3 skeleton cards with medal, avatar, name, rank, level, progress bar
+  - Country distribution: hidden during loading (!loading && condition added)
+  - Table: skeleton header (6 columns) + 12 skeleton rows with varied widths for realistic appearance
+  - Pagination: skeleton info bar + 5 skeleton page buttons
+  - Data source note and milestone legend remain visible during loading
+- Ran bun run lint: 0 errors
+- Dev server compiling without errors
+
+Stage Summary:
+- Professional skeleton loading states fully implemented on Leaderboard page
+- CSS-only shimmer animation (1.5s) with moving gradient overlay
+- Skeleton matches the exact layout of loaded content to prevent layout shift
+- Supports both dark and light themes with html.light overrides
+- All CSS uses toh-* prefix convention
+- 0 lint errors, no runtime errors

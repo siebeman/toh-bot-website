@@ -547,8 +547,10 @@ export default function LeaderboardPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [countryExpanded, setCountryExpanded] = useState(true);
+  const [deviceExpanded, setDeviceExpanded] = useState(true);
   const statsRevealRef = useScrollReveal();
   const countryRevealRef = useScrollReveal();
+  const deviceRevealRef = useScrollReveal();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -631,6 +633,30 @@ export default function LeaderboardPage() {
 
     return result;
   }, [banned, bannedSearch, banReasonFilter]);
+
+  // Device breakdown from active filtered players
+  const deviceBreakdown = useMemo(() => {
+    const total = filteredActive.length;
+    const map = new Map<string, number>();
+    for (const p of filteredActive) {
+      const d = p.device.trim();
+      const key = d === '-' || !d ? 'Other/Unknown' : d === 'PC' ? 'PC' : d === 'Mobile' ? 'Mobile' : d === 'Controller' ? 'Controller' : 'Other/Unknown';
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    const devices = [
+      { device: 'PC', count: map.get('PC') || 0, color: 'blue' },
+      { device: 'Mobile', count: map.get('Mobile') || 0, color: 'green' },
+      { device: 'Controller', count: map.get('Controller') || 0, color: 'orange' },
+      { device: 'Other/Unknown', count: map.get('Other/Unknown') || 0, color: 'gray' },
+    ];
+    return {
+      devices: devices.map((d) => ({
+        ...d,
+        percentage: total > 0 ? (d.count / total) * 100 : 0,
+      })),
+      total,
+    };
+  }, [filteredActive]);
 
   // Country distribution from active filtered players
   const countryDistribution = useMemo(() => {
@@ -813,67 +839,97 @@ export default function LeaderboardPage() {
           <h1 className="toh-lb-title">Leaderboard</h1>
           <p className="toh-lb-subtitle">Official Community Rankings · Top 300</p>
 
-          {/* Animated Stats */}
-          <div className="toh-lb-stats-bar toh-reveal" ref={statsRevealRef}>
-            <div className="toh-lb-stat-item">
-              <div className="toh-lb-stat-icon">👥</div>
-              <div className="toh-lb-stat-value"><LBAnimatedStat target={totalPlayers} /></div>
-              <div className="toh-lb-stat-label">Total Players</div>
+          {/* Animated Stats or Skeleton */}
+          {loading ? (
+            <div className="toh-lb-stats-bar toh-reveal" ref={statsRevealRef}>
+              {[0, 1, 2].map((i) => (
+                <React.Fragment key={i}>
+                  <div className="toh-skeleton-stat-item">
+                    <div className="toh-skeleton-stat-icon" />
+                    <div className="toh-skeleton-stat-value" />
+                    <div className="toh-skeleton-stat-label" />
+                  </div>
+                  {i < 2 && <div className="toh-lb-stat-divider" />}
+                </React.Fragment>
+              ))}
             </div>
-            <div className="toh-lb-stat-divider" />
-            <div className="toh-lb-stat-item">
-              <div className="toh-lb-stat-icon">📊</div>
-              <div className="toh-lb-stat-value"><LBAnimatedStat target={averageLevel} /></div>
-              <div className="toh-lb-stat-label">Average Level</div>
+          ) : (
+            <div className="toh-lb-stats-bar toh-reveal" ref={statsRevealRef}>
+              <div className="toh-lb-stat-item">
+                <div className="toh-lb-stat-icon">👥</div>
+                <div className="toh-lb-stat-value"><LBAnimatedStat target={totalPlayers} /></div>
+                <div className="toh-lb-stat-label">Total Players</div>
+              </div>
+              <div className="toh-lb-stat-divider" />
+              <div className="toh-lb-stat-item">
+                <div className="toh-lb-stat-icon">📊</div>
+                <div className="toh-lb-stat-value"><LBAnimatedStat target={averageLevel} /></div>
+                <div className="toh-lb-stat-label">Average Level</div>
+              </div>
+              <div className="toh-lb-stat-divider" />
+              <div className="toh-lb-stat-item">
+                <div className="toh-lb-stat-icon">🏆</div>
+                <div className="toh-lb-stat-value"><LBAnimatedStat target={topLevel} /></div>
+                <div className="toh-lb-stat-label">Top Level</div>
+              </div>
             </div>
-            <div className="toh-lb-stat-divider" />
-            <div className="toh-lb-stat-item">
-              <div className="toh-lb-stat-icon">🏆</div>
-              <div className="toh-lb-stat-value"><LBAnimatedStat target={topLevel} /></div>
-              <div className="toh-lb-stat-label">Top Level</div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Top 3 Podium */}
-        {tab === 'active' && top3.length >= 3 && !activeSearch && !deviceFilter && (
+        {/* Top 3 Podium or Skeleton */}
+        {loading ? (
           <div className="toh-podium">
-            {podiumOrder.map((player, i) => {
-              const actualIndex = i === 0 ? 1 : i === 1 ? 0 : 2;
-              return (
-                <div
-                  key={player.username}
-                  className="toh-podium-card"
-                  style={{
-                    background: podiumColors[i],
-                    borderColor: podiumBorders[i],
-                    animationDelay: `${i * 100}ms`,
-                  }}
-                  onClick={() => setSelectedPlayer(player)}
-                >
-                  <div className="toh-podium-medal">{medalEmoji[actualIndex]}</div>
-                  <div className="toh-podium-avatar" style={{
-                    borderColor: podiumBorders[i],
-                  }}>
-                    {player.username[0]}
-                  </div>
-                  <div className="toh-podium-name">{player.username}</div>
-                  <div className="toh-podium-rank">{podiumLabels[i]}</div>
-                  <div className="toh-podium-level">Lv. {player.level.toLocaleString()}</div>
-                  <div className="toh-podium-bar-bg">
-                    <div className="toh-podium-bar-fill" style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }} />
-                  </div>
-                  {player.country !== '-' && (
-                    <div className="toh-podium-country">{player.country}</div>
-                  )}
-                </div>
-              );
-            })}
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="toh-skeleton-podium-card" style={{ animationDelay: `${i * 100}ms` }}>
+                <div className="toh-skeleton-podium-medal" />
+                <div className="toh-skeleton toh-skeleton-circle-lg" />
+                <div className="toh-skeleton" style={{ width: 80, height: 14 }} />
+                <div className="toh-skeleton" style={{ width: 40, height: 10 }} />
+                <div className="toh-skeleton" style={{ width: 70, height: 14 }} />
+                <div className="toh-skeleton-podium-bar" />
+              </div>
+            ))}
           </div>
+        ) : (
+          tab === 'active' && top3.length >= 3 && !activeSearch && !deviceFilter && (
+            <div className="toh-podium">
+              {podiumOrder.map((player, i) => {
+                const actualIndex = i === 0 ? 1 : i === 1 ? 0 : 2;
+                return (
+                  <div
+                    key={player.username}
+                    className="toh-podium-card"
+                    style={{
+                      background: podiumColors[i],
+                      borderColor: podiumBorders[i],
+                      animationDelay: `${i * 100}ms`,
+                    }}
+                    onClick={() => setSelectedPlayer(player)}
+                  >
+                    <div className="toh-podium-medal">{medalEmoji[actualIndex]}</div>
+                    <div className="toh-podium-avatar" style={{
+                      borderColor: podiumBorders[i],
+                    }}>
+                      {player.username[0]}
+                    </div>
+                    <div className="toh-podium-name">{player.username}</div>
+                    <div className="toh-podium-rank">{podiumLabels[i]}</div>
+                    <div className="toh-podium-level">Lv. {player.level.toLocaleString()}</div>
+                    <div className="toh-podium-bar-bg">
+                      <div className="toh-podium-bar-fill" style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }} />
+                    </div>
+                    {player.country !== '-' && (
+                      <div className="toh-podium-country">{player.country}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
 
         {/* Country Distribution */}
-        {tab === 'active' && countryDistribution.countries.length > 0 && (
+        {!loading && tab === 'active' && countryDistribution.countries.length > 0 && (
           <div className="toh-country-panel toh-reveal" ref={countryRevealRef}>
             <button
               className="toh-country-header"
@@ -925,6 +981,58 @@ export default function LeaderboardPage() {
                   {countryDistribution.totalWithCountry} players with known country
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Device Breakdown */}
+        {tab === 'active' && deviceBreakdown.total > 0 && (
+          <div className="toh-device-panel toh-reveal" ref={deviceRevealRef}>
+            <button
+              className="toh-device-header"
+              onClick={() => setDeviceExpanded((v) => !v)}
+              aria-expanded={deviceExpanded}
+              aria-label="Toggle device breakdown"
+            >
+              <span className="toh-device-title">
+                <span className="toh-device-title-icon">🖥️</span>
+                Device Breakdown
+              </span>
+              <span className="toh-device-meta">
+                <span className="toh-device-total-badge">
+                  {deviceBreakdown.total} players
+                </span>
+                <span className={`toh-device-chevron ${deviceExpanded ? 'expanded' : ''}`}>▾</span>
+              </span>
+            </button>
+            <div className={`toh-device-body ${deviceExpanded ? 'expanded' : 'collapsed'}`}>
+              <div className="toh-device-chart">
+                {deviceBreakdown.devices.map((item, i) => (
+                  <div className="toh-device-row" key={item.device} style={{ animationDelay: `${i * 80}ms` }}>
+                    <div className="toh-device-row-left">
+                      <span className={`toh-device-icon-badge toh-device-icon-${item.color}`}>
+                        {item.device === 'PC' ? '💻' : item.device === 'Mobile' ? '📱' : item.device === 'Controller' ? '🎮' : '❓'}
+                      </span>
+                      <span className="toh-device-name">{item.device}</span>
+                    </div>
+                    <div className="toh-device-row-center">
+                      <div className="toh-device-bar-track">
+                        <div
+                          className={`toh-device-bar-fill toh-device-bar-${item.color}`}
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="toh-device-row-right">
+                      <span className="toh-device-count">{item.count}</span>
+                      <span className="toh-device-pct">{item.percentage.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="toh-device-footer">
+                {deviceBreakdown.total} players analyzed · Filtered by current search & device settings
+              </div>
             </div>
           </div>
         )}
@@ -1028,112 +1136,151 @@ export default function LeaderboardPage() {
               </button>
             </div>
 
-            <div className="toh-lb-table-wrap toh-lb-table-mobile">
-              <table className="toh-lb-table">
-                <thead>
-                  <tr>
-                    <th
-                      className={sortField === 'rank' ? 'sorted' : ''}
-                      onClick={() => handleSort('rank')}
-                    >
-                      Rank {sortField === 'rank' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
-                    </th>
-                    <th
-                      className={sortField === 'username' ? 'sorted' : ''}
-                      onClick={() => handleSort('username')}
-                    >
-                      Username {sortField === 'username' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
-                    </th>
-                    <th
-                      className={sortField === 'level' ? 'sorted' : ''}
-                      onClick={() => handleSort('level')}
-                    >
-                      Level {sortField === 'level' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
-                    </th>
-                    <th>Country</th>
-                    <th>Device</th>
-                    <th
-                      className={sortField === 'updated' ? 'sorted' : ''}
-                      onClick={() => handleSort('updated')}
-                    >
-                      Last Updated {sortField === 'updated' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activePaged.length === 0 ? (
+            {loading ? (
+              <div className="toh-lb-table-wrap toh-lb-table-mobile">
+                {/* Skeleton Table Header */}
+                <div className="toh-skeleton-thead">
+                  <div className="toh-skeleton-th" style={{ width: 60 }} />
+                  <div className="toh-skeleton-th" style={{ width: 120 }} />
+                  <div className="toh-skeleton-th" style={{ width: 140 }} />
+                  <div className="toh-skeleton-th" style={{ width: 80 }} />
+                  <div className="toh-skeleton-th" style={{ width: 80 }} />
+                  <div className="toh-skeleton-th" style={{ width: 100 }} />
+                </div>
+                {/* Skeleton Table Rows */}
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div className="toh-skeleton-row" key={i}>
+                    <div className="toh-skeleton-cell" style={{ width: 40 }} />
+                    <div className="toh-skeleton-cell" style={{ width: `${100 + (i % 3) * 20}px` }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 140, flex: 1 }}>
+                      <div className="toh-skeleton-cell" style={{ width: 80, height: 14 }} />
+                      <div className="toh-skeleton-level-bar" />
+                    </div>
+                    <div className="toh-skeleton-cell" style={{ width: 50 }} />
+                    <div className="toh-skeleton-cell" style={{ width: 60 }} />
+                    <div className="toh-skeleton-cell" style={{ width: 90 }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="toh-lb-table-wrap toh-lb-table-mobile">
+                <table className="toh-lb-table">
+                  <thead>
                     <tr>
-                      <td colSpan={6}>
-                        <div className="toh-lb-no-results">
-                          No players found matching your search.
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    activePaged.map((player, i) => (
-                      <tr
-                        key={player.rank}
-                        className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''}`}
-                        style={{ animationDelay: `${i * 30}ms` }}
-                        onClick={() => setSelectedPlayer(player)}
+                      <th
+                        className={sortField === 'rank' ? 'sorted' : ''}
+                        onClick={() => handleSort('rank')}
                       >
-                        <td>
-                          {player.rank <= 3 ? (
-                            <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
-                              {player.rank}
-                            </span>
-                          ) : (
-                            <span style={{
-                              fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-                              fontSize: '0.85rem',
-                              color: 'var(--dim)',
-                            }}>
-                              #{player.rank}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <span className="toh-lb-username">{player.username}</span>
-                        </td>
-                        <td style={{ minWidth: 140 }}>
-                          <div className="toh-lb-level-num">
-                            Lv. {player.level.toLocaleString()}
-                            {getMilestoneBadge(player.level) && (
-                              <span className="toh-lb-milestone-badge" title={player.level >= 1000 ? 'Level 1000+' : player.level >= 500 ? 'Level 500+' : 'Level 100+'}>
-                                {' '}{getMilestoneBadge(player.level)}
-                              </span>
-                            )}
+                        Rank {sortField === 'rank' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th
+                        className={sortField === 'username' ? 'sorted' : ''}
+                        onClick={() => handleSort('username')}
+                      >
+                        Username {sortField === 'username' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th
+                        className={sortField === 'level' ? 'sorted' : ''}
+                        onClick={() => handleSort('level')}
+                      >
+                        Level {sortField === 'level' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th>Country</th>
+                      <th>Device</th>
+                      <th
+                        className={sortField === 'updated' ? 'sorted' : ''}
+                        onClick={() => handleSort('updated')}
+                      >
+                        Last Updated {sortField === 'updated' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activePaged.length === 0 ? (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className="toh-lb-no-results">
+                            No players found matching your search.
                           </div>
-                          <div className="toh-lb-level-bar-bg">
-                            <div
-                              className="toh-lb-level-bar-fill"
-                              style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }}
-                            />
-                          </div>
-                        </td>
-                        <td>
-                          <span className="toh-lb-country-cell">
-                            {player.country === '-' ? '—' : player.country}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`toh-lb-device-badge ${getDeviceClass(player.device)}`}>
-                            {player.device === '-' ? '—' : player.device.trim()}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="toh-lb-date-cell">
-                            {player.last_updated === '-' ? '—' : player.last_updated}
-                          </span>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      activePaged.map((player, i) => (
+                        <tr
+                          key={player.rank}
+                          className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''}`}
+                          style={{ animationDelay: `${i * 30}ms` }}
+                          onClick={() => setSelectedPlayer(player)}
+                        >
+                          <td>
+                            {player.rank <= 3 ? (
+                              <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
+                                {player.rank}
+                              </span>
+                            ) : (
+                              <span style={{
+                                fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                                fontSize: '0.85rem',
+                                color: 'var(--dim)',
+                              }}>
+                                #{player.rank}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <span className="toh-lb-username">{player.username}</span>
+                          </td>
+                          <td style={{ minWidth: 140 }}>
+                            <div className="toh-lb-level-num">
+                              Lv. {player.level.toLocaleString()}
+                              {getMilestoneBadge(player.level) && (
+                                <span className="toh-lb-milestone-badge" title={player.level >= 1000 ? 'Level 1000+' : player.level >= 500 ? 'Level 500+' : 'Level 100+'}>
+                                  {' '}{getMilestoneBadge(player.level)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="toh-lb-level-bar-bg">
+                              <div
+                                className="toh-lb-level-bar-fill"
+                                style={{ width: `${Math.min(100, (player.level / maxLevel) * 100)}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td>
+                            <span className="toh-lb-country-cell">
+                              {player.country === '-' ? '—' : player.country}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`toh-lb-device-badge ${getDeviceClass(player.device)}`}>
+                              {player.device === '-' ? '—' : player.device.trim()}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="toh-lb-date-cell">
+                              {player.last_updated === '-' ? '—' : player.last_updated}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-            {renderPagination(activePage, activeTotalPages, setActivePage, filteredActive.length)}
+            {loading ? (
+              <div className="toh-skeleton-pagination">
+                <div className="toh-skeleton-pagination-info" />
+                <div className="toh-skeleton-pagination-btns">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="toh-skeleton-pagination-btn" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              renderPagination(activePage, activeTotalPages, setActivePage, filteredActive.length)
+            )}
 
             <div className="toh-lb-data-source">
               Data sourced from official community records

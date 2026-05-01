@@ -373,23 +373,67 @@ export default function MainPage() {
       {/* Footer */}
       <footer className="toh-footer" style={{ position: 'relative', zIndex: 1 }}>
         <div className="toh-container">
-          <div className="toh-footer-content">
-            <div className="toh-footer-links">
-              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" aria-label="Discord">
-                <MessageCircle size={18} />
-              </a>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                <Github size={18} />
-              </a>
+          <div className="toh-footer-grid">
+            {/* Branding Column */}
+            <div className="toh-footer-col toh-footer-brand">
+              <div className="toh-footer-logo">
+                <div className="toh-footer-logo-icon">T</div>
+                <span className="toh-footer-logo-text">TOH Bot</span>
+              </div>
+              <p className="toh-footer-desc">
+                The ultimate Discord bot for the Tower of Hell community. Track leaderboards, race friends, and climb the ranks.
+              </p>
             </div>
-            <p>
+
+            {/* Quick Links Column */}
+            <div className="toh-footer-col">
+              <h3 className="toh-footer-col-title">Quick Links</h3>
+              <ul className="toh-footer-links-list">
+                <li><button onClick={() => navigate('home')} className="toh-footer-link">Home</button></li>
+                <li><button onClick={() => navigate('commands')} className="toh-footer-link">Commands</button></li>
+                <li><button onClick={() => navigate('race')} className="toh-footer-link">Race Mode</button></li>
+                <li><button onClick={() => navigate('leaderboard')} className="toh-footer-link">Leaderboard</button></li>
+              </ul>
+            </div>
+
+            {/* Community Column */}
+            <div className="toh-footer-col">
+              <h3 className="toh-footer-col-title">Community</h3>
+              <ul className="toh-footer-links-list">
+                <li>
+                  <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
+                    <MessageCircle size={14} />
+                    Discord
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
+                    <Github size={14} />
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <a href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                    Add to Server
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="toh-footer-bottom">
+            <p className="toh-footer-copy">
               © {new Date().getFullYear()} TOH Bot — Built for the{' '}
               <a href="https://www.roblox.com/games/1962086868" target="_blank" rel="noopener noreferrer">
                 Tower of Hell
               </a>{' '}
               community.
             </p>
-            <p className="toh-footer-love">Made with ❤️</p>
+            <p className="toh-footer-love">Made with ❤️ · Powered by Next.js</p>
           </div>
         </div>
       </footer>
