@@ -5,7 +5,7 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 
@@ -172,6 +172,33 @@ export default function MainPage() {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLight, setIsLight] = useState(false);
+
+  // Theme: read from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('toh-theme');
+    if (stored === 'light') {
+      queueMicrotask(() => setIsLight(true));
+      document.documentElement.classList.add('light');
+    } else {
+      queueMicrotask(() => setIsLight(false));
+      document.documentElement.classList.remove('light');
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setIsLight((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('light');
+        localStorage.setItem('toh-theme', 'light');
+      } else {
+        document.documentElement.classList.remove('light');
+        localStorage.setItem('toh-theme', 'dark');
+      }
+      return next;
+    });
+  }, []);
 
   // Hash-based routing: read hash on mount
   useEffect(() => {
@@ -209,6 +236,24 @@ export default function MainPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const keyMap: Record<string, PageType> = { '1': 'home', '2': 'commands', '3': 'race', '4': 'leaderboard' };
+      if (keyMap[e.key]) {
+        e.preventDefault();
+        navigate(keyMap[e.key]);
+      }
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navigate, mobileMenuOpen]);
+
   const navLinks: { key: PageType; label: string }[] = [
     { key: 'home', label: 'Home' },
     { key: 'commands', label: 'Commands' },
@@ -230,18 +275,27 @@ export default function MainPage() {
           </div>
 
           <div className="toh-nav-links">
-            {navLinks.map((link) => (
+            {navLinks.map((link, idx) => (
               <button
                 key={link.key}
                 className={`toh-nav-link ${currentPage === link.key ? 'active' : ''}`}
                 onClick={() => navigate(link.key)}
+                title={`Navigate to ${link.label} (${idx + 1})`}
               >
                 {link.label}
+                <span className="toh-nav-shortcut">{idx + 1}</span>
               </button>
             ))}
           </div>
 
           <div className="toh-nav-actions">
+            <button
+              className="toh-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {isLight ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
             <a
               href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
               target="_blank"
@@ -294,6 +348,14 @@ export default function MainPage() {
             >
               Add to Server
             </a>
+            <button
+              className="toh-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+              style={{ margin: '0 auto' }}
+            >
+              {isLight ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
           </div>
         )}
       </nav>

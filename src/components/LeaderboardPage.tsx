@@ -221,9 +221,7 @@ function ComparePlayersModal({
     toast({ title: 'Select two players to compare' });
   }, [toast]);
 
-  // Reset keyboard index when dropdown or filtered list changes
-  useEffect(() => { setKbIndexA(-1); }, [searchA, dropdownAOpen]);
-  useEffect(() => { setKbIndexB(-1); }, [searchB, dropdownBOpen]);
+  // Keyboard index resets when search or dropdown changes (handled in onChange/onFocus)
 
   const handleDropdownKeydown = (
     e: React.KeyboardEvent,
@@ -330,8 +328,9 @@ function ComparePlayersModal({
           onChange={(e) => {
             setSearch(e.target.value);
             setDropdownOpen(true);
+            setKbIndex(-1);
           }}
-          onFocus={() => setDropdownOpen(true)}
+          onFocus={() => { setDropdownOpen(true); setKbIndex(-1); }}
           onKeyDown={(e) => {
             handleDropdownKeydown(e, filtered.length, kbIndex, setKbIndex, filtered, setSelected, setSearch, setDropdownOpen, otherSelected);
           }}
@@ -677,6 +676,13 @@ export default function LeaderboardPage() {
     if (d === 'PC') return 'toh-lb-device-pc';
     if (d === 'Mobile') return 'toh-lb-device-mobile';
     return 'toh-lb-device-other';
+  };
+
+  const getMilestoneBadge = (level: number): string | null => {
+    if (level >= 1000) return '🔥';
+    if (level >= 500) return '⭐';
+    if (level >= 100) return '✦';
+    return null;
   };
 
   const maxLevel = 1341;

@@ -114,9 +114,51 @@ function useScrollReveal() {
   return ref;
 }
 
+/* ════════════════════════════════════════════
+   Changelog Data
+══════════════════════════════ */
+const CHANGELOG = [
+  {
+    version: 'v2.4',
+    date: 'Apr 2026',
+    title: 'Interactive Race Mode',
+    desc: 'Compete in real-time tower climbing races with countdown, live tracking, and race history.',
+    tags: ['New Feature', 'Race'],
+  },
+  {
+    version: 'v2.3',
+    date: 'Mar 2026',
+    title: 'Player Comparison Tool',
+    desc: 'Compare any two players side-by-side with level gaps, rank advantages, and detailed stats.',
+    tags: ['New Feature', 'Leaderboard'],
+  },
+  {
+    version: 'v2.2',
+    date: 'Feb 2026',
+    title: 'Country Distribution',
+    desc: 'See where players are from with interactive country distribution charts and rankings.',
+    tags: ['Improved', 'Leaderboard'],
+  },
+  {
+    version: 'v2.1',
+    date: 'Jan 2026',
+    title: 'CSV Export & Data Tools',
+    desc: 'Export leaderboard data as CSV, share player profiles, and access advanced filtering.',
+    tags: ['New Feature', 'Tools'],
+  },
+  {
+    version: 'v2.0',
+    date: 'Dec 2025',
+    title: 'Complete Redesign',
+    desc: 'A full visual overhaul with glassmorphism, animated backgrounds, and improved navigation.',
+    tags: ['Improved', 'Design'],
+  },
+];
+
 export default function HomePage({ onNavigate }: HomePageProps) {
   const statsRevealRef = useScrollReveal();
   const featuresRevealRef = useScrollReveal();
+  const changelogRevealRef = useScrollReveal();
   const faqRevealRef = useScrollReveal();
   const features = [
     {
@@ -357,6 +399,53 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   {f.items.map((item) => (
                     <div key={item} className="toh-feature-item">{item}</div>
                   ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What's New / Changelog Section */}
+      <section className="toh-changelog-section toh-reveal" ref={changelogRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">What's New</div>
+            <h2 className="toh-section-title">Changelog</h2>
+            <p className="toh-section-subtitle">
+              Stay up to date with the latest features, improvements, and fixes to TOH Bot.
+            </p>
+          </div>
+          <div className="toh-changelog-timeline">
+            {CHANGELOG.map((entry, i) => (
+              <div
+                key={entry.version}
+                className="toh-changelog-entry toh-changelog-entry-stagger"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
+                <div className="toh-changelog-line-wrap">
+                  <div className="toh-changelog-dot" />
+                  {i < CHANGELOG.length - 1 && <div className="toh-changelog-line" />}
+                </div>
+                <div className="toh-changelog-content">
+                  <div className="toh-changelog-meta">
+                    <span className="toh-changelog-version">{entry.version}</span>
+                    <span className="toh-changelog-date">{entry.date}</span>
+                  </div>
+                  <div className="toh-changelog-title">{entry.title}</div>
+                  <div className="toh-changelog-desc">{entry.desc}</div>
+                  <div className="toh-changelog-tags">
+                    {entry.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className={`toh-changelog-tag toh-changelog-tag-${
+                          tag === 'New Feature' ? 'new' : tag === 'Improved' ? 'improved' : tag === 'Fixed' ? 'fixed' : 'default'
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

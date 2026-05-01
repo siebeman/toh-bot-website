@@ -104,6 +104,703 @@
 }
 
 /* ════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+════════════════════════════════════════════ */
+
+.light {
+  --bg: #f8f9fa;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface2: rgba(255, 255, 255, 0.95);
+  --surface3: #e9ecef;
+  --toh-border: rgba(0, 0, 0, 0.08);
+  --toh-border2: rgba(139, 124, 246, 0.25);
+  --indigo: #7c6ed6;
+  --indigo-dim: #6358b8;
+  --indigo-glow: rgba(139, 124, 246, 0.15);
+  --violet: #7c6ed6;
+  --toh-white: #1a1a2e;
+  --toh-text: #2d2d3f;
+  --muted: #5a5a72;
+  --dim: #6b6b82;
+
+  /* shadcn overrides for light theme */
+  --background: #f8f9fa;
+  --foreground: #2d2d3f;
+  --card: rgba(255, 255, 255, 0.85);
+  --card-foreground: #2d2d3f;
+  --popover: rgba(255, 255, 255, 0.95);
+  --popover-foreground: #2d2d3f;
+  --primary: #7c6ed6;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(248, 249, 250, 0.92);
+  --secondary-foreground: #2d2d3f;
+  --muted: rgba(0, 0, 0, 0.06);
+  --muted-foreground: #6b6b82;
+  --accent: rgba(139, 124, 246, 0.08);
+  --accent-foreground: #7c6ed6;
+  --destructive: #dc3545;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: #7c6ed6;
+  --chart-1: #7c6ed6;
+  --chart-2: #28a745;
+  --chart-3: #dc3545;
+  --chart-4: #3b82f6;
+  --chart-5: #ffd700;
+  --sidebar: rgba(255, 255, 255, 0.85);
+  --sidebar-foreground: #2d2d3f;
+  --sidebar-primary: #7c6ed6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(139, 124, 246, 0.08);
+  --sidebar-accent-foreground: #7c6ed6;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: #7c6ed6;
+}
+
+/* Light theme body background */
+.light body,
+html.light body {
+  background:
+    radial-gradient(circle at top center, rgba(139, 124, 246, 0.08), transparent 34%),
+    radial-gradient(circle at 82% 12%, rgba(139, 124, 246, 0.04), transparent 22%),
+    radial-gradient(circle at 18% 22%, rgba(139, 124, 246, 0.06), transparent 26%),
+    linear-gradient(180deg, #f0f1f5 0%, #f8f9fa 42%, #f5f6f8 100%);
+  color: var(--toh-text);
+}
+
+/* Reduce noise overlay in light mode */
+html.light body::before {
+  opacity: 0.15;
+}
+
+html.light body::after {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(139, 124, 246, 0.04), transparent 28%),
+    linear-gradient(transparent 0%, rgba(0, 0, 0, 0.01) 50%, transparent 100%);
+  opacity: 0.6;
+}
+
+/* Light theme smooth transitions */
+html.light,
+html.light *,
+html.light *::before,
+html.light *::after {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
+/* Light theme nav */
+html.light .toh-nav-inner {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-nav.scrolled .toh-nav-inner {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(139, 124, 246, 0.18);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-nav-logo {
+  color: var(--toh-white);
+}
+
+html.light .toh-nav-link {
+  color: rgba(45, 45, 63, 0.6);
+}
+
+html.light .toh-nav-link:hover {
+  color: var(--toh-white);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.light .toh-nav-link.active {
+  color: var(--toh-white);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.light .toh-nav-link.active::after {
+  background: var(--indigo);
+}
+
+/* Light theme hamburger */
+html.light .toh-hamburger {
+  color: var(--toh-white);
+}
+
+/* Light theme mobile menu */
+html.light .toh-mobile-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme hero */
+html.light .toh-hero::after {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.024) 1px, transparent 1px);
+  background-size: 70px 70px;
+}
+
+html.light .toh-hero h1 span {
+  background: linear-gradient(135deg, #8b7cf6 0%, #1a1a2e 45%, #8b7cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.light .toh-hero-desc {
+  color: rgba(45, 45, 63, 0.78);
+}
+
+html.light .toh-hero-eyebrow {
+  background: rgba(139, 124, 246, 0.08);
+  border-color: rgba(139, 124, 246, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+html.light .toh-hero-stat {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme feature cards */
+html.light .toh-feature-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7) 32%),
+    rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-feature-card:hover {
+  border-color: rgba(139, 124, 246, 0.25);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8) 36%),
+    rgba(255, 255, 255, 0.9);
+}
+
+html.light .toh-feature-card::before {
+  background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(139, 124, 246, 0.1), transparent 20%);
+}
+
+html.light .toh-feature-icon {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.12), rgba(139, 124, 246, 0.06));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Light theme mockup */
+html.light .toh-mockup {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 250, 0.9) 24%),
+    rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-mockup-bar {
+  background: #e9ecef;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-mockup:hover {
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow: 0 46px 110px rgba(0, 0, 0, 0.12);
+}
+
+/* Light theme Discord embed */
+html.light .dc-embed {
+  background: rgba(248, 249, 250, 0.9);
+  border-left-color: var(--indigo);
+}
+
+/* Light theme buttons */
+html.light .toh-btn-ghost {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--toh-white);
+}
+
+html.light .toh-btn-ghost:hover {
+  border-color: rgba(139, 124, 246, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme search/command cards */
+html.light .toh-cmd-search {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-cmd-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-cmd-card:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(139, 124, 246, 0.2);
+}
+
+html.light .toh-cmd-category-title {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme search highlight */
+html.light mark.toh-highlight {
+  background: rgba(139, 124, 246, 0.2);
+  color: #5b4cc4;
+}
+
+/* Light theme race mode */
+html.light .toh-creds-panel,
+html.light .toh-racer-card,
+html.light .toh-race-controls {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-race-input {
+  background: rgba(248, 249, 250, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-chip {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-progress-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-stat-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-countdown-overlay {
+  background: rgba(248, 249, 250, 0.85);
+}
+
+html.light .toh-race-results {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.06), rgba(34, 197, 94, 0.04));
+  border-color: rgba(139, 124, 246, 0.15);
+}
+
+html.light .toh-race-result-item {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-race-history-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-race-stat-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme leaderboard */
+html.light .toh-lb-header {
+  border-color: rgba(0, 0, 0, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 250, 0.6) 30%),
+    rgba(255, 255, 255, 0.7);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-lb-header::after {
+  background: linear-gradient(90deg, transparent, rgba(139, 124, 246, 0.15), transparent);
+}
+
+html.light .toh-lb-title {
+  background: linear-gradient(135deg, #8b7cf6 0%, #1a1a2e 50%, #8b7cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+html.light .toh-lb-status-bar {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-lb-tabs {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light .toh-lb-tab-btn.active {
+  background: rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+html.light .toh-lb-search-box input {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-lb-search-box input:focus {
+  border-color: rgba(139, 124, 246, 0.35);
+}
+
+html.light .toh-lb-filter-select {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-lb-filter-select option {
+  background: #fff;
+}
+
+html.light .toh-lb-table-wrap {
+  border-color: rgba(0, 0, 0, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 250, 0.5) 24%),
+    rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-lb-table thead th {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-lb-table tbody tr {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-lb-table tbody tr:hover {
+  background: rgba(139, 124, 246, 0.04);
+}
+
+html.light .toh-lb-table tbody tr.top-3 {
+  background: rgba(255, 215, 0, 0.04);
+}
+
+html.light .toh-lb-table tbody tr.top-3:hover {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+html.light .toh-lb-page-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-lb-perpage-select {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-lb-perpage-select option {
+  background: #fff;
+}
+
+/* Light theme podium */
+html.light .toh-podium-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-podium-card:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 0 20px rgba(139, 124, 246, 0.06);
+}
+
+/* Light theme modals */
+html.light .toh-modal-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+html.light .toh-modal-content,
+html.light .toh-compare-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.12);
+}
+
+html.light .toh-modal-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-modal-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-modal-section {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-modal-grid {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-dropdown-input {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-compare-dropdown-list {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-compare-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-compare-dropdown-item.active {
+  background: rgba(139, 124, 246, 0.1);
+}
+
+html.light .toh-compare-table {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-row {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-cell:first-child {
+  border-right-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-cell:last-child {
+  border-left-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-winner {
+  background: rgba(46, 204, 113, 0.06);
+}
+
+html.light .toh-compare-diff {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-diff-row {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-compare-empty {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-compare-level-bar-bg {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme stats section */
+html.light .toh-stats-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7) 35%),
+    rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-stats-card:hover {
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-stats-card-glow {
+  background: radial-gradient(circle, rgba(139, 124, 246, 0.12), transparent 70%);
+}
+
+html.light .toh-stats-icon {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.12), rgba(139, 124, 246, 0.06));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+html.light .toh-stats-chart-wrap {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65) 30%),
+    rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-stats-bar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.light .toh-stats-bar-count {
+  text-shadow: none;
+}
+
+/* Light theme FAQ */
+html.light .toh-faq-item {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-faq-item:hover {
+  border-color: rgba(139, 124, 246, 0.15);
+}
+
+html.light .toh-faq-item.open {
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+html.light .toh-faq-answer-wrap {
+  /* ensure transition still works */
+}
+
+/* Light theme country distribution */
+html.light .toh-country-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65) 30%),
+    rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-country-header:hover {
+  background: rgba(139, 124, 246, 0.03);
+}
+
+html.light .toh-country-bar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-country-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme footer */
+html.light .toh-footer {
+  border-image: linear-gradient(90deg, transparent 5%, rgba(139, 124, 246, 0.3), rgba(196, 181, 253, 0.2), rgba(139, 124, 246, 0.3), transparent 95%) 1;
+}
+
+html.light .toh-footer-links a {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-footer-links a:hover {
+  background: rgba(139, 124, 246, 0.08);
+  border-color: rgba(139, 124, 246, 0.2);
+}
+
+html.light .toh-footer a:hover {
+  text-shadow: none;
+}
+
+/* Light theme scroll-to-top */
+html.light .toh-scroll-top {
+  box-shadow: 0 8px 24px rgba(139, 124, 246, 0.2);
+}
+
+/* Light theme quick stats */
+html.light .toh-lb-quick-stat {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-lb-quick-stat:hover {
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme stats bar in header */
+html.light .toh-lb-stats-bar {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme compare button */
+html.light .toh-compare-btn {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.12), rgba(167, 139, 250, 0.08));
+  border-color: rgba(139, 124, 246, 0.25);
+}
+
+html.light .toh-compare-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.2), rgba(167, 139, 250, 0.15));
+  border-color: rgba(139, 124, 246, 0.4);
+}
+
+/* Light theme export button */
+html.light .toh-lb-export-btn {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Light theme share button */
+html.light .toh-modal-share-btn {
+  background: rgba(139, 124, 246, 0.08);
+  border-color: rgba(139, 124, 246, 0.18);
+}
+
+/* Light theme cache badge */
+html.light .toh-lb-cache-badge {
+  background: rgba(139, 124, 246, 0.08);
+  border-color: rgba(139, 124, 246, 0.2);
+  color: var(--indigo);
+}
+
+/* Light theme mobile table scroll */
+@media (max-width: 768px) {
+  html.light .toh-lb-table-mobile::after {
+    background: linear-gradient(90deg, transparent, rgba(248, 249, 250, 0.9));
+  }
+}
+
+/* Light theme speed toggle */
+html.light .toh-race-speed-group {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Light theme toast */
+html.light .toh-toast {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Theme toggle button */
+.toh-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--toh-white);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, color 0.2s;
+}
+
+.toh-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(196, 181, 253, 0.25);
+  transform: translateY(-1px);
+}
+
+html.light .toh-theme-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #1a1a2e;
+}
+
+html.light .toh-theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(139, 124, 246, 0.25);
+}
+
+/* ════════════════════════════════════════════
    BASE STYLES
 ════════════════════════════════════════════ */
 
@@ -269,6 +966,42 @@ button {
 .toh-nav-link.active {
   color: var(--toh-white);
   background: rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+
+.toh-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--indigo);
+  box-shadow: 0 0 8px var(--indigo-glow);
+}
+
+.toh-nav-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dim);
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.toh-nav-link:hover .toh-nav-shortcut,
+.toh-nav-link.active .toh-nav-shortcut {
+  opacity: 1;
 }
 
 .toh-nav-actions {
@@ -4264,6 +4997,241 @@ select:focus-visible,
 }
 
 /* ════════════════════════════════════════════
+   WHAT'S NEW / CHANGELOG SECTION
+══════════════════════════════ */
+
+.toh-changelog-section {
+  padding: 80px 0;
+  position: relative;
+}
+
+.toh-changelog-timeline {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.toh-changelog-entry {
+  display: flex;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: toh-changelog-fade-in 0.5s ease forwards;
+}
+
+.toh-changelog-entry-stagger {
+  animation: toh-changelog-fade-in 0.5s ease both;
+}
+
+@keyframes toh-changelog-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toh-changelog-line-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  position: relative;
+}
+
+.toh-changelog-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--indigo);
+  border: 3px solid rgba(139, 124, 246, 0.3);
+  box-shadow: 0 0 12px var(--indigo-glow);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  margin-top: 6px;
+}
+
+.toh-changelog-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: rgba(139, 124, 246, 0.12);
+  animation: toh-changelog-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes toh-changelog-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.4);
+  }
+}
+
+.toh-changelog-line {
+  width: 2px;
+  flex: 1;
+  background: linear-gradient(180deg, var(--indigo), rgba(139, 124, 246, 0.15));
+  min-height: 20px;
+}
+
+.toh-changelog-content {
+  flex: 1;
+  padding: 22px 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 40%),
+    rgba(13, 13, 18, 0.5);
+  border: 1px solid rgba(196, 181, 253, 0.08);
+  border-radius: 20px;
+  margin-bottom: 0;
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.toh-changelog-content:hover {
+  border-color: rgba(196, 181, 253, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 40%),
+    rgba(16, 16, 22, 0.7);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.toh-changelog-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.toh-changelog-version {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(139, 124, 246, 0.15);
+  border: 1px solid rgba(196, 181, 253, 0.3);
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+}
+
+.toh-changelog-date {
+  font-size: 13px;
+  color: var(--dim);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-changelog-title {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toh-white);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.toh-changelog-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.toh-changelog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toh-changelog-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.toh-changelog-tag-new {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: var(--toh-green);
+}
+
+.toh-changelog-tag-improved {
+  background: rgba(139, 124, 246, 0.12);
+  border-color: rgba(196, 181, 253, 0.3);
+  color: var(--violet);
+}
+
+.toh-changelog-tag-fixed {
+  background: rgba(232, 59, 59, 0.12);
+  border-color: rgba(232, 59, 59, 0.3);
+  color: var(--toh-red);
+}
+
+.toh-changelog-tag-default {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--toh-border);
+  color: var(--dim);
+}
+
+/* Changelog responsive */
+@media (max-width: 640px) {
+  .toh-changelog-timeline {
+    max-width: 100%;
+  }
+
+  .toh-changelog-entry {
+    gap: 16px;
+  }
+
+  .toh-changelog-line-wrap {
+    width: 24px;
+  }
+
+  .toh-changelog-dot {
+    width: 11px;
+    height: 11px;
+    border-width: 2px;
+    margin-top: 8px;
+  }
+
+  .toh-changelog-content {
+    padding: 18px 18px;
+    border-radius: 16px;
+  }
+
+  .toh-changelog-title {
+    font-size: 16px;
+  }
+
+  .toh-changelog-desc {
+    font-size: 13px;
+  }
+
+  .toh-changelog-meta {
+    gap: 8px;
+  }
+}
+
+/* ════════════════════════════════════════════
    FAQ SECTION
 ══════════════════════════════ */
 
@@ -4659,23 +5627,6 @@ select:focus-visible,
   width: 200px;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--violet), transparent);
-  border-radius: 1px;
-}
-
-/* Nav link active indicator */
-.toh-nav-link.active {
-  position: relative;
-}
-
-.toh-nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 2px;
-  background: var(--indigo);
   border-radius: 1px;
 }
 
