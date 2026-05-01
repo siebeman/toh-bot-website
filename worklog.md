@@ -1,6 +1,68 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 17 - Latest)
+## Current Project Status (Round 18 - Latest)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Round 18 Development Summary (User-Requested Content & Layout Changes)
+
+**Changes Implemented:**
+
+1. ✅ **Homepage Hero Stats Updated** — Changed from "5K+ Servers, 50K+ Users, 99.9% Uptime" to "5K+ Users, 99.9% Uptime" (removed Servers stat, changed 50K+ to 5K+ for Users)
+
+2. ✅ **Feature Card Text Readability Fixed** — Fixed dark text on dark background issue caused by CSS variable conflict
+   - `.toh-feature-desc` changed from `color: var(--dim)` to `color: var(--toh-text); opacity: 0.7;`
+   - `.toh-feature-item` changed from `color: var(--muted)` to `color: var(--toh-text); opacity: 0.75;`
+   - Root cause: shadcn's `--muted` was overridden to `rgba(255, 255, 255, 0.06)` making text nearly invisible
+
+3. ✅ **Leaderboard Feature Card Updated** — Description now says "The biggest unofficial Tower of Hell leaderboard, live on the website. See who dominates the tower." with items updated to "Live rankings", "Device filtering", "Country tracking"
+
+4. ✅ **Commands Page Replaced with Real Bot Commands** — All 62 actual bot commands across 6 categories:
+   - **Level & XP** (9 commands): /levelinfo, /towers, /xpcalc, /compare, /xprate, /partialxp, /levelcap, /convert, /whatsmylevel
+   - **Progress & Planning** (10 commands): /progress, /grind, /nextlevel, /efficiency, /milestone, /skillpoints, /xpgoal, /dailytarget, /xpperday, /grindcalendar
+   - **Time & Stats** (9 commands): /howlong, /howaddicted, /towermath, /whatif, /towerstoday, /seasonal, /grindgraph, /projection, /website
+   - **Competitive** (19 commands): /leaderboard, /leaderboardcompare, /leaderboardstats, /leaderboardcountry, /leaderboarddevice, /leaderboardrange, /leaderboardwatch, /race, /race_create, /race_join, /race_start, /race_status, /race_end, /catchup, /overtake, /breakeven, /compare_players, /podium, /howfar
+   - **Fun** (12 commands): /roast, /hype, /shouldigrind, /shouldishower, /shouldigooutside, /shouldisleep, /areyouoktohbot, /tohquote, /towerfact, /equivalent, /flex, /levelcard
+   - **Misc** (3 commands): /ping, /tohhelp, /remindme
+
+5. ✅ **Homepage Section Reordering** — New order: Features/Everything You Need → XP Calculator → Community Stats → Changelog → Common Questions
+
+6. ✅ **Removed Unwanted Homepage Sections** — Did You Know (rotating tips), Live Activity Feed, and Achievements/Milestones sections removed from homepage
+
+7. ✅ **XP Calculator Bot Note Added** — Added "💡 Use the bot for more calculation options — try /grind, /xpcalc, /progress and more!" note with `.toh-calc-bot-note` CSS class (with light theme override)
+
+8. ✅ **Breadcrumb Navigation Bar Removed** — Removed the rectangular `toh-breadcrumb-bar` header (with "Home" label) that appeared below the main nav bar. Only the rounded main navigation bar remains. Cleaned up unused imports (ChevronRight, ArrowLeft).
+
+**CSS Changes:**
+- `.toh-feature-desc`: Changed to `color: var(--toh-text); opacity: 0.7;`
+- `.toh-feature-item`: Changed to `color: var(--toh-text); opacity: 0.75;`
+- `.toh-calc-bot-note`: New class for XP Calculator bot note (font-size 14px, muted-foreground color)
+- `.toh-calc-bot-note strong`: Indigo color for command names
+- Light theme overrides for `.toh-calc-bot-note` and `.toh-calc-bot-note strong`
+
+**QA Testing Results:**
+- Homepage tested with agent-browser + VLM: Hero stats show "5K+ Users" and "99.9% Uptime" ✅
+- Feature card bullet points are visible and readable ✅
+- Leaderboard card shows "biggest unofficial Tower of Hell leaderboard" ✅
+- No rectangular breadcrumb header below main nav ✅
+- Commands page shows 62 commands across 6 categories ✅
+- XP Calculator section includes bot note ✅
+- 0 lint errors, 0 runtime errors
+
+### Unresolved Issues / Next Phase Priorities
+
+1. **globals.css is ~12,000 lines** — could benefit from CSS splitting or PurgeCSS in production build (medium priority)
+2. **Particle canvas performance** on low-end devices - could benefit from requestAnimationFrame throttling (low priority)
+3. **FAQ accessibility** — collapsed answers still present in DOM for screen readers (aria-hidden recommended)
+4. **Keyboard shortcuts panel** — no focus trapping when open (accessibility concern)
+5. **WebSocket integration** for live leaderboard updates — would require backend changes (nice-to-have)
+6. **Mobile leaderboard** — hidden columns reduce usability, consider tap-to-expand detail rows
+7. **Real-time notification updates** — connect notification center to actual data source
+8. **Newsletter form** — currently non-functional, could connect to backend API
+
+---
+
+## Previous Project Status (Round 17)
 
 The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing with breadcrumb navigation, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, activity feed, player hover tooltips, level distribution chart, search history, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**. Total globals.css: ~12,011 lines.
 

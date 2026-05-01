@@ -5,7 +5,7 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard, Bell } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 type NavigateDirection = 'forward' | 'back';
@@ -579,55 +579,7 @@ export default function MainPage() {
         </div>
       </nav>
 
-      {/* Breadcrumb Navigation Bar */}
-      <div className="toh-breadcrumb-bar">
-        <div className="toh-container">
-          <div className="toh-breadcrumb-inner">
-            {/* Back button */}
-            {currentPage !== 'home' ? (
-              <button
-                className="toh-breadcrumb-back"
-                onClick={goBack}
-                aria-label="Go back to previous page"
-                title="Go back"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-            ) : (
-              <span className="toh-breadcrumb-back toh-breadcrumb-back-hidden">
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </span>
-            )}
 
-            <div className="toh-breadcrumb-separator-v" />
-
-            {/* Breadcrumb trail */}
-            <nav className="toh-breadcrumb-trail" aria-label="Breadcrumb">
-              <button
-                className="toh-breadcrumb-item"
-                onClick={() => navigate('home')}
-              >
-                <span className="toh-breadcrumb-item-emoji">🏠</span>
-                <span className="toh-breadcrumb-item-text">Home</span>
-                <span className="toh-breadcrumb-underline" />
-              </button>
-
-              {currentPage !== 'home' && (
-                <>
-                  <ChevronRight size={12} className="toh-breadcrumb-chevron" />
-                  <span className="toh-breadcrumb-item toh-breadcrumb-item-active">
-                    <span className="toh-breadcrumb-item-emoji">{PAGE_META[currentPage].emoji}</span>
-                    <span className="toh-breadcrumb-item-text">{PAGE_META[currentPage].label}</span>
-                    <span className="toh-breadcrumb-underline" />
-                  </span>
-                </>
-              )}
-            </nav>
-          </div>
-        </div>
-      </div>
 
       {/* Page Content with Transitions */}
       <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>

@@ -18,47 +18,88 @@ interface CategoryInfo {
 }
 
 const COMMANDS: Command[] = [
-  // General
-  { name: '/help', desc: 'Show all available commands and usage info', usage: '/help', category: 'General' },
-  { name: '/botinfo', desc: 'Display bot information and statistics', usage: '/botinfo', category: 'General' },
-  { name: '/ping', desc: 'Check the bot\'s response latency', usage: '/ping', category: 'General' },
-  { name: '/invite', desc: 'Get the bot invite link for your server', usage: '/invite', category: 'General' },
-  { name: '/support', desc: 'Get a link to the support server', usage: '/support', category: 'General' },
-  // XP & Levels
-  { name: '/level', desc: 'Check your current level and XP progress', usage: '/level [username]', category: 'XP & Levels' },
-  { name: '/rank', desc: 'View your rank on the leaderboard', usage: '/rank [username]', category: 'XP & Levels' },
-  { name: '/xp', desc: 'See your current XP and needed for next level', usage: '/xp [username]', category: 'XP & Levels' },
-  { name: '/progress', desc: 'View your XP progress bar and milestones', usage: '/progress [username]', category: 'XP & Levels' },
-  { name: '/grind', desc: 'Calculate XP needed to reach a target level', usage: '/grind <target_level>', category: 'XP & Levels' },
-  { name: '/compare', desc: 'Compare your stats with another player', usage: '/compare <username>', category: 'XP & Levels' },
-  { name: '/predict', desc: 'Estimate when you\'ll reach a target level', usage: '/predict <target_level>', category: 'XP & Levels' },
-  // Race
-  { name: '/race create', desc: 'Create a new race with custom settings', usage: '/race create [max_players]', category: 'Race' },
-  { name: '/race join', desc: 'Join an active race in this server', usage: '/race join <race_id>', category: 'Race' },
-  { name: '/race leave', desc: 'Leave the current race', usage: '/race leave', category: 'Race' },
-  { name: '/race start', desc: 'Start the race (host only)', usage: '/race start', category: 'Race' },
-  { name: '/race finish', desc: 'Mark yourself as finished in the race', usage: '/race finish', category: 'Race' },
-  { name: '/race cancel', desc: 'Cancel the current race (host only)', usage: '/race cancel', category: 'Race' },
-  { name: '/race list', desc: 'List all active races in this server', usage: '/race list', category: 'Race' },
-  // Leaderboard
-  { name: '/leaderboard', desc: 'View the global Tower of Hell leaderboard', usage: '/leaderboard [page]', category: 'Leaderboard' },
-  { name: '/top', desc: 'See the top 10 players by level', usage: '/top [count]', category: 'Leaderboard' },
-  { name: '/search', desc: 'Search for a specific player on the leaderboard', usage: '/search <username>', category: 'Leaderboard' },
-  { name: '/banned', desc: 'View the banned players leaderboard', usage: '/banned [page]', category: 'Leaderboard' },
-  // Admin
-  { name: '/setup', desc: 'Configure the bot for your server', usage: '/setup', category: 'Admin' },
-  { name: '/channel', desc: 'Set the bot\'s command channel', usage: '/channel <#channel>', category: 'Admin' },
-  { name: '/role', desc: 'Set required roles for commands', usage: '/role <@role>', category: 'Admin' },
-  { name: '/reset', desc: 'Reset server configuration to defaults', usage: '/reset', category: 'Admin' },
-  { name: '/prefix', desc: 'Change the bot\'s prefix', usage: '/prefix <new_prefix>', category: 'Admin' },
+  // Level & XP
+  { name: '/levelinfo', desc: 'Full XP breakdown for any level', usage: '/levelinfo <level>', category: 'Level & XP' },
+  { name: '/towers', desc: 'Total towers to reach a level', usage: '/towers <level>', category: 'Level & XP' },
+  { name: '/xpcalc', desc: 'Convert raw XP into a level', usage: '/xpcalc <xp>', category: 'Level & XP' },
+  { name: '/compare', desc: 'XP gap and tower gap between two levels', usage: '/compare <level1> <level2>', category: 'Level & XP' },
+  { name: '/xprate', desc: 'XP cost table across a level range', usage: '/xprate <start> <end>', category: 'Level & XP' },
+  { name: '/partialxp', desc: 'XP for completing part of a tower', usage: '/partialxp <xp>', category: 'Level & XP' },
+  { name: '/levelcap', desc: 'Stats about the level 1,000,000 cap', usage: '/levelcap', category: 'Level & XP' },
+  { name: '/convert', desc: 'Convert between XP and towers', usage: '/convert <value>', category: 'Level & XP' },
+  { name: '/whatsmylevel', desc: 'Estimate your level from tower win count', usage: '/whatsmylevel <wins>', category: 'Level & XP' },
+
+  // Progress & Planning
+  { name: '/progress', desc: 'Progress bar and towers left to reach a target level', usage: '/progress <target>', category: 'Progress & Planning' },
+  { name: '/grind', desc: 'Full grind planner', usage: '/grind <target_level>', category: 'Progress & Planning' },
+  { name: '/nextlevel', desc: 'Exactly what you need for your next level', usage: '/nextlevel', category: 'Progress & Planning' },
+  { name: '/efficiency', desc: 'Compare grinding strategies', usage: '/efficiency', category: 'Progress & Planning' },
+  { name: '/milestone', desc: 'Your next 10 round-number milestones', usage: '/milestone', category: 'Progress & Planning' },
+  { name: '/skillpoints', desc: 'Skill tree progress', usage: '/skillpoints', category: 'Progress & Planning' },
+  { name: '/xpgoal', desc: 'Towers needed to gain a target XP or levels', usage: '/xpgoal <target>', category: 'Progress & Planning' },
+  { name: '/dailytarget', desc: 'Towers/levels per day to hit a level by a deadline', usage: '/dailytarget <level> <date>', category: 'Progress & Planning' },
+  { name: '/xpperday', desc: 'XP/towers/levels per day to reach a level in N days', usage: '/xpperday <level> <days>', category: 'Progress & Planning' },
+  { name: '/grindcalendar', desc: 'Set up a visual grind calendar on the website', usage: '/grindcalendar', category: 'Progress & Planning' },
+
+  // Time & Stats
+  { name: '/howlong', desc: 'Estimate time spent or real grind rate', usage: '/howlong', category: 'Time & Stats' },
+  { name: '/howaddicted', desc: 'Full life-in-ToH summary with addiction tier', usage: '/howaddicted', category: 'Time & Stats' },
+  { name: '/towermath', desc: 'Absurd real-world comparisons for your XP', usage: '/towermath', category: 'Time & Stats' },
+  { name: '/whatif', desc: 'What level you\'d be if you started earlier', usage: '/whatif <date>', category: 'Time & Stats' },
+  { name: '/towerstoday', desc: 'Session summary', usage: '/towerstoday', category: 'Time & Stats' },
+  { name: '/seasonal', desc: 'Monthly grind review', usage: '/seasonal', category: 'Time & Stats' },
+  { name: '/grindgraph', desc: 'PNG chart of your level progress', usage: '/grindgraph', category: 'Time & Stats' },
+  { name: '/projection', desc: 'Are you on pace to hit your goal?', usage: '/projection <goal>', category: 'Time & Stats' },
+  { name: '/website', desc: 'Link to the live Tower of Hell Bot website and race dashboard', usage: '/website', category: 'Time & Stats' },
+
+  // Competitive
+  { name: '/leaderboard', desc: 'Show public leaderboard (optional rank/username)', usage: '/leaderboard [rank|username]', category: 'Competitive' },
+  { name: '/leaderboardcompare', desc: 'Compare two leaderboard players', usage: '/leaderboardcompare <user1> <user2>', category: 'Competitive' },
+  { name: '/leaderboardstats', desc: 'Leaderboard-wide stats', usage: '/leaderboardstats', category: 'Competitive' },
+  { name: '/leaderboardcountry', desc: 'Show players from a specific country', usage: '/leaderboardcountry <country>', category: 'Competitive' },
+  { name: '/leaderboarddevice', desc: 'Show players from a specific device', usage: '/leaderboarddevice <device>', category: 'Competitive' },
+  { name: '/leaderboardrange', desc: 'Show all players between two ranks', usage: '/leaderboardrange <min> <max>', category: 'Competitive' },
+  { name: '/leaderboardwatch', desc: 'Ping you when a user reaches a target rank', usage: '/leaderboardwatch <user> <rank>', category: 'Competitive' },
+  { name: '/race', desc: 'Race to a target level (simple comparison)', usage: '/race <target>', category: 'Competitive' },
+  { name: '/race_create', desc: 'Start a real Discord race', usage: '/race_create', category: 'Competitive' },
+  { name: '/race_join', desc: 'Join a real Discord race', usage: '/race_join', category: 'Competitive' },
+  { name: '/race_start', desc: 'Start the race you created', usage: '/race_start', category: 'Competitive' },
+  { name: '/race_status', desc: 'See status of a Discord race', usage: '/race_status', category: 'Competitive' },
+  { name: '/race_end', desc: 'End or cancel the race you created', usage: '/race_end', category: 'Competitive' },
+  { name: '/catchup', desc: 'How long to catch up to someone ahead', usage: '/catchup <user>', category: 'Competitive' },
+  { name: '/overtake', desc: 'When you overtake someone grinding slower', usage: '/overtake <user>', category: 'Competitive' },
+  { name: '/breakeven', desc: 'When your XP matches a player with a head start', usage: '/breakeven <user>', category: 'Competitive' },
+  { name: '/compare_players', desc: 'Dramatic XP comparison', usage: '/compare_players <user1> <user2>', category: 'Competitive' },
+  { name: '/podium', desc: 'Rank three players on a podium', usage: '/podium <user1> <user2> <user3>', category: 'Competitive' },
+  { name: '/howfar', desc: 'Gap between two levels in hours/weeks', usage: '/howfar <level1> <level2>', category: 'Competitive' },
+
+  // Fun
+  { name: '/roast', desc: 'Get roasted based on your level', usage: '/roast', category: 'Fun' },
+  { name: '/hype', desc: 'Get hyped up based on your level', usage: '/hype', category: 'Fun' },
+  { name: '/shouldigrind', desc: '50/50 yes/no', usage: '/shouldigrind', category: 'Fun' },
+  { name: '/shouldishower', desc: 'Should you shower?', usage: '/shouldishower', category: 'Fun' },
+  { name: '/shouldigooutside', desc: 'Should you go outside?', usage: '/shouldigooutside', category: 'Fun' },
+  { name: '/shouldisleep', desc: 'Should you sleep?', usage: '/shouldisleep', category: 'Fun' },
+  { name: '/areyouoktohbot', desc: 'Check the bot\'s state', usage: '/areyouoktohbot', category: 'Fun' },
+  { name: '/tohquote', desc: 'Random Tower of Hell wisdom', usage: '/tohquote', category: 'Fun' },
+  { name: '/towerfact', desc: 'Random XP fact about the game', usage: '/towerfact', category: 'Fun' },
+  { name: '/equivalent', desc: 'What your level is equivalent to', usage: '/equivalent', category: 'Fun' },
+  { name: '/flex', desc: 'Generates a shareable level card image', usage: '/flex', category: 'Fun' },
+  { name: '/levelcard', desc: 'Alias for /flex', usage: '/levelcard', category: 'Fun' },
+
+  // Misc
+  { name: '/ping', desc: 'Check bot latency', usage: '/ping', category: 'Misc' },
+  { name: '/tohhelp', desc: 'Full command list in Discord', usage: '/tohhelp', category: 'Misc' },
+  { name: '/remindme', desc: 'Set a grind reminder', usage: '/remindme <time> <message>', category: 'Misc' },
 ];
 
 const CATEGORIES: CategoryInfo[] = [
-  { name: 'General', icon: '⚡', description: 'Core bot commands', color: '#8b7cf6' },
-  { name: 'XP & Levels', icon: '📊', description: 'Track your progress', color: '#2ecc71' },
-  { name: 'Race', icon: '🏁', description: 'Compete against others', color: '#e83b3b' },
-  { name: 'Leaderboard', icon: '🏆', description: 'See who\'s on top', color: '#ffd700' },
-  { name: 'Admin', icon: '⚙️', description: 'Server configuration', color: '#3b82f6' },
+  { name: 'Level & XP', icon: '📊', description: 'XP and level calculations', color: '#8b7cf6' },
+  { name: 'Progress & Planning', icon: '🎯', description: 'Plan your grind', color: '#2ecc71' },
+  { name: 'Time & Stats', icon: '⏱️', description: 'Time and statistics', color: '#f59e0b' },
+  { name: 'Competitive', icon: '🏆', description: 'Compete and compare', color: '#e83b3b' },
+  { name: 'Fun', icon: '🎉', description: 'Fun and entertainment', color: '#ec4899' },
+  { name: 'Misc', icon: '⚙️', description: 'Utilities and more', color: '#3b82f6' },
 ];
 
 const RECENT_KEY = 'toh-cmd-recent';

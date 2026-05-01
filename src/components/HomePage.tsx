@@ -156,48 +156,6 @@ const CHANGELOG = [
 ];
 
 /* ════════════════════════════════════════════
-   Did You Know Tips Data
-══════════════════════════════ */
-const DYK_TIPS = [
-  { emoji: '💡', title: 'Grind Calculator', desc: 'You can use /grind to calculate how much XP you need for your next level!' },
-  { emoji: '🏁', title: 'Race Mode', desc: 'Race Mode supports up to 8 players simultaneously — challenge your whole server!' },
-  { emoji: '📊', title: 'Global Leaderboard', desc: 'The leaderboard tracks over 300 active players from 50+ countries worldwide.' },
-  { emoji: '🏆', title: 'Milestone Badges', desc: 'Players with 1000+ levels earn the 🔥 badge — can you reach it?' },
-  { emoji: '🤖', title: 'Slash Commands', desc: 'TOH Bot supports 20+ slash commands — try /help to see them all!' },
-  { emoji: '⚡', title: 'Real-time XP', desc: 'XP is synced automatically — no manual updates needed, just play!' },
-  { emoji: '🌍', title: 'Country Rankings', desc: 'See which country dominates the tower with country distribution charts.' },
-  { emoji: '📈', title: 'Progress Projections', desc: 'Use /grind to get time-to-level estimates based on your current pace.' },
-  { emoji: '🎯', title: 'Player Comparison', desc: 'Compare any two players side-by-side with detailed stat breakdowns.' },
-  { emoji: '🔧', title: 'Admin Tools', desc: 'Server admins can configure TOH Bot with custom prefixes and channel settings.' },
-];
-
-/* ════════════════════════════════════════════
-   Achievements Data
-══════════════════════════════ */
-const ACHIEVEMENTS = [
-  { emoji: '🏆', title: 'Tower Champion', desc: 'Reach Level 1000', pct: 87, complete: false },
-  { emoji: '🌍', title: 'World Traveler', desc: 'Players from 50+ countries', pct: 100, complete: true },
-  { emoji: '🏁', title: 'Race Veteran', desc: 'Complete 1000 races', pct: 80, complete: false },
-  { emoji: '⚡', title: 'Speed Demon', desc: 'Finish a race under 2 minutes', pct: 100, complete: true },
-  { emoji: '📊', title: 'Data Master', desc: 'Track 300+ active players', pct: 100, complete: true },
-  { emoji: '🤝', title: 'Community Builder', desc: 'Reach 5000 servers', pct: 92, complete: false },
-];
-
-/* ════════════════════════════════════════════
-   Live Activity Feed Data
-══════════════════════════════ */
-const ACTIVITIES = [
-  { emoji: '🏆', user: 'Skyourain', action: 'reached Level 1,341', time: '2 min ago', type: 'level' },
-  { emoji: '🏁', user: 'wilder270522', action: 'won a Race Mode match', time: '15 min ago', type: 'race' },
-  { emoji: '⬆️', user: 'chatgris31', action: 'moved to Rank #3', time: '32 min ago', type: 'rank' },
-  { emoji: '🔥', user: 'RealMorri', action: 'hit Level 900 milestone', time: '1 hr ago', type: 'milestone' },
-  { emoji: '🤝', user: 'xXGamerXx', action: 'joined the leaderboard', time: '2 hr ago', type: 'join' },
-  { emoji: '📊', user: 'ProClimber99', action: 'achieved 500 XP in one day', time: '3 hr ago', type: 'xp' },
-  { emoji: '🏁', user: 'TowerKing', action: 'set a new race record', time: '4 hr ago', type: 'race' },
-  { emoji: '⬆️', user: 'SkyClimber', action: 'climbed 15 ranks today', time: '5 hr ago', type: 'rank' },
-];
-
-/* ════════════════════════════════════════════
    Animated Counter for XP Calculator
 ══════════════════════════════ */
 function AnimatedCounter({ target, duration = 800 }: { target: number; duration?: number }) {
@@ -226,37 +184,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const featuresRevealRef = useScrollReveal();
   const changelogRevealRef = useScrollReveal();
   const faqRevealRef = useScrollReveal();
-  const dykRevealRef = useScrollReveal();
-  const activityRevealRef = useScrollReveal();
-  const achieveRevealRef = useScrollReveal();
   const calcRevealRef = useScrollReveal();
-
-  // Activity Feed — auto-rotation breathing highlight
-  const [highlightIndex, setHighlightIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHighlightIndex((prev) => (prev + 1) % ACTIVITIES.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Did You Know — rotating tips
-  const [dykIndex, setDykIndex] = useState(0);
-  const [dykPaused, setDykPaused] = useState(false);
-  const [dykTransitioning, setDykTransitioning] = useState(false);
-
-  useEffect(() => {
-    if (dykPaused) return;
-    const timer = setInterval(() => {
-      setDykTransitioning(true);
-      setTimeout(() => {
-        setDykIndex((prev) => (prev + 1) % DYK_TIPS.length);
-        setDykTransitioning(false);
-      }, 300);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [dykPaused]);
 
   // Quick Search
   const [quickSearch, setQuickSearch] = useState('');
@@ -324,8 +252,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     {
       icon: '🏆',
       title: 'Leaderboard',
-      desc: 'Official community rankings updated in real-time. See who dominates the tower.',
-      items: ['Top 300 players', 'Device filtering', 'Country tracking'],
+      desc: 'The biggest unofficial Tower of Hell leaderboard, live on the website. See who dominates the tower.',
+      items: ['Live rankings', 'Device filtering', 'Country tracking'],
     },
     {
       icon: '📊',
@@ -425,8 +353,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </div>
 
               <div className="toh-hero-stats">
-                <AnimatedStat target={5000} duration={1500} suffix="K+" label="Servers" />
-                <AnimatedStat target={50000} duration={1500} suffix="K+" label="Users" />
+                <AnimatedStat target={5000} duration={1500} suffix="K+" label="Users" />
                 <AnimatedStat target={99.9} duration={1500} suffix="%" label="Uptime" />
               </div>
             </div>
@@ -483,7 +410,119 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
-      {/* Community Stats Section */}
+      {/* 1. Features Section — FIRST */}
+      <section style={{ padding: '80px 0' }} className="toh-reveal" ref={featuresRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">Features</div>
+            <h2 className="toh-section-title">Everything You Need</h2>
+            <p className="toh-section-subtitle">
+              From XP tracking to live races — TOH Bot has every tool a Tower of Hell player needs.
+            </p>
+          </div>
+          <div className="toh-features-grid">
+            {features.map((f, i) => (
+              <div
+                key={f.title}
+                className="toh-feature-card toh-feature-card-stagger"
+                style={{ animationDelay: `${i * 100}ms` }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  e.currentTarget.style.setProperty('--spot-x', `${x}%`);
+                  e.currentTarget.style.setProperty('--spot-y', `${y}%`);
+                }}
+              >
+                <div className="toh-feature-icon">{f.icon}</div>
+                <div className="toh-feature-title">{f.title}</div>
+                <div className="toh-feature-desc">{f.desc}</div>
+                <div className="toh-feature-items">
+                  {f.items.map((item) => (
+                    <div key={item} className="toh-feature-item">{item}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. XP Level-Up Calculator */}
+      <section className="toh-calc-section toh-reveal" ref={calcRevealRef}>
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">Tools</div>
+            <h2 className="toh-section-title">XP Calculator</h2>
+            <p className="toh-section-subtitle">
+              Calculate how much XP you need to reach your target level and estimate the time required.
+            </p>
+            <p className="toh-calc-bot-note">
+              💡 Use the bot for more calculation options — try <strong>/grind</strong>, <strong>/xpcalc</strong>, <strong>/progress</strong> and more!
+            </p>
+          </div>
+          <div className="toh-calc-card">
+            <div className="toh-calc-inputs">
+              <div className="toh-calc-field">
+                <label className="toh-calc-label" htmlFor="calc-current">Current Level</label>
+                <input
+                  id="calc-current"
+                  type="number"
+                  className="toh-calc-input"
+                  placeholder="e.g. 100"
+                  value={calcCurrent}
+                  onChange={(e) => setCalcCurrent(e.target.value.replace(/[^0-9]/g, ''))}
+                  min="0"
+                />
+              </div>
+              <div className="toh-calc-arrow">→</div>
+              <div className="toh-calc-field">
+                <label className="toh-calc-label" htmlFor="calc-target">Target Level</label>
+                <input
+                  id="calc-target"
+                  type="number"
+                  className="toh-calc-input"
+                  placeholder="e.g. 500"
+                  value={calcTarget}
+                  onChange={(e) => setCalcTarget(e.target.value.replace(/[^0-9]/g, ''))}
+                  min="0"
+                />
+              </div>
+            </div>
+            {xpNeeded > 0 && (
+              <div className="toh-calc-results">
+                <div className="toh-calc-result-row">
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value"><AnimatedCounter target={xpNeeded} /></div>
+                    <div className="toh-calc-result-label">XP Needed</div>
+                  </div>
+                  <div className="toh-calc-result-divider" />
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value">~<AnimatedCounter target={estimatedHours} />h</div>
+                    <div className="toh-calc-result-label">Estimated Time</div>
+                  </div>
+                  <div className="toh-calc-result-divider" />
+                  <div className="toh-calc-result-item">
+                    <div className="toh-calc-result-value">{targetLevel - currentLevel}</div>
+                    <div className="toh-calc-result-label">Levels to Go</div>
+                  </div>
+                </div>
+                <div className="toh-calc-progress-wrap">
+                  <div className="toh-calc-progress-track">
+                    <div className="toh-calc-progress-fill" style={{ width: `${calcPct}%` }} />
+                  </div>
+                  <div className="toh-calc-progress-label">{calcPct}% complete</div>
+                </div>
+              </div>
+            )}
+            {currentLevel > 0 && targetLevel > 0 && targetLevel <= currentLevel && (
+              <div className="toh-calc-error">Target level must be greater than current level.</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Community Stats Section */}
       <section className="toh-stats-section toh-reveal" ref={statsRevealRef}>
         <div className="toh-stats-glow" />
         <div className="toh-container">
@@ -554,228 +593,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
-      {/* Did You Know — Rotating Tips Banner */}
-      <section className="toh-dyk-section toh-reveal" ref={dykRevealRef}>
-        <div className="toh-container">
-          <div className="toh-dyk-banner"
-            onMouseEnter={() => setDykPaused(true)}
-            onMouseLeave={() => setDykPaused(false)}
-          >
-            <div className="toh-dyk-glow" />
-            <div className={`toh-dyk-content ${dykTransitioning ? 'toh-dyk-fade-out' : 'toh-dyk-fade-in'}`}>
-              <div className="toh-dyk-emoji">{DYK_TIPS[dykIndex].emoji}</div>
-              <div className="toh-dyk-text">
-                <div className="toh-dyk-label">Did you know?</div>
-                <div className="toh-dyk-title">{DYK_TIPS[dykIndex].title}</div>
-                <div className="toh-dyk-desc">{DYK_TIPS[dykIndex].desc}</div>
-              </div>
-            </div>
-            <div className="toh-dyk-dots">
-              {DYK_TIPS.map((_, i) => (
-                <button
-                  key={i}
-                  className={`toh-dyk-dot ${i === dykIndex ? 'active' : ''}`}
-                  onClick={() => {
-                    setDykTransitioning(true);
-                    setTimeout(() => {
-                      setDykIndex(i);
-                      setDykTransitioning(false);
-                    }, 300);
-                  }}
-                  aria-label={`Go to tip ${i + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Activity Feed */}
-      <section className="toh-activity-section toh-reveal" ref={activityRevealRef}>
-        <div className="toh-container">
-          <div className="toh-section-header">
-            <div className="toh-section-eyebrow">
-              <span className="toh-activity-live-dot" />
-              Live Feed
-            </div>
-            <h2 className="toh-section-title">Recent Activity</h2>
-            <p className="toh-section-subtitle">
-              See what&apos;s happening in the Tower of Hell community right now.
-            </p>
-          </div>
-          <div className="toh-activity-card">
-            <div className="toh-activity-list">
-              {ACTIVITIES.map((act, i) => (
-                <div
-                  key={`${act.user}-${act.action}`}
-                  className={`toh-activity-item toh-activity-item-stagger ${i === highlightIndex ? 'toh-activity-item-highlight' : ''}`}
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
-                  <div className="toh-activity-item-emoji">{act.emoji}</div>
-                  <div className="toh-activity-item-content">
-                    <span className="toh-activity-item-user">{act.user}</span>{' '}
-                    <span className="toh-activity-item-action">{act.action}</span>
-                  </div>
-                  <div className="toh-activity-item-time">{act.time}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Achievements / Milestones Showcase */}
-      <section className="toh-achieve-section toh-reveal" ref={achieveRevealRef}>
-        <div className="toh-container">
-          <div className="toh-section-header">
-            <div className="toh-section-eyebrow">Milestones</div>
-            <h2 className="toh-section-title">Achievements</h2>
-            <p className="toh-section-subtitle">
-              Track our community milestones — see what we&apos;ve accomplished together.
-            </p>
-          </div>
-          <div className="toh-achieve-grid">
-            {ACHIEVEMENTS.map((a, i) => (
-              <div
-                key={a.title}
-                className={`toh-achieve-card ${a.complete ? 'toh-achieve-complete' : 'toh-achieve-progress'}`}
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <div className="toh-achieve-emoji">{a.emoji}</div>
-                <div className="toh-achieve-info">
-                  <div className="toh-achieve-title">{a.title}</div>
-                  <div className="toh-achieve-desc">{a.desc}</div>
-                </div>
-                {a.complete ? (
-                  <div className="toh-achieve-check">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="toh-achieve-bar-wrap">
-                    <div className="toh-achieve-bar-track">
-                      <div className="toh-achieve-bar-fill" style={{ width: `${a.pct}%` }} />
-                    </div>
-                    <div className="toh-achieve-bar-label">{a.pct}%</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section style={{ padding: '80px 0' }} className="toh-reveal" ref={featuresRevealRef}>
-        <div className="toh-container">
-          <div className="toh-section-header">
-            <div className="toh-section-eyebrow">Features</div>
-            <h2 className="toh-section-title">Everything You Need</h2>
-            <p className="toh-section-subtitle">
-              From XP tracking to live races — TOH Bot has every tool a Tower of Hell player needs.
-            </p>
-          </div>
-          <div className="toh-features-grid">
-            {features.map((f, i) => (
-              <div
-                key={f.title}
-                className="toh-feature-card toh-feature-card-stagger"
-                style={{ animationDelay: `${i * 100}ms` }}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  e.currentTarget.style.setProperty('--spot-x', `${x}%`);
-                  e.currentTarget.style.setProperty('--spot-y', `${y}%`);
-                }}
-              >
-                <div className="toh-feature-icon">{f.icon}</div>
-                <div className="toh-feature-title">{f.title}</div>
-                <div className="toh-feature-desc">{f.desc}</div>
-                <div className="toh-feature-items">
-                  {f.items.map((item) => (
-                    <div key={item} className="toh-feature-item">{item}</div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* XP Level-Up Calculator */}
-      <section className="toh-calc-section toh-reveal" ref={calcRevealRef}>
-        <div className="toh-container">
-          <div className="toh-section-header">
-            <div className="toh-section-eyebrow">Tools</div>
-            <h2 className="toh-section-title">XP Calculator</h2>
-            <p className="toh-section-subtitle">
-              Calculate how much XP you need to reach your target level and estimate the time required.
-            </p>
-          </div>
-          <div className="toh-calc-card">
-            <div className="toh-calc-inputs">
-              <div className="toh-calc-field">
-                <label className="toh-calc-label" htmlFor="calc-current">Current Level</label>
-                <input
-                  id="calc-current"
-                  type="number"
-                  className="toh-calc-input"
-                  placeholder="e.g. 100"
-                  value={calcCurrent}
-                  onChange={(e) => setCalcCurrent(e.target.value.replace(/[^0-9]/g, ''))}
-                  min="0"
-                />
-              </div>
-              <div className="toh-calc-arrow">→</div>
-              <div className="toh-calc-field">
-                <label className="toh-calc-label" htmlFor="calc-target">Target Level</label>
-                <input
-                  id="calc-target"
-                  type="number"
-                  className="toh-calc-input"
-                  placeholder="e.g. 500"
-                  value={calcTarget}
-                  onChange={(e) => setCalcTarget(e.target.value.replace(/[^0-9]/g, ''))}
-                  min="0"
-                />
-              </div>
-            </div>
-            {xpNeeded > 0 && (
-              <div className="toh-calc-results">
-                <div className="toh-calc-result-row">
-                  <div className="toh-calc-result-item">
-                    <div className="toh-calc-result-value"><AnimatedCounter target={xpNeeded} /></div>
-                    <div className="toh-calc-result-label">XP Needed</div>
-                  </div>
-                  <div className="toh-calc-result-divider" />
-                  <div className="toh-calc-result-item">
-                    <div className="toh-calc-result-value">~<AnimatedCounter target={estimatedHours} />h</div>
-                    <div className="toh-calc-result-label">Estimated Time</div>
-                  </div>
-                  <div className="toh-calc-result-divider" />
-                  <div className="toh-calc-result-item">
-                    <div className="toh-calc-result-value">{targetLevel - currentLevel}</div>
-                    <div className="toh-calc-result-label">Levels to Go</div>
-                  </div>
-                </div>
-                <div className="toh-calc-progress-wrap">
-                  <div className="toh-calc-progress-track">
-                    <div className="toh-calc-progress-fill" style={{ width: `${calcPct}%` }} />
-                  </div>
-                  <div className="toh-calc-progress-label">{calcPct}% complete</div>
-                </div>
-              </div>
-            )}
-            {currentLevel > 0 && targetLevel > 0 && targetLevel <= currentLevel && (
-              <div className="toh-calc-error">Target level must be greater than current level.</div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* What's New / Changelog Section */}
+      {/* 4. What's New / Changelog Section */}
       <section className="toh-changelog-section toh-reveal" ref={changelogRevealRef}>
         <div className="toh-container">
           <div className="toh-section-header">
@@ -822,7 +640,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* 5. FAQ Section */}
       <section className="toh-faq-section toh-reveal" ref={faqRevealRef}>
         <div className="toh-container">
           <div className="toh-section-header">

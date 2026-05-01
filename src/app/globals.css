@@ -1522,7 +1522,8 @@ button {
 
 .toh-feature-desc {
   font-size: 14px;
-  color: var(--dim);
+  color: var(--toh-text);
+  opacity: 0.7;
   line-height: 1.6;
 }
 
@@ -1538,7 +1539,8 @@ button {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--toh-text);
+  opacity: 0.75;
 }
 
 .toh-feature-item::before {
@@ -8694,6 +8696,18 @@ html.light .toh-quick-search-result:hover {
   position: relative;
 }
 
+.toh-calc-bot-note {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.toh-calc-bot-note strong {
+  color: var(--indigo);
+  font-weight: 600;
+}
+
 .toh-calc-card {
   background: var(--surface);
   border: 1px solid var(--toh-border);
@@ -8891,6 +8905,14 @@ html.light .toh-calc-progress-track {
 
 html.light .toh-calc-result-divider {
   background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-calc-bot-note {
+  color: #6b6b82;
+}
+
+html.light .toh-calc-bot-note strong {
+  color: #6f63db;
 }
 
 /* ════════════════════════════════════════════
