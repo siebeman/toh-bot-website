@@ -290,7 +290,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </p>
               <div className="toh-hero-actions">
                 <a
-                  href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
+                  href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="toh-btn-primary"

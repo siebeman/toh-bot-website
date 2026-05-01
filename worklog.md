@@ -1,6 +1,26 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 18 - Latest)
+## Current Project Status (Round 19 - Latest)
+
+The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
+
+### Round 19 Development Summary (Discord Invite Link Update)
+
+**Changes Implemented:**
+
+1. ✅ **Discord Invite Link Updated** — Replaced all placeholder `client_id=YOUR_BOT_ID` URLs with the actual bot invite link:
+   - URL: `https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200`
+   - Updated in `src/app/page.tsx` (3 occurrences: nav bar "Add to Server" button, mobile menu "Add to Server" button, footer "Add to Server" link)
+   - Updated in `src/components/HomePage.tsx` (1 occurrence: hero "Add to Server" button)
+
+**Verification:**
+- Grep confirms 0 remaining `YOUR_BOT_ID` placeholders in source
+- 0 lint errors
+- Dev server compiling without errors
+
+---
+
+## Previous Project Status (Round 18)
 
 The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
 

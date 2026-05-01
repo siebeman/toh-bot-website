@@ -526,7 +526,7 @@ export default function MainPage() {
               {isLight ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <a
-              href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
+              href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
               target="_blank"
               rel="noopener noreferrer"
               className="toh-btn-primary"
@@ -560,7 +560,7 @@ export default function MainPage() {
             </button>
           ))}
           <a
-            href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID"
+            href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200"
             target="_blank"
             rel="noopener noreferrer"
             className="toh-btn-primary"
@@ -643,7 +643,7 @@ export default function MainPage() {
                   </a>
                 </li>
                 <li>
-                  <a href="https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
+                  <a href="https://discord.com/oauth2/authorize?client_id=1485294767788265576&scope=bot+applications.commands&permissions=277025459200" target="_blank" rel="noopener noreferrer" className="toh-footer-link toh-footer-link-external">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                     </svg>
