@@ -342,10 +342,19 @@ button {
   border-top: 1px solid var(--toh-border);
   background: rgba(5, 5, 5, 0.95);
   border-radius: 0 0 999px 999px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.35s ease;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .toh-mobile-menu.open {
   display: flex;
+  max-height: 400px;
+  opacity: 1;
+  padding: 12px 24px 16px;
 }
 
 .toh-mobile-menu .toh-nav-link {
@@ -447,7 +456,7 @@ button {
 .toh-hero-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -1576,9 +1585,12 @@ button {
 }
 
 .toh-lb-page-btn.active {
-  background: var(--indigo);
+  background: linear-gradient(135deg, var(--indigo), #7c6ed6);
   border-color: var(--indigo);
   color: #fff;
+  box-shadow: 0 0 14px rgba(139, 124, 246, 0.45), 0 0 4px rgba(139, 124, 246, 0.25);
+  font-weight: 700;
+  transform: scale(1.08);
 }
 
 .toh-lb-page-btn:disabled {
@@ -1616,11 +1628,12 @@ button {
 
 .toh-footer a {
   color: var(--violet);
-  transition: color 0.2s;
+  transition: color 0.2s, transform 0.2s;
 }
 
 .toh-footer a:hover {
   color: var(--toh-white);
+  text-shadow: 0 0 8px rgba(139, 124, 246, 0.4);
 }
 
 /* ════════════════════════════════════════════
@@ -1883,14 +1896,16 @@ mark.toh-highlight {
   position: relative;
   overflow: hidden;
   border-left: 3px solid transparent;
-  transition: border-color 0.2s, background 0.15s, border-left-color 0.3s;
+  transition: border-color 0.2s, background 0.2s, border-left-color 0.35s ease, transform 0.2s, box-shadow 0.2s;
 }
 
 .toh-cmd-card-hover:hover {
   border-left-color: var(--indigo);
   border-color: var(--indigo);
   border-left-color: var(--indigo);
-  background: var(--surface2);
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.06), var(--surface2));
+  transform: translateX(2px);
+  box-shadow: 0 4px 16px rgba(139, 124, 246, 0.1);
 }
 
 /* Race mode position badge */
@@ -2000,16 +2015,16 @@ mark.toh-highlight {
 }
 
 .toh-podium-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(139, 124, 246, 0.1);
+}
+
+.toh-podium-card:nth-child(2):hover {
+  transform: translateY(-26px) scale(1.03);
 }
 
 .toh-podium-card:nth-child(2) {
   transform: translateY(-20px);
-}
-
-.toh-podium-card:nth-child(2):hover {
-  transform: translateY(-26px);
 }
 
 .toh-podium-medal {
@@ -2326,26 +2341,37 @@ mark.toh-highlight {
 
 .toh-footer-links a {
   color: var(--dim);
-  transition: color 0.2s, transform 0.2s;
+  transition: color 0.2s, transform 0.2s, box-shadow 0.2s;
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--toh-border);
 }
 
 .toh-footer-links a:hover {
   color: var(--violet);
+  background: rgba(139, 124, 246, 0.12);
+  border-color: rgba(196, 181, 253, 0.3);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 124, 246, 0.2);
 }
 
 .toh-footer-love {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--dim);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .toh-footer {
-  border-image: linear-gradient(90deg, transparent, rgba(139, 124, 246, 0.3), rgba(196, 181, 253, 0.2), rgba(139, 124, 246, 0.3), transparent) 1;
-  border-top-width: 1px;
-  border-top-style: solid;
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent 5%, rgba(139, 124, 246, 0.4), rgba(196, 181, 253, 0.3), rgba(139, 124, 246, 0.4), transparent 95%) 1;
+  padding: 40px 0;
+  margin-top: 100px;
+  font-size: 14px;
 }
 
 /* Mobile table scroll with gradient fade */
@@ -2386,7 +2412,7 @@ mark.toh-highlight {
   }
 
   .toh-podium-card:nth-child(2):hover {
-    transform: translateY(-6px);
+    transform: translateY(-6px) scale(1.03);
   }
 
   .toh-hero-actions {
@@ -2404,6 +2430,81 @@ mark.toh-highlight {
 /* Leaderboard quick-link on mobile */
 .toh-lb-quick-link {
   display: none;
+}
+
+/* ════════════════════════════════════════════
+   MICRO-INTERACTIONS & ACCESSIBILITY
+════════════════════════════════════════════ */
+
+/* Focus-visible ring styles for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.toh-nav-link:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.toh-btn-primary:focus-visible,
+.toh-btn-ghost:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.toh-lb-page-btn:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+.toh-race-btn-start:focus-visible,
+.toh-race-btn-reset:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.toh-race-speed-btn:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 1px;
+  border-radius: 999px;
+}
+
+.toh-cmd-card-hover:focus-visible,
+.toh-cmd-card:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: -2px;
+}
+
+.toh-podium-card:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 20px;
+}
+
+.toh-lb-cache-badge:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+.toh-compare-btn:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* Scroll-to-top focus-visible */
+.toh-scroll-top:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 
 @media (max-width: 900px) {
@@ -2636,8 +2737,8 @@ mark.toh-highlight {
 }
 
 .toh-stats-bar-track {
-  height: 10px;
-  border-radius: 5px;
+  height: 18px;
+  border-radius: 9px;
   background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
   position: relative;
@@ -2645,10 +2746,25 @@ mark.toh-highlight {
 
 .toh-stats-bar-fill {
   height: 100%;
-  border-radius: 5px;
+  border-radius: 9px;
   position: relative;
   opacity: 0;
   animation: toh-bar-grow 0.8s ease forwards;
+  overflow: hidden;
+}
+
+.toh-stats-bar-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: toh-bar-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes toh-bar-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .toh-stats-bar-fill::after {
@@ -2658,8 +2774,8 @@ mark.toh-highlight {
   top: 0;
   bottom: 0;
   width: 14px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15));
-  border-radius: 0 5px 5px 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18));
+  border-radius: 0 9px 9px 0;
 }
 
 @keyframes toh-bar-grow {
@@ -2674,9 +2790,10 @@ mark.toh-highlight {
 
 .toh-stats-bar-count {
   font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 600;
+  font-size: 13px;
+  color: var(--toh-white);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(139, 124, 246, 0.3);
 }
 
 /* Responsive: Stats grid */
@@ -2751,8 +2868,8 @@ mark.toh-highlight {
   gap: 6px;
   padding: 9px 16px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(232, 59, 59, 0.15), rgba(139, 124, 246, 0.15));
-  border: 1px solid rgba(232, 59, 59, 0.3);
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.18), rgba(167, 139, 250, 0.12));
+  border: 1px solid rgba(139, 124, 246, 0.35);
   color: var(--toh-white);
   font-size: 0.85rem;
   font-weight: 600;
@@ -2763,10 +2880,10 @@ mark.toh-highlight {
 }
 
 .toh-compare-btn:hover {
-  background: linear-gradient(135deg, rgba(232, 59, 59, 0.25), rgba(139, 124, 246, 0.25));
-  border-color: rgba(232, 59, 59, 0.45);
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.3), rgba(167, 139, 250, 0.22));
+  border-color: rgba(196, 181, 253, 0.5);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(232, 59, 59, 0.15);
+  box-shadow: 0 8px 20px rgba(139, 124, 246, 0.2);
 }
 
 /* Compare modal content */
@@ -2803,7 +2920,7 @@ mark.toh-highlight {
 }
 
 .toh-compare-header-icon {
-  color: var(--toh-red);
+  color: var(--indigo);
 }
 
 .toh-compare-title {
@@ -3319,9 +3436,15 @@ mark.toh-highlight {
   grid-template-columns: 100px 1fr 90px;
   gap: 12px;
   align-items: center;
-  padding: 6px 0;
+  padding: 8px 4px;
+  border-radius: 8px;
   opacity: 0;
   animation: toh-country-row-in 0.4s ease forwards;
+  transition: background 0.2s;
+}
+
+.toh-country-row:hover {
+  background: rgba(139, 124, 246, 0.06);
 }
 
 @keyframes toh-country-row-in {
@@ -3428,8 +3551,8 @@ mark.toh-highlight {
 
 /* Bar track & fill */
 .toh-country-bar-track {
-  height: 8px;
-  border-radius: 4px;
+  height: 14px;
+  border-radius: 7px;
   background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
   position: relative;
@@ -3437,10 +3560,25 @@ mark.toh-highlight {
 
 .toh-country-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 7px;
   position: relative;
   opacity: 0;
   animation: toh-country-bar-grow 0.8s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  overflow: hidden;
+}
+
+.toh-country-bar-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: toh-country-bar-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes toh-country-bar-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .toh-country-bar-fill::after {
@@ -3450,8 +3588,8 @@ mark.toh-highlight {
   top: 0;
   bottom: 0;
   width: 16px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15));
-  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18));
+  border-radius: 0 7px 7px 0;
 }
 
 @keyframes toh-country-bar-grow {
@@ -3466,43 +3604,43 @@ mark.toh-highlight {
 
 /* Bar colors by rank */
 .toh-country-bar-1 {
-  background: linear-gradient(90deg, #b8860b, #ffd700);
+  background: linear-gradient(90deg, #b8860b, #ffd700, #ffe066);
 }
 
 .toh-country-bar-2 {
-  background: linear-gradient(90deg, #808080, #c0c0c0);
+  background: linear-gradient(90deg, #808080, #c0c0c0, #d8d8d8);
 }
 
 .toh-country-bar-3 {
-  background: linear-gradient(90deg, #8b5a1a, #cd7f32);
+  background: linear-gradient(90deg, #8b5a1a, #cd7f32, #e09950);
 }
 
 .toh-country-bar-4 {
-  background: linear-gradient(90deg, #5b4cc4, #8b7cf6);
+  background: linear-gradient(90deg, #5b4cc4, #8b7cf6, #a894fa);
 }
 
 .toh-country-bar-5 {
-  background: linear-gradient(90deg, #6f63db, #9d8ff0);
+  background: linear-gradient(90deg, #6f63db, #9d8ff0, #b5aaf5);
 }
 
 .toh-country-bar-6 {
-  background: linear-gradient(90deg, #7e6ed0, #a78bfa);
+  background: linear-gradient(90deg, #7e6ed0, #a78bfa, #bfa4fc);
 }
 
 .toh-country-bar-7 {
-  background: linear-gradient(90deg, #8b7cf6, #b0a4e0);
+  background: linear-gradient(90deg, #8b7cf6, #b0a4e0, #c8b8ea);
 }
 
 .toh-country-bar-8 {
-  background: linear-gradient(90deg, #6b5b9a, #8b7aaa);
+  background: linear-gradient(90deg, #6b5b9a, #8b7aaa, #a998bc);
 }
 
 .toh-country-bar-9 {
-  background: linear-gradient(90deg, #5a4d82, #7a6d9a);
+  background: linear-gradient(90deg, #5a4d82, #7a6d9a, #9688b0);
 }
 
 .toh-country-bar-10 {
-  background: linear-gradient(90deg, #4a4070, #6a5d82);
+  background: linear-gradient(90deg, #4a4070, #6a5d82, #8478a0);
 }
 
 /* Country row right side */
@@ -3632,6 +3770,20 @@ mark.toh-highlight {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
   box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+  animation: toh-race-start-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes toh-race-start-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3), 0 0 16px rgba(34, 197, 94, 0.2);
+  }
+}
+
+.toh-race-btn-start:disabled {
+  animation: none;
 }
 
 .toh-race-btn-start:hover {
@@ -3704,8 +3856,9 @@ mark.toh-highlight {
 
 .toh-race-speed-btn.active {
   color: #fff;
-  background: var(--indigo);
-  box-shadow: 0 2px 8px rgba(139, 124, 246, 0.3);
+  background: linear-gradient(135deg, var(--indigo), #7c6ed6);
+  box-shadow: 0 2px 8px rgba(139, 124, 246, 0.35), 0 0 6px rgba(139, 124, 246, 0.15);
+  font-weight: 700;
 }
 
 /* Countdown overlay */
@@ -3755,6 +3908,25 @@ mark.toh-highlight {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.toh-progress-fill.racing {
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-progress-fill.racing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: toh-racing-shimmer 1.2s linear infinite;
+}
+
+@keyframes toh-racing-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Racer finished badge */
@@ -4209,5 +4381,437 @@ mark.toh-highlight {
   .toh-faq-answer {
     padding: 0 18px 16px;
     font-size: 13px;
+  }
+}
+
+/* ════════════════════════════════════════════
+   ROUND 5 — STYLING ENHANCEMENTS & NEW FEATURES
+══════════════════════════════ */
+
+/* Export CSV button */
+.toh-lb-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--toh-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+}
+
+.toh-lb-export-btn:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.15);
+}
+
+/* Level milestone badges in table */
+.toh-lb-milestone {
+  font-size: 11px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.toh-lb-milestone-fire {
+  filter: drop-shadow(0 0 4px rgba(255, 120, 0, 0.5));
+}
+
+.toh-lb-milestone-star {
+  filter: drop-shadow(0 0 4px rgba(196, 181, 253, 0.5));
+}
+
+.toh-lb-milestone-diamond {
+  filter: drop-shadow(0 0 4px rgba(139, 124, 246, 0.5));
+}
+
+/* Milestone legend */
+.toh-lb-milestone-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-lb-milestone-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Leaderboard quick stats row */
+.toh-lb-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.toh-lb-quick-stat {
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-lb-quick-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--indigo), var(--violet), var(--indigo), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.toh-lb-quick-stat:hover {
+  border-color: rgba(196, 181, 253, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.toh-lb-quick-stat:hover::before {
+  opacity: 1;
+}
+
+.toh-lb-quick-stat-value {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toh-white);
+  letter-spacing: -0.02em;
+}
+
+.toh-lb-quick-stat-label {
+  font-size: 11px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.toh-lb-quick-stat-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+/* Share button in modal */
+.toh-modal-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(139, 124, 246, 0.12);
+  border: 1px solid rgba(139, 124, 246, 0.25);
+  color: var(--violet);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.toh-modal-share-btn:hover {
+  background: rgba(139, 124, 246, 0.22);
+  border-color: rgba(196, 181, 253, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 124, 246, 0.15);
+}
+
+/* Scroll reveal animation */
+.toh-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toh-reveal.toh-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Racing progress bar shimmer during race */
+.toh-progress-fill.racing {
+  animation: toh-racing-shimmer 1s ease-in-out infinite;
+}
+
+@keyframes toh-racing-shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+  100% { filter: brightness(1); }
+}
+
+/* Start Race button pulse when idle */
+.toh-race-btn-start:not(:disabled) {
+  animation: toh-start-pulse 2s ease-in-out infinite;
+}
+
+@keyframes toh-start-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+
+/* Enhanced country distribution bars */
+.toh-country-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-country-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: toh-country-bar-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes toh-country-bar-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Toast styling override */
+.toh-toast {
+  background: var(--surface2) !important;
+  border: 1px solid var(--toh-border2) !important;
+  border-radius: 16px !important;
+  color: var(--toh-text) !important;
+  font-family: var(--font-manrope), 'Manrope', sans-serif !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.toh-toast-success {
+  border-left: 3px solid var(--toh-green) !important;
+}
+
+.toh-toast-info {
+  border-left: 3px solid var(--indigo) !important;
+}
+
+/* Keyboard navigation highlight in compare dropdown */
+.toh-compare-dropdown-item.kb-focus {
+  background: rgba(139, 124, 246, 0.2);
+  outline: 2px solid var(--indigo);
+  outline-offset: -2px;
+}
+
+/* Leaderboard responsive quick stats */
+@media (max-width: 640px) {
+  .toh-lb-quick-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .toh-lb-quick-stat {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .toh-lb-quick-stat-icon {
+    margin-bottom: 0;
+    font-size: 18px;
+  }
+
+  .toh-lb-quick-stat-value {
+    font-size: 20px;
+  }
+
+  .toh-lb-milestone-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Footer enhanced styling */
+.toh-footer {
+  position: relative;
+}
+
+.toh-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--violet), transparent);
+  border-radius: 1px;
+}
+
+/* Nav link active indicator */
+.toh-nav-link.active {
+  position: relative;
+}
+
+.toh-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  background: var(--indigo);
+  border-radius: 1px;
+}
+
+/* Banned player row styling */
+.toh-lb-table tbody tr.banned-row {
+  opacity: 0.75;
+}
+
+.toh-lb-table tbody tr.banned-row:hover {
+  opacity: 1;
+  background: rgba(232, 59, 59, 0.04);
+}
+
+/* ════════════════════════════════════════════
+   LEADERBOARD ANIMATED STATS BAR (in header)
+══════════════════════════════ */
+.toh-lb-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.toh-lb-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 16px;
+}
+
+.toh-lb-stat-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.toh-lb-stat-value {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--toh-white);
+  letter-spacing: -0.02em;
+}
+
+.toh-lb-stat-label {
+  font-size: 11px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.toh-lb-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Milestone badge next to level number in table */
+.toh-lb-milestone-badge {
+  font-size: 10px;
+  margin-left: 3px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.toh-lb-milestone-badge[title*="1000"] {
+  filter: drop-shadow(0 0 4px rgba(255, 120, 0, 0.5));
+}
+
+.toh-lb-milestone-badge[title*="500"] {
+  filter: drop-shadow(0 0 4px rgba(196, 181, 253, 0.5));
+}
+
+.toh-lb-milestone-badge[title*="100"] {
+  filter: drop-shadow(0 0 4px rgba(139, 124, 246, 0.5));
+}
+
+/* Milestone legend below table */
+.toh-lb-milestone-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-lb-milestone-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .toh-lb-stats-bar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .toh-lb-stat-divider {
+    width: 60px;
+    height: 1px;
+  }
+
+  .toh-lb-stat-item {
+    flex-direction: row;
+    gap: 10px;
+    padding: 4px 8px;
+  }
+
+  .toh-lb-stat-icon {
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+
+  .toh-lb-stat-value {
+    font-size: 18px;
+  }
+
+  .toh-lb-stat-label {
+    font-size: 10px;
+  }
+
+  .toh-lb-milestone-legend {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

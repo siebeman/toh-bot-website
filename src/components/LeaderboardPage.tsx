@@ -1,7 +1,55 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Search, RefreshCw, X, Swords } from 'lucide-react';
+import { Search, RefreshCw, X, Swords, Download, Share2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+/* ════════════════════════════════════════════
+   Scroll Reveal Hook
+══════════════════════════════ */
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('toh-revealed');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
+
+/* ════════════════════════════════════════════
+   Animated Stat for Leaderboard Header
+══════════════════════════════ */
+function LBAnimatedStat({ target }: { target: number }) {
+  const [value, setValue] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (hasAnimated.current || target === 0) return;
+    hasAnimated.current = true;
+    const start = performance.now();
+    const duration = 1500;
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target]);
+
+  return <>{value.toLocaleString()}</>;
+}
 
 interface Player {
   rank: number;
@@ -45,6 +93,14 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
   const maxLevel = 1341;
   const nextMilestone = Math.ceil((player.level + 1) / 100) * 100;
   const milestoneProgress = ((player.level % 100) / 100) * 100;
+  const { toast } = useToast();
+
+  const handleShare = () => {
+    const url = `https://tohbot.com/#leaderboard?player=${encodeURIComponent(player.username)}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast({ title: 'Profile link copied!' });
+    });
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -125,6 +181,11 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
             {player.last_updated === '-' ? '—' : player.last_updated}
           </div>
         </div>
+
+        <button className="toh-modal-share-btn" onClick={handleShare}>
+          <Share2 size={14} />
+          Share Profile
+        </button>
       </div>
     </div>
   );
@@ -149,6 +210,54 @@ function ComparePlayersModal({
   const [dropdownBOpen, setDropdownBOpen] = useState(false);
   const dropdownARef = useRef<HTMLDivElement>(null);
   const dropdownBRef = useRef<HTMLDivElement>(null);
+  const [kbIndexA, setKbIndexA] = useState(-1);
+  const [kbIndexB, setKbIndexB] = useState(-1);
+  const listARef = useRef<HTMLDivElement>(null);
+  const listBRef = useRef<HTMLDivElement>(null);
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    toast({ title: 'Select two players to compare' });
+  }, [toast]);
+
+  // Reset keyboard index when dropdown or filtered list changes
+  useEffect(() => { setKbIndexA(-1); }, [searchA, dropdownAOpen]);
+  useEffect(() => { setKbIndexB(-1); }, [searchB, dropdownBOpen]);
+
+  const handleDropdownKeydown = (
+    e: React.KeyboardEvent,
+    filteredLength: number,
+    kbIndex: number,
+    setKbIndex: (i: number) => void,
+    filtered: Player[],
+    setSelected: (p: Player) => void,
+    setSearch: (v: string) => void,
+    setDropdownOpen: (v: boolean) => void,
+    otherSelected: Player | null,
+  ) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = Math.min(kbIndex + 1, filteredLength - 1);
+      setKbIndex(next);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = Math.max(kbIndex - 1, 0);
+      setKbIndex(prev);
+    } else if (e.key === 'Enter' && kbIndex >= 0 && kbIndex < filteredLength) {
+      e.preventDefault();
+      const p = filtered[kbIndex];
+      if (otherSelected?.rank !== p.rank) {
+        setSelected(p);
+        setSearch('');
+        setDropdownOpen(false);
+        setKbIndex(-1);
+      }
+    } else if (e.key === 'Escape') {
+      setDropdownOpen(false);
+      setKbIndex(-1);
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -206,6 +315,9 @@ function ComparePlayersModal({
     setDropdownOpen: (v: boolean) => void,
     dropdownRef: React.RefObject<HTMLDivElement | null>,
     otherSelected: Player | null,
+    kbIndex: number,
+    setKbIndex: (i: number) => void,
+    listRef: React.RefObject<HTMLDivElement | null>,
   ) => (
     <div className="toh-compare-player-col" ref={dropdownRef}>
       <div className="toh-compare-dropdown-label">{label}</div>
@@ -220,22 +332,27 @@ function ComparePlayersModal({
             setDropdownOpen(true);
           }}
           onFocus={() => setDropdownOpen(true)}
+          onKeyDown={(e) => {
+            handleDropdownKeydown(e, filtered.length, kbIndex, setKbIndex, filtered, setSelected, setSearch, setDropdownOpen, otherSelected);
+          }}
         />
         {dropdownOpen && (
-          <div className="toh-compare-dropdown-list">
+          <div className="toh-compare-dropdown-list" ref={listRef}>
             {filtered.length === 0 ? (
               <div className="toh-compare-dropdown-empty">No players found</div>
             ) : (
-              filtered.map((p) => (
+              filtered.map((p, idx) => (
                 <button
                   key={p.rank}
-                  className={`toh-compare-dropdown-item ${selected?.rank === p.rank ? 'active' : ''} ${otherSelected?.rank === p.rank ? 'disabled' : ''}`}
+                  className={`toh-compare-dropdown-item ${selected?.rank === p.rank ? 'active' : ''} ${otherSelected?.rank === p.rank ? 'disabled' : ''} ${idx === kbIndex ? 'kb-focus' : ''}`}
                   onClick={() => {
                     setSelected(p);
                     setSearch('');
                     setDropdownOpen(false);
+                    setKbIndex(-1);
                   }}
                   disabled={otherSelected?.rank === p.rank}
+                  onMouseEnter={() => setKbIndex(idx)}
                 >
                   <span className="toh-compare-dropdown-item-avatar">{p.username[0]}</span>
                   <span className="toh-compare-dropdown-item-name">{p.username}</span>
@@ -281,9 +398,9 @@ function ComparePlayersModal({
 
         {/* Player Selection */}
         <div className="toh-compare-selection">
-          {renderPlayerDropdown('Player 1', searchA, setSearchA, filteredA, selectedA, setSelectedA, dropdownAOpen, setDropdownAOpen, dropdownARef, selectedB)}
+          {renderPlayerDropdown('Player 1', searchA, setSearchA, filteredA, selectedA, setSelectedA, dropdownAOpen, setDropdownAOpen, dropdownARef, selectedB, kbIndexA, setKbIndexA, listARef)}
           <div className="toh-compare-vs-badge">VS</div>
-          {renderPlayerDropdown('Player 2', searchB, setSearchB, filteredB, selectedB, setSelectedB, dropdownBOpen, setDropdownBOpen, dropdownBRef, selectedA)}
+          {renderPlayerDropdown('Player 2', searchB, setSearchB, filteredB, selectedB, setSelectedB, dropdownBOpen, setDropdownBOpen, dropdownBRef, selectedA, kbIndexB, setKbIndexB, listBRef)}
         </div>
 
         {/* Comparison Table */}
@@ -409,6 +526,7 @@ function ComparePlayersModal({
    Leaderboard Page
 ════════════════════════════════════════════ */
 export default function LeaderboardPage() {
+  const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
   const [banned, setBanned] = useState<BannedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -430,6 +548,8 @@ export default function LeaderboardPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [countryExpanded, setCountryExpanded] = useState(true);
+  const statsRevealRef = useScrollReveal();
+  const countryRevealRef = useScrollReveal();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -561,6 +681,33 @@ export default function LeaderboardPage() {
 
   const maxLevel = 1341;
 
+  // CSV export function
+  const handleExportCSV = () => {
+    const headers = ['Rank', 'Username', 'Level', 'Country', 'Device', 'Last Updated'];
+    const rows = filteredActive.map((p) => [
+      p.rank,
+      p.username,
+      p.level,
+      p.country === '-' ? '' : p.country,
+      p.device === '-' ? '' : p.device.trim(),
+      p.last_updated === '-' ? '' : p.last_updated,
+    ]);
+    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'toh-leaderboard-export.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Leaderboard exported successfully!' });
+  };
+
+  // Computed stats for animated counters
+  const totalPlayers = filteredActive.length;
+  const averageLevel = totalPlayers > 0 ? Math.round(filteredActive.reduce((s, p) => s + p.level, 0) / totalPlayers) : 0;
+  const topLevel = totalPlayers > 0 ? filteredActive.reduce((max, p) => Math.max(max, p.level), 0) : 0;
+
   const renderPagination = (
     currentPage: number,
     totalPages: number,
@@ -659,6 +806,27 @@ export default function LeaderboardPage() {
           <div className="toh-lb-logo-ring">🔥</div>
           <h1 className="toh-lb-title">Leaderboard</h1>
           <p className="toh-lb-subtitle">Official Community Rankings · Top 300</p>
+
+          {/* Animated Stats */}
+          <div className="toh-lb-stats-bar toh-reveal" ref={statsRevealRef}>
+            <div className="toh-lb-stat-item">
+              <div className="toh-lb-stat-icon">👥</div>
+              <div className="toh-lb-stat-value"><LBAnimatedStat target={totalPlayers} /></div>
+              <div className="toh-lb-stat-label">Total Players</div>
+            </div>
+            <div className="toh-lb-stat-divider" />
+            <div className="toh-lb-stat-item">
+              <div className="toh-lb-stat-icon">📊</div>
+              <div className="toh-lb-stat-value"><LBAnimatedStat target={averageLevel} /></div>
+              <div className="toh-lb-stat-label">Average Level</div>
+            </div>
+            <div className="toh-lb-stat-divider" />
+            <div className="toh-lb-stat-item">
+              <div className="toh-lb-stat-icon">🏆</div>
+              <div className="toh-lb-stat-value"><LBAnimatedStat target={topLevel} /></div>
+              <div className="toh-lb-stat-label">Top Level</div>
+            </div>
+          </div>
         </div>
 
         {/* Top 3 Podium */}
@@ -700,7 +868,7 @@ export default function LeaderboardPage() {
 
         {/* Country Distribution */}
         {tab === 'active' && countryDistribution.countries.length > 0 && (
-          <div className="toh-country-panel">
+          <div className="toh-country-panel toh-reveal" ref={countryRevealRef}>
             <button
               className="toh-country-header"
               onClick={() => setCountryExpanded((v) => !v)}
@@ -840,10 +1008,17 @@ export default function LeaderboardPage() {
               </select>
               <button
                 className="toh-compare-btn"
-                onClick={() => setShowCompare(true)}
+                onClick={() => { setShowCompare(true); }}
               >
                 <Swords size={14} />
                 Compare
+              </button>
+              <button
+                className="toh-lb-export-btn"
+                onClick={handleExportCSV}
+              >
+                <Download size={14} />
+                Export CSV
               </button>
             </div>
 
@@ -915,7 +1090,14 @@ export default function LeaderboardPage() {
                           <span className="toh-lb-username">{player.username}</span>
                         </td>
                         <td style={{ minWidth: 140 }}>
-                          <div className="toh-lb-level-num">Lv. {player.level.toLocaleString()}</div>
+                          <div className="toh-lb-level-num">
+                            Lv. {player.level.toLocaleString()}
+                            {getMilestoneBadge(player.level) && (
+                              <span className="toh-lb-milestone-badge" title={player.level >= 1000 ? 'Level 1000+' : player.level >= 500 ? 'Level 500+' : 'Level 100+'}>
+                                {' '}{getMilestoneBadge(player.level)}
+                              </span>
+                            )}
+                          </div>
                           <div className="toh-lb-level-bar-bg">
                             <div
                               className="toh-lb-level-bar-fill"
@@ -949,6 +1131,13 @@ export default function LeaderboardPage() {
 
             <div className="toh-lb-data-source">
               Data sourced from official community records
+            </div>
+
+            {/* Milestone Legend */}
+            <div className="toh-lb-milestone-legend">
+              <span className="toh-lb-milestone-legend-item">🔥 Level 1000+</span>
+              <span className="toh-lb-milestone-legend-item">⭐ Level 500+</span>
+              <span className="toh-lb-milestone-legend-item">✦ Level 100+</span>
             </div>
           </div>
         )}
@@ -1055,7 +1244,7 @@ export default function LeaderboardPage() {
 
       {/* Player Detail Modal */}
       {selectedPlayer && (
-        <PlayerModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+        <PlayerModal player={selectedPlayer} onClose={() => { setSelectedPlayer(null); toast({ title: selectedPlayer.username }); }} />
       )}
 
       {/* Compare Players Modal */}

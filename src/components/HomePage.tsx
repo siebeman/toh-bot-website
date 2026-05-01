@@ -91,7 +91,33 @@ function FAQItem({ question, answer, delay }: { question: string; answer: string
   );
 }
 
+/* ════════════════════════════════════════════
+   Scroll Reveal Hook
+══════════════════════════════ */
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('toh-revealed');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
+
 export default function HomePage({ onNavigate }: HomePageProps) {
+  const statsRevealRef = useScrollReveal();
+  const featuresRevealRef = useScrollReveal();
+  const faqRevealRef = useScrollReveal();
   const features = [
     {
       icon: '⚡',
@@ -230,7 +256,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </section>
 
       {/* Community Stats Section */}
-      <section className="toh-stats-section">
+      <section className="toh-stats-section toh-reveal" ref={statsRevealRef}>
         <div className="toh-stats-glow" />
         <div className="toh-container">
           <div className="toh-section-header">
@@ -301,7 +327,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </section>
 
       {/* Features Section */}
-      <section style={{ padding: '80px 0' }}>
+      <section style={{ padding: '80px 0' }} className="toh-reveal" ref={featuresRevealRef}>
         <div className="toh-container">
           <div className="toh-section-header">
             <div className="toh-section-eyebrow">Features</div>
@@ -339,7 +365,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </section>
 
       {/* FAQ Section */}
-      <section className="toh-faq-section">
+      <section className="toh-faq-section toh-reveal" ref={faqRevealRef}>
         <div className="toh-container">
           <div className="toh-section-header">
             <div className="toh-section-eyebrow">FAQ</div>
