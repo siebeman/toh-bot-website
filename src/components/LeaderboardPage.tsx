@@ -832,23 +832,7 @@ export default function LeaderboardPage() {
     return { countries: sorted, totalCountries: map.size, totalWithCountry };
   }, [filteredActive]);
 
-  // Simulated rank changes (generated once based on players)
-  const rankChanges = useMemo(() => {
-    const changes: Record<string, { direction: 'up' | 'down' | 'same'; amount: number }> = {};
-    // Use a simple deterministic seed based on username for consistency within a session
-    for (const p of players) {
-      const hash = p.username.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      const roll = hash % 10; // 0-9
-      if (roll < 6) {
-        changes[p.username] = { direction: 'same', amount: 0 };
-      } else if (roll < 8) {
-        changes[p.username] = { direction: 'up', amount: (hash % 5) + 1 };
-      } else {
-        changes[p.username] = { direction: 'down', amount: (hash % 3) + 1 };
-      }
-    }
-    return changes;
-  }, [players]);
+
 
   // Pagination
   const activeTotalPages = Math.max(1, Math.ceil(filteredActive.length / pageSize));
@@ -1505,12 +1489,7 @@ export default function LeaderboardPage() {
                                 #{player.rank}
                               </span>
                             )}
-                            {rankChanges[player.username]?.direction === 'up' && (
-                              <span className="toh-lb-rank-change toh-lb-rank-up">↑+{rankChanges[player.username].amount}</span>
-                            )}
-                            {rankChanges[player.username]?.direction === 'down' && (
-                              <span className="toh-lb-rank-change toh-lb-rank-down">↓-{rankChanges[player.username].amount}</span>
-                            )}
+
                             </div>
                           </td>
                           <td>

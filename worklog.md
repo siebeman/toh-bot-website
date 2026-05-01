@@ -1,14 +1,49 @@
 # TOH Bot Website - Work Log
 
-## Current Project Status (Round 20 - Latest)
+## Current Project Status (Round 21 - Latest)
 
 The TOH Bot website is a feature-rich single-page application with 4 pages (Home, Commands, Race Mode, Leaderboard), hash-based routing, animated backgrounds, dark/light theme toggle, keyboard navigation, notification center, scroll progress indicator, cookie consent, and a comprehensive set of interactive features. The project is **stable with 0 lint errors, 0 runtime errors**.
 
-### Round 20 Development Summary (UI Bug Fixes)
+### Round 21 Development Summary (Rank Arrows Removal + Race System Rewrite)
 
 **Changes Implemented:**
 
-1. ✅ **Changelog Text Readability Fixed** — Fixed black/invisible text on dark background in changelog section
+1. ✅ **Rank Change Arrows Removed from Leaderboard** — Removed green (↑) and red (↓) rank change indicators from the leaderboard table
+   - Removed `rankChanges` useMemo from `LeaderboardPage.tsx`
+   - Removed rank change indicator JSX (`.toh-lb-rank-up` and `.toh-lb-rank-down` spans)
+   - Rank numbers now display cleanly without simulated change indicators
+
+2. ✅ **Race Mode Page Completely Rewritten** — Replaced mock/demo race simulation with a real Supabase-powered race system matching the uploaded `index.html`
+   - **Auto-connects** to Supabase on mount using default credentials (saved in sessionStorage)
+   - **Server Picker** — Groups active/waiting races by Discord server, shows server cards with race count and active player count
+   - **Race Picker** — Shows available races per server with status and mode (Standard/Average)
+   - **Live Race View** — Real-time racer cards with progress bars, XP tracking, ETA calculation, average time mode
+   - **Real-time Updates** — Subscribes to Supabase postgres_changes for racers, race_logs, and races tables
+   - **Activity Log** — Shows recent race events (tower wins, completions, level updates) with timestamps
+   - **Timer** — Elapsed time display for active races
+   - **URL Routing** — Race short_id stored in URL query param (`?id=xxx`) for direct linking
+   - **Empty State** — Shows instructions when no active races exist
+   - **Error Handling** — Connection errors, query failures displayed cleanly
+   - **Credentials Panel** — Optional manual Supabase URL/key entry with security note
+   - Installed `@supabase/supabase-js@2.105.1`
+
+3. ✅ **New CSS Classes Added** — ~160 lines of new CSS for race system components
+   - `.toh-state-box` — Container for empty/server-picker/race-picker states
+   - `.toh-server-card`, `.toh-server-icon`, `.toh-server-info`, `.toh-server-name`, `.toh-server-count` — Server picker cards
+   - `.toh-race-select-card` — Race selection cards
+   - `.toh-racer-card.p1/p2/p3/done` — Racer card place/finish classes
+   - `.toh-chip.done` — Done status chip
+   - Light theme overrides for all new classes
+   - Responsive breakpoints at 640px
+
+**QA Testing Results:**
+- Leaderboard: No green/red arrows visible next to rank numbers ✅
+- Race Mode: Auto-connects to Supabase, shows "Connected — no active race" when no races exist ✅
+- 0 lint errors, 0 runtime errors
+
+---
+
+## Previous Project Status (Round 20)
    - Root cause: `--muted` CSS variable was overridden by shadcn to `rgba(255,255,255,0.06)` (nearly invisible on dark bg)
    - `.toh-changelog-desc`: Changed from `color: var(--muted)` to `color: var(--toh-text); opacity: 0.7;`
    - Also fixed `.toh-faq-answer`: Same `var(--muted)` → `var(--toh-text); opacity: 0.7;` fix

@@ -1,39 +1,102 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createClient, type SupabaseClient, type RealtimeChannel } from '@supabase/supabase-js';
 
-type RacePhase = 'idle' | 'countdown' | 'racing' | 'finished';
-
-interface RacerState {
+// ════════════════════════════════════════════════
+//  TYPES
+// ════════════════════════════════════════════════
+interface RaceData {
+  id: string;
+  short_id: string;
   name: string;
-  level: number;
-  progress: number;
-  status: 'waiting' | 'racing' | 'done';
-  time: string;
-  finishMs: number | null;
-  speed: number;
+  status: 'waiting' | 'active' | 'finished';
+  goal_type: string;
+  goal_amount: number;
+  started_at: string | null;
+  guild_id: string;
+  guild_name: string;
+  guild_icon: string;
+  created_at: string;
 }
 
-const INITIAL_RACERS: RacerState[] = [
-  { name: 'Skyourain', level: 1341, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
-  { name: 'wilder270522', level: 1067, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
-  { name: 'chatgris31', level: 933, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
-  { name: 'RealMorri', level: 900, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
-];
+interface RacerData {
+  user_id: string;
+  race_id: string;
+  display_name: string;
+  start_xp: number;
+  current_xp: number;
+  start_level: number;
+  goal_xp: number;
+  current_average: number | null;
+  finished: boolean;
+  avatar_url: string | null;
+}
 
-/* ════════════════════════════════════════════
-   Racer Color Map
-══════════════════════════════ */
-const RACER_COLORS: Record<string, { class: string; color: string; glow: string; progress: string }> = {
-  Skyourain: { class: 'toh-racer-color-gold', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.3)', progress: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
-  wilder270522: { class: 'toh-racer-color-blue', color: '#3b82f6', glow: 'rgba(59, 130, 246, 0.3)', progress: 'linear-gradient(90deg, #3b82f6, #60a5fa)' },
-  chatgris31: { class: 'toh-racer-color-green', color: '#22c55e', glow: 'rgba(34, 197, 94, 0.3)', progress: 'linear-gradient(90deg, #22c55e, #4ade80)' },
-  RealMorri: { class: 'toh-racer-color-orange', color: '#f97316', glow: 'rgba(249, 115, 22, 0.3)', progress: 'linear-gradient(90deg, #f97316, #fb923c)' },
-};
+interface LogEntry {
+  id?: string;
+  logged_at: string;
+  username: string;
+  log_type: string;
+  towers_won?: number;
+  tower_type?: string;
+  completion_time?: number;
+  new_level?: number;
+  xp_gained?: number;
+}
 
-/* ════════════════════════════════════════════
-   Confetti Component
-══════════════════════════════ */
+type RaceView = 'loading' | 'creds' | 'empty' | 'server-picker' | 'race-picker' | 'race' | 'error';
+
+// ════════════════════════════════════════════════
+//  DEFAULTS
+// ════════════════════════════════════════════════
+const DEFAULT_URL = 'https://anmczmzyvlvmmzfkbqvk.supabase.co';
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFubWN6bXp5dmx2bW16ZmticXZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjYxNjIsImV4cCI6MjA4OTk0MjE2Mn0.5erfLnL39TrSwgTFYctHACIC1SQPDW4SvRHp6HudtXI';
+
+// ════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════
+function lvlFromXP(xp: number): number {
+  return Math.min(Math.floor((-1 + Math.sqrt(Math.max(0, 1 + 4 * xp / 50))) / 2), 1000000);
+}
+
+function fmtXP(xp: number): string {
+  const n = Number(xp) || 0;
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return String(n);
+}
+
+function fmtTime(s: number): string {
+  const n = Number(s) || 0;
+  const m = Math.floor(n / 60);
+  const ss = (n % 60).toFixed(1);
+  return m > 0 ? `${m}M${ss.replace('.0', '')}S` : `${ss.replace('.0', '')}S`;
+}
+
+function fmtTimer(totalSec: number): string {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function calcETA(r: RacerData, startedAt: Date | null): string {
+  const xpGained = Number(r.current_xp) - Number(r.start_xp);
+  const left = Number(r.goal_xp) - xpGained;
+  if (left <= 0) return 'Done!';
+  if (!startedAt) return '—';
+  const elapsed = (Date.now() - startedAt.getTime()) / 60000;
+  if (elapsed < 0.5 || xpGained <= 0) return '…';
+  const mins = Math.ceil(left / (xpGained / elapsed));
+  return mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `~${mins}m`;
+}
+
+// ════════════════════════════════════════════════
+//  CONFETTI COMPONENT
+// ════════════════════════════════════════════════
 const CONFETTI_COLORS = ['#f59e0b', '#3b82f6', '#22c55e', '#f97316', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#fbbf24', '#a78bfa'];
 
 function Confetti() {
@@ -72,238 +135,371 @@ function Confetti() {
   );
 }
 
-const MOCK_HISTORY = [
-  { date: 'Mar 4, 2026', winner: 'Skyourain', racers: 6, bestTime: '2:14', avatar: 'S' },
-  { date: 'Mar 3, 2026', winner: 'wilder270522', racers: 4, bestTime: '2:38', avatar: 'W' },
-  { date: 'Mar 2, 2026', winner: 'chatgris31', racers: 8, bestTime: '3:01', avatar: 'C' },
-  { date: 'Mar 1, 2026', winner: 'RealMorri', racers: 5, bestTime: '2:52', avatar: 'R' },
-];
-
-const MOCK_STATS = [
-  { icon: '🏁', value: '1,247', label: 'Total Races', className: 'races' },
-  { icon: '⏱️', value: '4:32', label: 'Avg Finish Time', className: 'time' },
-  { icon: '🏆', value: 'Skyourain — 89', label: 'Most Wins', className: 'wins' },
-];
-
-const SPEED_OPTIONS = [1, 2, 3] as const;
-
-function formatMs(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  const frac = Math.floor((ms % 1000) / 100);
-  return `${min}:${String(sec).padStart(2, '0')}.${frac}`;
-}
-
+// ════════════════════════════════════════════════
+//  MAIN COMPONENT
+// ════════════════════════════════════════════════
 export default function RaceModePage() {
-  const [phase, setPhase] = useState<RacePhase>('idle');
-  const [countdownNum, setCountdownNum] = useState(3);
-  const [speedMultiplier, setSpeedMultiplier] = useState<1 | 2 | 3>(1);
-  const [racers, setRacers] = useState<RacerState[]>(INITIAL_RACERS);
-  const [raceStartTime, setRaceStartTime] = useState<number>(0);
-  const [finishedOrder, setFinishedOrder] = useState<string[]>([]);
-  const [raceElapsed, setRaceElapsed] = useState<number>(0);
-  const [onlinePlayers, setOnlinePlayers] = useState(47);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Supabase state
+  const [sb, setSb] = useState<SupabaseClient | null>(null);
+  const [sbUrl, setSbUrl] = useState('');
+  const [sbKey, setSbKey] = useState('');
+  const [connStatus, setConnStatus] = useState('Not connected');
+  const [connLive, setConnLive] = useState(false);
+
+  // Race state
+  const [view, setView] = useState<RaceView>('loading');
+  const [racesList, setRacesList] = useState<RaceData[]>([]);
+  const [racersList, setRacersList] = useState<{ race_id: string }[]>([]);
+  const [currentRace, setCurrentRace] = useState<RaceData | null>(null);
+  const [racers, setRacers] = useState<Record<string, RacerData>>({});
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
+
+  // Timer
+  const [timerDisplay, setTimerDisplay] = useState('00:00');
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Online players — simulated fluctuation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setOnlinePlayers((prev) => {
-        const delta = Math.random() > 0.5 ? 1 : -1;
-        return Math.max(30, Math.min(65, prev + delta));
-      });
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Timer that only runs during the racing phase
-  useEffect(() => {
-    if (phase === 'racing') {
-      timerRef.current = setInterval(() => {
-        setRaceElapsed(Date.now() - raceStartTime);
-      }, 100);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [phase, raceStartTime]);
-
-  // Compute timer display
-  const timerDisplay = phase === 'idle' || phase === 'countdown'
-    ? '00:00'
-    : (() => {
-        const totalSec = Math.floor(raceElapsed / 1000);
-        const min = Math.floor(totalSec / 60);
-        const sec = totalSec % 60;
-        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-      })();
-
-  const resetRace = useCallback(() => {
-    if (animRef.current) {
-      clearInterval(animRef.current);
-      animRef.current = null;
-    }
-    setPhase('idle');
-    setCountdownNum(3);
-    setRacers(INITIAL_RACERS.map(r => ({ ...r, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 })));
-    setFinishedOrder([]);
-    setRaceStartTime(0);
-    setRaceElapsed(0);
-    setShowConfetti(false);
-  }, []);
-
-  const startRace = useCallback(() => {
-    resetRace();
-    setPhase('countdown');
-    setCountdownNum(3);
-
-    // Countdown sequence
-    let count = 3;
-    const countInterval = setInterval(() => {
-      count -= 1;
-      if (count > 0) {
-        setCountdownNum(count);
-      } else if (count === 0) {
-        setCountdownNum(0);
-        clearInterval(countInterval);
-
-        // Start the race
-        const startTime = Date.now();
-        setRaceStartTime(startTime);
-        setPhase('racing');
-
-        // Assign random speeds to each racer
-        const newRacers = INITIAL_RACERS.map(r => ({
-          ...r,
-          progress: 0,
-          status: 'racing' as const,
-          time: '-',
-          finishMs: null,
-          speed: 0.3 + Math.random() * 0.7, // base speed between 0.3-1.0 per tick
-        }));
-        setRacers(newRacers);
-        setFinishedOrder([]);
-
-        // Animation loop
-        const intervalMs = 50;
-        const order: string[] = [];
-
-        animRef.current = setInterval(() => {
-          const elapsed = Date.now() - startTime;
-
-          setRacers(prev => {
-            const updated = prev.map(racer => {
-              if (racer.status === 'done') return racer;
-
-              // Randomized pace: base speed + small random jitter each tick
-              const jitter = 0.5 + Math.random() * 1.0;
-              const increment = racer.speed * jitter * speedMultiplier * (intervalMs / 50);
-              const newProgress = Math.min(100, racer.progress + increment);
-
-              if (newProgress >= 100) {
-                order.push(racer.name);
-                return {
-                  ...racer,
-                  progress: 100,
-                  status: 'done' as const,
-                  time: formatMs(elapsed),
-                  finishMs: elapsed,
-                };
-              }
-
-              return { ...racer, progress: newProgress };
-            });
-
-            // Check if all finished
-            if (updated.every(r => r.status === 'done')) {
-              if (animRef.current) {
-                clearInterval(animRef.current);
-                animRef.current = null;
-              }
-              setPhase('finished');
-              setShowConfetti(true);
-              // Auto-remove confetti after 3 seconds
-              setTimeout(() => setShowConfetti(false), 3000);
-            }
-
-            return updated;
-          });
-
-          setFinishedOrder([...order]);
-        }, intervalMs);
-      }
-    }, 800);
-  }, [resetRace, speedMultiplier]);
+  const rtRef = useRef<RealtimeChannel | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (animRef.current) clearInterval(animRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (rtRef.current && sb) sb.removeChannel(rtRef.current);
     };
+  }, [sb]);
+
+  // ── Error ───────────────────────────────────
+  const showError = useCallback((title: string, msg: string) => {
+    setErrorTitle(title);
+    setErrorMsg(msg);
+    setView('error');
+    setConnStatus('Error');
+    setConnLive(false);
   }, []);
 
-  const positionColors: Record<number, string> = {
-    1: 'rgba(255, 215, 0, 0.2)',
-    2: 'rgba(192, 192, 192, 0.15)',
-    3: 'rgba(205, 127, 50, 0.15)',
-    4: 'rgba(139, 124, 246, 0.1)',
-  };
+  // ── Timer ───────────────────────────────────
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
 
-  const positionBorders: Record<number, string> = {
-    1: 'rgba(255, 215, 0, 0.3)',
-    2: 'rgba(192, 192, 192, 0.25)',
-    3: 'rgba(205, 127, 50, 0.25)',
-    4: 'rgba(139, 124, 246, 0.15)',
-  };
+  const startTimer = useCallback((sa: Date) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      const s = Math.floor((Date.now() - sa.getTime()) / 1000);
+      setTimerDisplay(fmtTimer(s));
+    }, 1000);
+  }, []);
 
-  const positionLabels: Record<number, string> = {
-    1: '1st',
-    2: '2nd',
-    3: '3rd',
-    4: '4th',
-  };
+  // ── Realtime Subscription ───────────────────
+  const subscribeRT = useCallback((client: SupabaseClient, raceId: string) => {
+    if (rtRef.current) client.removeChannel(rtRef.current);
 
-  // Compute position for each racer based on finishedOrder and current progress
-  const getRacerPosition = (name: string): number => {
-    const finishedIdx = finishedOrder.indexOf(name);
-    if (finishedIdx !== -1) return finishedIdx + 1;
-    // For non-finished racers, sort by progress descending
-    const activeRacers = racers
-      .filter(r => r.status !== 'done')
-      .sort((a, b) => b.progress - a.progress);
-    const idx = activeRacers.findIndex(r => r.name === name);
-    return finishedOrder.length + idx + 1;
-  };
+    rtRef.current = client
+      .channel(`race-${raceId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'racers', filter: `race_id=eq.${raceId}` }, (payload: any) => {
+        if (!payload.new) return;
+        setRacers(prev => {
+          const updated = { ...prev };
+          updated[payload.new.user_id] = payload.new;
+          return updated;
+        });
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'race_logs', filter: `race_id=eq.${raceId}` }, (payload: any) => {
+        if (payload.new) {
+          setLogs(prev => [payload.new as LogEntry, ...prev].slice(0, 50));
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'races', filter: `id=eq.${raceId}` }, (payload: any) => {
+        if (!payload.new) return;
+        setCurrentRace(payload.new);
+        if (payload.new.status === 'finished') {
+          stopTimer();
+          setConnStatus('Race finished');
+          setConnLive(false);
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 3000);
+        }
+        if (payload.new.status === 'active' && payload.new.started_at) {
+          const sa = new Date(payload.new.started_at);
+          setStartedAt(sa);
+          startTimer(sa);
+        }
+      })
+      .subscribe((status: string) => {
+        setConnStatus(status === 'SUBSCRIBED' ? 'Live' : status);
+        setConnLive(status === 'SUBSCRIBED');
+      });
+  }, [startTimer, stopTimer]);
 
-  const statusLabel = phase === 'idle' ? 'Ready' : phase === 'countdown' ? 'Countdown...' : phase === 'racing' ? 'Racing!' : 'Race Complete';
+  // ── Server Picker ───────────────────────────
+  const renderServerPicker = useCallback((races?: RaceData[], racerCounts?: { race_id: string }[]) => {
+    const r = races || racesList;
+    const rc = racerCounts || racersList;
 
+    // Group by server
+    const servers: Record<string, { name: string; icon: string; raceCount: number; userCount: number; id: string }> = {};
+    r.forEach(race => {
+      const gId = race.guild_id || 'unknown';
+      const gName = race.guild_name || 'Unknown Server';
+      const gIcon = race.guild_icon || '';
+      if (!servers[gId]) {
+        servers[gId] = { name: gName, icon: gIcon, raceCount: 0, userCount: 0, id: gId };
+      }
+      servers[gId].raceCount++;
+      const userCount = rc.filter(u => u.race_id === race.id).length;
+      servers[gId].userCount += userCount;
+    });
+
+    setView('server-picker');
+    setConnStatus('Select a server');
+    setConnLive(true);
+    setSelectedServerId(null);
+  }, [racesList, racersList]);
+
+  // ── Race Picker ─────────────────────────────
+  const renderRacePicker = useCallback((guildId: string) => {
+    setSelectedServerId(guildId);
+    setView('race-picker');
+    const filtered = racesList.filter(r => (r.guild_id || 'unknown') === guildId);
+    const serverName = filtered[0]?.guild_name || 'Unknown Server';
+    setConnStatus(`Select a race in ${serverName}`);
+    setConnLive(true);
+  }, [racesList]);
+
+  // ── Select Race ─────────────────────────────
+  const selectRace = useCallback(async (race: RaceData, client?: SupabaseClient, races?: RaceData[], racerCounts?: { race_id: string }[]) => {
+    const c = client || sb;
+    if (!c) return;
+
+    setCurrentRace(race);
+
+    // Update URL
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', race.short_id);
+    window.history.pushState({}, '', url);
+
+    setView('race');
+
+    // Render race meta
+    if (race.status === 'active' && race.started_at) {
+      const sa = new Date(race.started_at);
+      setStartedAt(sa);
+      startTimer(sa);
+    } else {
+      setStartedAt(null);
+      stopTimer();
+      setTimerDisplay('00:00');
+    }
+
+    // Load racers
+    const { data: racerData } = await c.from('racers').select('*').eq('race_id', race.id);
+    const racerMap: Record<string, RacerData> = {};
+    (racerData || []).forEach((r: RacerData) => { racerMap[r.user_id] = r; });
+    setRacers(racerMap);
+
+    // Load logs
+    const { data: logData } = await c.from('race_logs').select('*').eq('race_id', race.id).order('logged_at', { ascending: false }).limit(40);
+    setLogs((logData || []) as LogEntry[]);
+
+    // Subscribe to realtime
+    subscribeRT(c, race.id);
+
+    setConnStatus('Live');
+    setConnLive(true);
+  }, [sb, startTimer, stopTimer, subscribeRT]);
+
+  // ── Load Races ──────────────────────────────
+  const loadRaces = useCallback(async (client?: SupabaseClient) => {
+    const c = client || sb;
+    if (!c) return;
+    try {
+      const { data: rd, error: re } = await c
+        .from('races')
+        .select('*')
+        .in('status', ['waiting', 'active'])
+        .order('created_at', { ascending: false });
+
+      if (re) { showError('Query failed', re.message); return; }
+      const races: RaceData[] = rd || [];
+      setRacesList(races);
+
+      if (!races.length) {
+        setView('empty');
+        setConnStatus('Connected — no active race');
+        setConnLive(false);
+        return;
+      }
+
+      // Fetch racer counts
+      const rIds = races.map(r => r.id);
+      const { data: rc } = await c.from('racers').select('race_id').in('race_id', rIds);
+      setRacersList(rc || []);
+
+      // Check URL for a specific race ID
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetShortId = urlParams.get('id');
+      if (targetShortId) {
+        const target = races.find(r => r.short_id === targetShortId);
+        if (target) {
+          await selectRace(target, c, races, rc || []);
+          return;
+        }
+      }
+
+      renderServerPicker(races, rc || []);
+    } catch (e: any) {
+      showError('Failed to load races', e.message || String(e));
+    }
+  }, [sb, showError, selectRace, renderServerPicker]);
+
+  // ── Connect ─────────────────────────────────
+  const doConnect = useCallback(async (url: string, key: string) => {
+    setConnStatus('Connecting…');
+    setConnLive(false);
+    try {
+      const client = createClient(url, key);
+      setSb(client);
+      sessionStorage.setItem('sb_url', url);
+      sessionStorage.setItem('sb_key', key);
+      await loadRaces(client);
+    } catch (e: any) {
+      showError('Connection failed', e.message || String(e));
+    }
+  }, [loadRaces, showError]);
+
+  // ── Disconnect ──────────────────────────────
+  const doDisconnect = useCallback(() => {
+    if (rtRef.current && sb) sb.removeChannel(rtRef.current);
+    stopTimer();
+    setSb(null);
+    setCurrentRace(null);
+    setRacers({});
+    setLogs([]);
+    setStartedAt(null);
+    sessionStorage.removeItem('sb_url');
+    sessionStorage.removeItem('sb_key');
+    setView('creds');
+    setConnStatus('Not connected');
+    setConnLive(false);
+  }, [sb, stopTimer]);
+
+  // ── Go Back to Races ────────────────────────
+  const goBackToRaces = useCallback(() => {
+    if (rtRef.current && sb) sb.removeChannel(rtRef.current);
+    stopTimer();
+    setCurrentRace(null);
+    setRacers({});
+    setLogs([]);
+    setStartedAt(null);
+    setTimerDisplay('00:00');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    window.history.pushState({}, '', url);
+    renderServerPicker();
+  }, [sb, stopTimer, renderServerPicker]);
+
+  // Auto-connect on mount
+  useEffect(() => {
+    const savedUrl = sessionStorage.getItem('sb_url') || DEFAULT_URL;
+    const savedKey = sessionStorage.getItem('sb_key') || DEFAULT_KEY;
+    setSbUrl(savedUrl); // eslint-disable-line react-hooks/set-state-in-effect
+    setSbKey(savedKey);
+    if (savedUrl && savedKey) {
+      doConnect(savedUrl, savedKey);
+    } else {
+      setView('creds');
+    }
+  }, []);
+
+  // ── Sorted racers ───────────────────────────
+  const sortedRacers = Object.values(racers).sort((a, b) => {
+    const isAvg = currentRace?.goal_type === 'average';
+    if (isAvg) {
+      if (a.finished !== b.finished) return b.finished ? 1 : -1;
+      return (Number(a.current_average) || 99999) - (Number(b.current_average) || 99999);
+    }
+    return (Number(b.current_xp) - Number(b.start_xp)) - (Number(a.current_xp) - Number(a.start_xp));
+  });
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  // ── Server grouping for picker ──────────────
+  const serverGroups = React.useMemo(() => {
+    const servers: Record<string, { name: string; icon: string; raceCount: number; userCount: number; id: string }> = {};
+    racesList.forEach(race => {
+      const gId = race.guild_id || 'unknown';
+      const gName = race.guild_name || 'Unknown Server';
+      const gIcon = race.guild_icon || '';
+      if (!servers[gId]) {
+        servers[gId] = { name: gName, icon: gIcon, raceCount: 0, userCount: 0, id: gId };
+      }
+      servers[gId].raceCount++;
+      const userCount = racersList.filter(u => u.race_id === race.id).length;
+      servers[gId].userCount += userCount;
+    });
+    return Object.values(servers).sort((a, b) => b.raceCount - a.raceCount);
+  }, [racesList, racersList]);
+
+  const filteredRacesForPicker = React.useMemo(() => {
+    if (!selectedServerId) return [];
+    return racesList.filter(r => (r.guild_id || 'unknown') === selectedServerId);
+  }, [racesList, selectedServerId]);
+
+  // ════════════════════════════════════════════════
+  //  RENDER
+  // ════════════════════════════════════════════════
   return (
     <section className="toh-race-hero">
       <div className="toh-race-glow-1" />
       <div className="toh-race-glow-2" />
       <div className="toh-container" style={{ position: 'relative', zIndex: 1 }}>
+        {/* Header */}
         <div className="toh-race-top-row">
-          <div className="toh-live-badge">
-            <span className="toh-live-dot toh-pulse-prominent" />
-            Race Mode Live
+          <div className="toh-live-badge" style={{ cursor: view === 'race' ? 'default' : 'pointer' }}>
+            <span className="toh-live-dot" style={{
+              background: connLive ? '#4ade80' : 'rgba(255,255,255,0.2)',
+              animation: connLive ? undefined : 'none',
+            }} />
+            {connStatus}
           </div>
-          <div className="toh-online-players">
-            <span className="toh-online-dot" />
-            <span className="toh-online-count">{onlinePlayers}</span>
-            <span className="toh-online-label">players online</span>
-          </div>
+          {view === 'race' && (
+            <button
+              onClick={goBackToRaces}
+              style={{
+                fontSize: 12,
+                color: 'var(--dim)',
+                padding: '8px 14px',
+                border: '1px solid var(--toh-border)',
+                borderRadius: 8,
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              ← Back
+            </button>
+          )}
+          {view !== 'creds' && view !== 'loading' && (
+            <button
+              onClick={doDisconnect}
+              style={{
+                fontSize: 12,
+                color: 'var(--dim)',
+                padding: '6px 12px',
+                border: '1px solid var(--toh-border)',
+                borderRadius: 8,
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Disconnect
+            </button>
+          )}
         </div>
         <h1 style={{
           fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
@@ -312,340 +508,385 @@ export default function RaceModePage() {
           lineHeight: 1,
           color: '#fff',
           letterSpacing: '-0.05em',
-          marginBottom: '22px',
+          marginBottom: 10,
         }}>
-          Race Mode
+          Race Mode <span style={{ color: 'var(--indigo)' }}>Live</span>
         </h1>
         <p style={{
           fontSize: 17,
           color: 'rgba(229, 231, 239, 0.78)',
           lineHeight: 1.8,
-          maxWidth: 560,
+          maxWidth: 520,
           marginBottom: 40,
         }}>
-          Compete head-to-head in real-time tower climbing races. Create a race, invite players, and see who reaches the top first.
+          Watch players race in real-time. Every tower logged in Discord instantly moves the progress bar.
         </p>
 
-        {/* Info panel */}
-        <div className="toh-creds-panel">
-          <div className="toh-creds-title">🏁 How Race Mode Works</div>
-          <div className="toh-creds-subtitle">
-            Race mode allows server members to compete in real-time climbing challenges.
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-            <div style={{
-              padding: 16,
-              background: 'var(--surface2)',
-              borderRadius: 16,
-              border: '1px solid var(--toh-border)',
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>1️⃣</div>
-              <div style={{ fontWeight: 600, color: '#fff', marginBottom: 4, fontSize: 14 }}>Create a Race</div>
-              <div style={{ fontSize: 13, color: 'var(--dim)' }}>
-                Use <code style={{ fontFamily: 'var(--font-jetbrains)', color: 'var(--violet)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>/race create</code> to start a new race.
+        {/* ═══ CREDS PANEL ═══ */}
+        {view === 'creds' && (
+          <div className="toh-creds-panel">
+            <div className="toh-creds-title">Connect to your race database</div>
+            <div className="toh-creds-subtitle">
+              Enter your Supabase credentials to watch live. These are saved in your browser session.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+              <div>
+                <label className="toh-field-label">Supabase URL</label>
+                <input
+                  className="toh-race-input"
+                  type="text"
+                  placeholder="https://xxxx.supabase.co"
+                  value={sbUrl}
+                  onChange={e => setSbUrl(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="toh-field-label">
+                  Anon Key <span style={{ color: '#4ade80', textTransform: 'none', fontWeight: 500 }}>— public, safe to enter</span>
+                </label>
+                <input
+                  className="toh-race-input"
+                  type="password"
+                  placeholder="eyJhbGciOi…"
+                  value={sbKey}
+                  onChange={e => setSbKey(e.target.value)}
+                  autoComplete="off"
+                />
               </div>
             </div>
-            <div style={{
-              padding: 16,
-              background: 'var(--surface2)',
-              borderRadius: 16,
-              border: '1px solid var(--toh-border)',
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>2️⃣</div>
-              <div style={{ fontWeight: 600, color: '#fff', marginBottom: 4, fontSize: 14 }}>Players Join</div>
-              <div style={{ fontSize: 13, color: 'var(--dim)' }}>
-                Other players join with <code style={{ fontFamily: 'var(--font-jetbrains)', color: 'var(--violet)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>/race join</code>.
-              </div>
-            </div>
-            <div style={{
-              padding: 16,
-              background: 'var(--surface2)',
-              borderRadius: 16,
-              border: '1px solid var(--toh-border)',
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>3️⃣</div>
-              <div style={{ fontWeight: 600, color: '#fff', marginBottom: 4, fontSize: 14 }}>Race & Win</div>
-              <div style={{ fontSize: 13, color: 'var(--dim)' }}>
-                Climb the tower! First to finish wins. Bot tracks everything automatically.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Demo Race Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
-          <h2 style={{
-            fontSize: 26,
-            fontWeight: 700,
-            color: '#fff',
-          }}>
-            Demo Race
-          </h2>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span className={`toh-race-status ${phase}`}>
-              {phase === 'racing' && <span className="toh-live-dot toh-pulse-prominent" />}
-              {statusLabel}
-            </span>
-            <span className="toh-chip">4 Racers</span>
-            {phase === 'idle' && <span className="toh-chip waiting">Ready to race</span>}
-            {phase === 'racing' && <span className="toh-chip live toh-pulse-prominent-wrap"><span className="toh-live-dot toh-pulse-prominent" /> In Progress</span>}
-            {phase === 'finished' && <span className="toh-chip" style={{ background: 'rgba(139, 124, 246, 0.1)', borderColor: 'rgba(139, 124, 246, 0.25)', color: 'var(--violet)' }}>Complete</span>}
-          </div>
-        </div>
-
-        {/* Race Controls */}
-        <div className="toh-race-controls">
-          <div className="toh-race-controls-left">
-            <span className="toh-race-controls-label">Race Controls</span>
             <button
-              className="toh-race-btn-start"
-              onClick={startRace}
-              disabled={phase === 'countdown' || phase === 'racing'}
+              className="toh-btn-primary"
+              onClick={() => doConnect(sbUrl, sbKey)}
+              style={{ marginTop: 4 }}
             >
-              ▶ Start Race
+              Connect →
             </button>
-            <button
-              className="toh-race-btn-reset"
-              onClick={resetRace}
-              disabled={phase === 'idle'}
-            >
-              ↺ Reset
-            </button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'var(--dim)', fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace' }}>Speed</span>
-            <div className="toh-race-speed-group">
-              {SPEED_OPTIONS.map(s => (
-                <button
-                  key={s}
-                  className={`toh-race-speed-btn ${speedMultiplier === s ? 'active' : ''}`}
-                  onClick={() => setSpeedMultiplier(s)}
-                  disabled={phase === 'racing' || phase === 'countdown'}
-                >
-                  {s}x
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Timer with live animation */}
-        <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--toh-border)',
-          borderRadius: 12,
-          padding: '16px 24px',
-          marginBottom: 28,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 20,
-        }}>
-          <div style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-            Elapsed
-          </div>
-          <div
-            className={`toh-timer ${phase === 'racing' ? 'toh-timer-pulse' : ''}`}
-            style={{
-              fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-              fontSize: 28,
-              fontWeight: 600,
-              color: phase === 'racing' ? '#4ade80' : phase === 'finished' ? 'var(--indigo)' : 'var(--dim)',
-              letterSpacing: 2,
-              transition: 'transform 0.15s ease, color 0.3s ease',
-            }}
-          >
-            {timerDisplay}
-          </div>
-        </div>
-
-        {/* Racer Cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {racers.map((racer, i) => {
-            const pos = getRacerPosition(racer.name);
-            const racerColor = RACER_COLORS[racer.name];
-            return (
-              <div
-                key={racer.name}
-                className={`toh-racer-card toh-racer-enter ${racerColor?.class || ''}`}
-                style={{
-                  animationDelay: `${i * 120}ms`,
-                  borderColor: racer.status === 'done' ? positionBorders[pos] || undefined : undefined,
-                  background: pos === 1 && racer.status === 'done' ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.03), var(--surface))' : undefined,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                  <div className="toh-position-badge" style={{
-                    background: racer.status === 'done' ? positionColors[pos] : 'rgba(255,255,255,0.05)',
-                    border: `1px solid ${racer.status === 'done' ? (positionBorders[pos] || 'var(--toh-border)') : 'var(--toh-border)'}`,
-                  }}>
-                    {positionLabels[pos] || `${pos}th`}
-                  </div>
-                  <div className="toh-racer-avatar" style={{
-                    boxShadow: racerColor ? `0 0 12px ${racerColor.glow}, 0 0 4px ${racerColor.glow}` : undefined,
-                    border: racerColor ? `2px solid ${racerColor.color}` : undefined,
-                  }}>
-                    {racer.name[0]}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{racer.name}</div>
-                    <div style={{
-                      fontSize: 12,
-                      color: 'var(--dim)',
-                      fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-                    }}>
-                      Level {racer.level}
-                    </div>
-                  </div>
-                  {racer.status === 'done' && (
-                    <span className="toh-racer-finished-badge">
-                      ✓ FINISHED ({racer.time})
-                    </span>
-                  )}
-                  {racer.status === 'racing' && (
-                    <span style={{
-                      background: 'rgba(34, 197, 94, 0.1)',
-                      border: '1px solid rgba(34, 197, 94, 0.25)',
-                      borderRadius: 20,
-                      padding: '3px 10px',
-                      fontSize: 11,
-                      color: '#4ade80',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      Racing...
-                    </span>
-                  )}
-                  {racer.status === 'waiting' && (
-                    <span style={{
-                      background: 'rgba(234, 179, 8, 0.1)',
-                      border: '1px solid rgba(234, 179, 8, 0.25)',
-                      borderRadius: 20,
-                      padding: '3px 10px',
-                      fontSize: 11,
-                      color: '#facc15',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      Waiting
-                    </span>
-                  )}
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 12,
-                    color: 'var(--dim)',
-                    fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-                    marginBottom: 6,
-                  }}>
-                    <span>Progress</span>
-                    <span style={{ color: '#fff', fontWeight: 600 }}>{Math.round(racer.progress)}%</span>
-                  </div>
-                  <div className="toh-progress-track">
-                    <div
-                      className={`toh-progress-fill ${racer.progress >= 100 ? 'complete' : ''} ${racer.status === 'racing' ? 'racing' : ''}`}
-                      style={{
-                        width: `${racer.progress}%`,
-                        transition: racer.status === 'racing' ? 'width 0.05s linear' : 'width 0.7s cubic-bezier(0.34, 1.4, 0.64, 1)',
-                        background: racerColor ? racerColor.progress : undefined,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <span className="toh-stat-pill">Floor <b>{Math.min(12, Math.floor(racer.progress / 100 * 12))}/12</b></span>
-                  <span className="toh-stat-pill">Time <b>{racer.time}</b></span>
-                  <span className="toh-stat-pill">Pos <b>#{pos}</b></span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Race Results Summary */}
-        {phase === 'finished' && (
-          <div className="toh-race-results">
-            <div className="toh-race-results-title">
-              🏁 Race Results
-            </div>
-            <div className="toh-race-results-grid">
-              {racers
-                .filter(r => r.finishMs !== null)
-                .sort((a, b) => (a.finishMs ?? 0) - (b.finishMs ?? 0))
-                .map((racer, idx) => (
-                  <div key={racer.name} className="toh-race-result-item">
-                    <div className={`toh-race-result-pos ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : 'other'}`}>
-                      {idx + 1}
-                    </div>
-                    <div className="toh-race-result-name">{racer.name}</div>
-                    <div className="toh-race-result-time">{racer.time}</div>
-                  </div>
-                ))}
+            <div style={{
+              marginTop: 14,
+              padding: '12px 16px',
+              background: 'rgba(34,197,94,0.06)',
+              border: '1px solid rgba(34,197,94,0.15)',
+              borderRadius: 10,
+              fontSize: 13,
+              color: 'var(--dim)',
+            }}>
+              <b style={{ color: '#4ade80' }}>✓ Security note:</b> Only use the <b>anon</b> key here — it&apos;s designed to be public. Never paste your <b>service_role</b> key.
             </div>
           </div>
         )}
 
-        {/* Race History */}
-        <div className="toh-race-history">
-          <div className="toh-race-history-title">
-            📜 Race History
+        {/* ═══ EMPTY STATE ═══ */}
+        {view === 'empty' && (
+          <div className="toh-state-box">
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🏁</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 8 }}>No Active Race</div>
+            <div style={{ fontSize: 14, color: 'var(--dim)', lineHeight: 1.6, maxWidth: 480, margin: '0 auto' }}>
+              Start a race in Discord with <code style={{ fontFamily: 'var(--font-jetbrains)', color: 'var(--violet)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>/race_create</code>, have players join with <code style={{ fontFamily: 'var(--font-jetbrains)', color: 'var(--violet)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>/race_join</code>, then come back here to watch live.
+            </div>
           </div>
-          <div className="toh-race-history-grid">
-            {MOCK_HISTORY.map((race, i) => (
-              <div key={i} className="toh-race-history-card">
-                <div className="toh-race-history-date">{race.date}</div>
-                <div className="toh-race-history-winner">
-                  <div className="toh-race-history-winner-avatar">{race.avatar}</div>
-                  <div className="toh-race-history-winner-name">{race.winner}</div>
-                </div>
-                <div className="toh-race-history-meta">
-                  <span className="toh-race-history-meta-item">Racers: <b>{race.racers}</b></span>
-                  <span className="toh-race-history-meta-item">Best: <b>{race.bestTime}</b></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
-        {/* Race Statistics */}
-        <div className="toh-race-stats">
-          <div className="toh-race-stats-title">
-            📊 Race Statistics
-          </div>
-          <div className="toh-race-stats-grid">
-            {MOCK_STATS.map((stat, i) => (
-              <div key={i} className="toh-race-stat-card">
-                <div className={`toh-race-stat-icon ${stat.className}`}>
-                  {stat.icon}
+        {/* ═══ SERVER PICKER ═══ */}
+        {view === 'server-picker' && (
+          <div className="toh-state-box">
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 24 }}>Choose a Server</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16, marginTop: 20 }}>
+              {serverGroups.map(s => (
+                <div
+                  key={s.id}
+                  className="toh-server-card"
+                  onClick={() => renderRacePicker(s.id)}
+                >
+                  <div className="toh-server-icon" style={s.icon ? { backgroundImage: `url('${s.icon}')` } : undefined}>
+                    {!s.icon && s.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="toh-server-info">
+                    <div className="toh-server-name">{s.name}</div>
+                    <div className="toh-server-count">
+                      {s.raceCount} race{s.raceCount !== 1 ? 's' : ''} • {s.userCount} active player{s.userCount !== 1 ? 's' : ''}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="toh-race-stat-value">{stat.value}</div>
-                  <div className="toh-race-stat-label">{stat.label}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ RACE PICKER ═══ */}
+        {view === 'race-picker' && (
+          <div className="toh-state-box">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
+              <button
+                onClick={() => renderServerPicker()}
+                style={{ fontSize: 12, color: 'var(--dim)', padding: '6px 12px', border: '1px solid var(--toh-border)', borderRadius: 8, background: 'transparent', cursor: 'pointer' }}
+              >
+                ← Servers
+              </button>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
+                Races in {filteredRacesForPicker[0]?.guild_name || 'Unknown Server'}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20, marginTop: 10 }}>
+              {filteredRacesForPicker.map(r => (
+                <div
+                  key={r.id}
+                  className="toh-race-select-card"
+                  onClick={() => selectRace(r)}
+                >
+                  <div style={{ fontFamily: 'var(--font-jetbrains)', fontSize: 11, fontWeight: 700, color: 'var(--indigo)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                    {r.short_id}
+                  </div>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', marginBottom: 16 }}>{r.name}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--dim)' }}>
+                    <span>{r.status.toUpperCase()}</span>
+                    <span>{r.goal_type === 'average' ? 'Average Mode' : 'Standard Mode'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ ERROR STATE ═══ */}
+        {view === 'error' && (
+          <div style={{
+            background: 'rgba(239,68,68,0.05)',
+            border: '1px solid rgba(239,68,68,0.2)',
+            borderRadius: 16,
+            padding: 32,
+            textAlign: 'center',
+            marginTop: 16,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: 600, color: '#fff', marginBottom: 6 }}>{errorTitle}</div>
+            <div style={{ fontSize: 14, color: 'var(--dim)' }}>{errorMsg}</div>
+          </div>
+        )}
+
+        {/* ═══ RACE VIEW ═══ */}
+        {view === 'race' && currentRace && (
+          <>
+            {/* Race Meta */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>{currentRace.name}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  <span className={`toh-chip ${currentRace.status === 'active' ? 'live' : currentRace.status === 'waiting' ? 'waiting' : 'done'}`}>
+                    {currentRace.status === 'active' && <><span className="toh-live-dot toh-pulse-prominent" /> ● LIVE</>}
+                    {currentRace.status === 'waiting' && '⏳ WAITING'}
+                    {currentRace.status === 'finished' && '■ DONE'}
+                  </span>
+                  <span className="toh-chip">ID: <b>{currentRace.short_id}</b></span>
+                  <span className="toh-chip">
+                    {currentRace.goal_type === 'average' ? 'Goal: 5 towers (Average Time)' : `Goal: +${Number(currentRace.goal_amount).toLocaleString()} levels`}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {currentRace.status === 'active' && startedAt && (
+                  <div style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--toh-border)',
+                    borderRadius: 12,
+                    padding: '16px 24px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 20,
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Elapsed</div>
+                      <div style={{
+                        fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                        fontSize: 28,
+                        fontWeight: 600,
+                        color: '#4ade80',
+                        letterSpacing: 2,
+                      }}>
+                        {timerDisplay}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Racer Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {sortedRacers.map((r, i) => {
+                const isAvg = currentRace.goal_type === 'average';
+                const xpGained = Number(r.current_xp) - Number(r.start_xp);
+                const goalXP = Number(r.goal_xp) || 1;
+                let pct = 0;
+                if (isAvg) {
+                  pct = r.finished ? 100 : 0;
+                } else {
+                  pct = Math.min(xpGained / goalXP * 100, 100);
+                }
+                const curLvl = lvlFromXP(Number(r.current_xp));
+                const eta = isAvg ? (r.finished ? 'Finished' : 'Racing...') : calcETA(r, startedAt);
+                const placeClass = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : '';
+
+                return (
+                  <div
+                    key={r.user_id}
+                    className={`toh-racer-card toh-racer-enter ${placeClass} ${r.finished ? 'done' : ''}`}
+                    style={{ animationDelay: `${i * 120}ms` }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                      <div style={{ fontSize: 22, flexShrink: 0, width: 30, textAlign: 'center' }}>
+                        {medals[i] || (i + 1)}
+                      </div>
+                      <div className="toh-racer-avatar" style={{
+                        backgroundImage: r.avatar_url ? `url('${r.avatar_url}')` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}>
+                        {!r.avatar_url && (r.display_name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: 15, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {r.display_name}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--dim)', fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace' }}>
+                          Level {curLvl.toLocaleString()}
+                        </div>
+                      </div>
+                      {r.finished && (
+                        <span className="toh-racer-finished-badge">✓ Done</span>
+                      )}
+                      {!r.finished && currentRace.status === 'active' && (
+                        <span style={{
+                          background: 'rgba(34, 197, 94, 0.1)',
+                          border: '1px solid rgba(34, 197, 94, 0.25)',
+                          borderRadius: 20,
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          color: '#4ade80',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                        }}>
+                          Racing...
+                        </span>
+                      )}
+                      {!r.finished && currentRace.status === 'waiting' && (
+                        <span style={{
+                          background: 'rgba(234, 179, 8, 0.1)',
+                          border: '1px solid rgba(234, 179, 8, 0.25)',
+                          borderRadius: 20,
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          color: '#facc15',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                        }}>
+                          Waiting
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 12,
+                        color: 'var(--dim)',
+                        fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                        marginBottom: 6,
+                      }}>
+                        <span>
+                          {isAvg
+                            ? <>Avg Time: <b style={{ color: '#fff' }}>{r.current_average ? fmtTime(r.current_average) : '—'}</b></>
+                            : <>XP: <b style={{ color: '#fff' }}>{fmtXP(xpGained)}</b> / <span>{fmtXP(goalXP)}</span></>
+                          }
+                        </span>
+                        <span style={{ color: '#fff', fontWeight: 600 }}>
+                          {isAvg ? (r.finished ? '100%' : 'In Progress') : `${pct.toFixed(1)}%`}
+                        </span>
+                      </div>
+                      <div className="toh-progress-track">
+                        <div
+                          className={`toh-progress-fill ${pct >= 100 ? 'complete' : ''} ${!r.finished && currentRace.status === 'active' ? 'racing' : ''}`}
+                          style={{
+                            width: `${pct}%`,
+                            transition: 'width 0.7s cubic-bezier(0.34, 1.4, 0.64, 1)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <span className="toh-stat-pill">Start: <b>{Number(r.start_level).toLocaleString()}</b></span>
+                      <span className="toh-stat-pill">ETA: <b>{eta}</b></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Activity Log */}
+            {logs.length > 0 && (
+              <div style={{ marginTop: 40 }}>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: 2,
+                  color: 'var(--dim)',
+                  marginBottom: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}>
+                  Activity Log
+                  <span style={{ flex: 1, height: 1, background: 'var(--toh-border)' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto', scrollbarWidth: 'thin' }}>
+                  {logs.map((log, idx) => {
+                    const t = new Date(log.logged_at);
+                    const ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`;
+                    const detail = log.log_type === 'towers'
+                      ? `won ${log.towers_won} ${log.tower_type} tower${log.towers_won !== 1 ? 's' : ''}`
+                      : log.log_type === 'time'
+                        ? `completed tower in ${fmtTime(log.completion_time || 0)}`
+                        : `updated to level ${Number(log.new_level || 0).toLocaleString()}`;
+
+                    return (
+                      <div key={log.id || idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '9px 14px',
+                        background: 'var(--surface)',
+                        border: '1px solid var(--toh-border)',
+                        borderRadius: 10,
+                        fontSize: 13,
+                        animation: idx === 0 ? 'toh-log-in 0.25s ease both' : undefined,
+                      }}>
+                        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: 10, color: 'var(--dim)', whiteSpace: 'nowrap' }}>{ts}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--violet)', whiteSpace: 'nowrap' }}>{log.username}</span>
+                        <span style={{ color: 'var(--dim)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detail}</span>
+                        {log.log_type !== 'time' && log.xp_gained && (
+                          <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: 12, color: '#4ade80', whiteSpace: 'nowrap' }}>+{fmtXP(log.xp_gained)}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-
-      {/* Countdown Overlay */}
-      {phase === 'countdown' && (
-        <div className="toh-countdown-overlay">
-          {countdownNum > 0 ? (
-            <div key={countdownNum} className="toh-countdown-number">
-              {countdownNum}
-            </div>
-          ) : (
-            <div key="go" className="toh-countdown-go">
-              GO!
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Confetti */}
       {showConfetti && <Confetti />}
+
+      {/* Log-in animation keyframes (inline) */}
+      <style jsx>{`
+        @keyframes toh-log-in {
+          from { opacity: 0; transform: translateX(-6px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
     </section>
   );
 }
