@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Search, RefreshCw, X, Swords, Download, Share2 } from 'lucide-react';
+import { Search, RefreshCw, X, Swords, Download, Share2, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 /* ════════════════════════════════════════════
@@ -548,6 +548,8 @@ export default function LeaderboardPage() {
   const [showCompare, setShowCompare] = useState(false);
   const [countryExpanded, setCountryExpanded] = useState(true);
   const [deviceExpanded, setDeviceExpanded] = useState(true);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const statsRevealRef = useScrollReveal();
   const countryRevealRef = useScrollReveal();
   const deviceRevealRef = useScrollReveal();
@@ -573,6 +575,29 @@ export default function LeaderboardPage() {
     fetchData();
   }, [fetchData]);
 
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('toh-favorites');
+      if (stored) {
+        queueMicrotask(() => setFavorites(JSON.parse(stored)));
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  // Toggle favorite player
+  const toggleFavorite = useCallback((username: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(username)
+        ? prev.filter((u) => u !== username)
+        : [...prev, username];
+      localStorage.setItem('toh-favorites', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   // Filtered and sorted active players
   const filteredActive = useMemo(() => {
     let result = [...players];
@@ -596,6 +621,10 @@ export default function LeaderboardPage() {
       });
     }
 
+    if (showFavoritesOnly) {
+      result = result.filter((p) => favorites.includes(p.username));
+    }
+
     result.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -616,7 +645,7 @@ export default function LeaderboardPage() {
     });
 
     return result;
-  }, [players, activeSearch, deviceFilter, sortField, sortDir]);
+  }, [players, activeSearch, deviceFilter, sortField, sortDir, showFavoritesOnly, favorites]);
 
   // Filtered banned players
   const filteredBanned = useMemo(() => {
@@ -685,7 +714,7 @@ export default function LeaderboardPage() {
   const bannedPaged = filteredBanned.slice((bannedPage - 1) * pageSize, bannedPage * pageSize);
 
   // Reset page when filters change
-  useEffect(() => { setActivePage(1); }, [activeSearch, deviceFilter, sortField, sortDir, pageSize]);
+  useEffect(() => { setActivePage(1); }, [activeSearch, deviceFilter, sortField, sortDir, pageSize, showFavoritesOnly]);
   useEffect(() => { setBannedPage(1); }, [bannedSearch, banReasonFilter]);
 
   const handleSort = (field: SortField) => {
@@ -1121,6 +1150,16 @@ export default function LeaderboardPage() {
                 <option value="updated-desc">Sort: Last Updated</option>
               </select>
               <button
+                className={`toh-fav-filter-btn ${showFavoritesOnly ? 'toh-fav-filter-active' : ''}`}
+                onClick={() => setShowFavoritesOnly((v) => !v)}
+              >
+                <Star size={14} fill={showFavoritesOnly ? 'var(--toh-gold)' : 'none'} />
+                Favorites
+                {favorites.length > 0 && (
+                  <span className="toh-fav-count-badge">{favorites.length}</span>
+                )}
+              </button>
+              <button
                 className="toh-compare-btn"
                 onClick={() => { setShowCompare(true); }}
               >
@@ -1135,6 +1174,34 @@ export default function LeaderboardPage() {
                 Export CSV
               </button>
             </div>
+
+            {/* Favorites Section */}
+            {!loading && !showFavoritesOnly && favorites.length > 0 && (
+              <div className="toh-fav-section">
+                <div className="toh-fav-header">
+                  <span className="toh-fav-header-icon">⭐</span>
+                  Your Favorites ({favorites.length})
+                </div>
+                <div className="toh-fav-cards">
+                  {filteredActive
+                    .filter((p) => favorites.includes(p.username))
+                    .slice(0, 10)
+                    .map((player) => (
+                      <div
+                        key={player.username}
+                        className="toh-fav-card"
+                        onClick={() => setSelectedPlayer(player)}
+                      >
+                        <div className="toh-fav-card-avatar">{player.username[0]}</div>
+                        <div className="toh-fav-card-info">
+                          <div className="toh-fav-card-name">{player.username}</div>
+                          <div className="toh-fav-card-meta">#{player.rank} · Lv. {player.level.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
 
             {loading ? (
               <div className="toh-lb-table-wrap toh-lb-table-mobile">
@@ -1185,10 +1252,10 @@ export default function LeaderboardPage() {
                       >
                         Level {sortField === 'level' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
                       </th>
-                      <th>Country</th>
-                      <th>Device</th>
+                      <th className="toh-lb-hide-xs">Country</th>
+                      <th className="toh-lb-hide-mobile">Device</th>
                       <th
-                        className={sortField === 'updated' ? 'sorted' : ''}
+                        className={`${sortField === 'updated' ? 'sorted' : ''} toh-lb-hide-mobile`}
                         onClick={() => handleSort('updated')}
                       >
                         Last Updated {sortField === 'updated' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
@@ -1208,7 +1275,7 @@ export default function LeaderboardPage() {
                       activePaged.map((player, i) => (
                         <tr
                           key={player.rank}
-                          className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''}`}
+                          className={`toh-lb-row ${player.rank <= 3 ? 'top-3' : ''} ${favorites.includes(player.username) ? 'toh-fav-row' : ''}`}
                           style={{ animationDelay: `${i * 30}ms` }}
                           onClick={() => setSelectedPlayer(player)}
                         >
@@ -1228,7 +1295,16 @@ export default function LeaderboardPage() {
                             )}
                           </td>
                           <td>
-                            <span className="toh-lb-username">{player.username}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <button
+                                className={`toh-fav-star-btn ${favorites.includes(player.username) ? 'toh-fav-star-active' : ''}`}
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(player.username); }}
+                                aria-label={favorites.includes(player.username) ? 'Remove from favorites' : 'Add to favorites'}
+                              >
+                                <Star size={14} fill={favorites.includes(player.username) ? 'var(--toh-gold)' : 'none'} />
+                              </button>
+                              <span className="toh-lb-username">{player.username}</span>
+                            </div>
                           </td>
                           <td style={{ minWidth: 140 }}>
                             <div className="toh-lb-level-num">
@@ -1246,17 +1322,17 @@ export default function LeaderboardPage() {
                               />
                             </div>
                           </td>
-                          <td>
+                          <td className="toh-lb-hide-xs">
                             <span className="toh-lb-country-cell">
                               {player.country === '-' ? '—' : player.country}
                             </span>
                           </td>
-                          <td>
+                          <td className="toh-lb-hide-mobile">
                             <span className={`toh-lb-device-badge ${getDeviceClass(player.device)}`}>
                               {player.device === '-' ? '—' : player.device.trim()}
                             </span>
                           </td>
-                          <td>
+                          <td className="toh-lb-hide-mobile">
                             <span className="toh-lb-date-cell">
                               {player.last_updated === '-' ? '—' : player.last_updated}
                             </span>
@@ -1327,9 +1403,9 @@ export default function LeaderboardPage() {
                     <th>Rank</th>
                     <th>Username</th>
                     <th>Level</th>
-                    <th>Country</th>
+                    <th className="toh-lb-hide-xs">Country</th>
                     <th>Ban Reason</th>
-                    <th>Device</th>
+                    <th className="toh-lb-hide-mobile">Device</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1370,7 +1446,7 @@ export default function LeaderboardPage() {
                             Lv. {player.level}
                           </span>
                         </td>
-                        <td>
+                        <td className="toh-lb-hide-xs">
                           <span className="toh-lb-country-cell">
                             {player.country === '-' ? '—' : player.country}
                           </span>
@@ -1378,7 +1454,7 @@ export default function LeaderboardPage() {
                         <td>
                           <span className="toh-lb-ban-badge">{player.ban_reason}</span>
                         </td>
-                        <td>
+                        <td className="toh-lb-hide-mobile">
                           <span className={`toh-lb-device-badge ${getDeviceClass(player.device)}`}>
                             {player.device === '-' ? '—' : player.device.trim()}
                           </span>

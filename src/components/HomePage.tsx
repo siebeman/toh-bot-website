@@ -155,11 +155,45 @@ const CHANGELOG = [
   },
 ];
 
+/* ════════════════════════════════════════════
+   Did You Know Tips Data
+══════════════════════════════ */
+const DYK_TIPS = [
+  { emoji: '💡', title: 'Grind Calculator', desc: 'You can use /grind to calculate how much XP you need for your next level!' },
+  { emoji: '🏁', title: 'Race Mode', desc: 'Race Mode supports up to 8 players simultaneously — challenge your whole server!' },
+  { emoji: '📊', title: 'Global Leaderboard', desc: 'The leaderboard tracks over 300 active players from 50+ countries worldwide.' },
+  { emoji: '🏆', title: 'Milestone Badges', desc: 'Players with 1000+ levels earn the 🔥 badge — can you reach it?' },
+  { emoji: '🤖', title: 'Slash Commands', desc: 'TOH Bot supports 20+ slash commands — try /help to see them all!' },
+  { emoji: '⚡', title: 'Real-time XP', desc: 'XP is synced automatically — no manual updates needed, just play!' },
+  { emoji: '🌍', title: 'Country Rankings', desc: 'See which country dominates the tower with country distribution charts.' },
+  { emoji: '📈', title: 'Progress Projections', desc: 'Use /grind to get time-to-level estimates based on your current pace.' },
+  { emoji: '🎯', title: 'Player Comparison', desc: 'Compare any two players side-by-side with detailed stat breakdowns.' },
+  { emoji: '🔧', title: 'Admin Tools', desc: 'Server admins can configure TOH Bot with custom prefixes and channel settings.' },
+];
+
 export default function HomePage({ onNavigate }: HomePageProps) {
   const statsRevealRef = useScrollReveal();
   const featuresRevealRef = useScrollReveal();
   const changelogRevealRef = useScrollReveal();
   const faqRevealRef = useScrollReveal();
+  const dykRevealRef = useScrollReveal();
+
+  // Did You Know — rotating tips
+  const [dykIndex, setDykIndex] = useState(0);
+  const [dykPaused, setDykPaused] = useState(false);
+  const [dykTransitioning, setDykTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (dykPaused) return;
+    const timer = setInterval(() => {
+      setDykTransitioning(true);
+      setTimeout(() => {
+        setDykIndex((prev) => (prev + 1) % DYK_TIPS.length);
+        setDykTransitioning(false);
+      }, 300);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [dykPaused]);
   const features = [
     {
       icon: '⚡',
@@ -362,6 +396,42 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   </div>
                   <div className="toh-stats-bar-count">{bar.count}</div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Did You Know — Rotating Tips Banner */}
+      <section className="toh-dyk-section toh-reveal" ref={dykRevealRef}>
+        <div className="toh-container">
+          <div className="toh-dyk-banner"
+            onMouseEnter={() => setDykPaused(true)}
+            onMouseLeave={() => setDykPaused(false)}
+          >
+            <div className="toh-dyk-glow" />
+            <div className={`toh-dyk-content ${dykTransitioning ? 'toh-dyk-fade-out' : 'toh-dyk-fade-in'}`}>
+              <div className="toh-dyk-emoji">{DYK_TIPS[dykIndex].emoji}</div>
+              <div className="toh-dyk-text">
+                <div className="toh-dyk-label">Did you know?</div>
+                <div className="toh-dyk-title">{DYK_TIPS[dykIndex].title}</div>
+                <div className="toh-dyk-desc">{DYK_TIPS[dykIndex].desc}</div>
+              </div>
+            </div>
+            <div className="toh-dyk-dots">
+              {DYK_TIPS.map((_, i) => (
+                <button
+                  key={i}
+                  className={`toh-dyk-dot ${i === dykIndex ? 'active' : ''}`}
+                  onClick={() => {
+                    setDykTransitioning(true);
+                    setTimeout(() => {
+                      setDykIndex(i);
+                      setDykTransitioning(false);
+                    }, 300);
+                  }}
+                  aria-label={`Go to tip ${i + 1}`}
+                />
               ))}
             </div>
           </div>

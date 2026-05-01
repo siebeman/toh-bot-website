@@ -5,7 +5,7 @@ import HomePage from '@/components/HomePage';
 import CommandsPage from '@/components/CommandsPage';
 import RaceModePage from '@/components/RaceModePage';
 import LeaderboardPage from '@/components/LeaderboardPage';
-import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon } from 'lucide-react';
+import { Menu, X, ArrowUp, MessageCircle, Github, Sun, Moon, Keyboard } from 'lucide-react';
 
 type PageType = 'home' | 'commands' | 'race' | 'leaderboard';
 
@@ -173,6 +173,7 @@ export default function MainPage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLight, setIsLight] = useState(false);
+  const [showKbHelp, setShowKbHelp] = useState(false);
 
   // Theme: read from localStorage on mount
   useEffect(() => {
@@ -236,7 +237,7 @@ export default function MainPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu
+  // Keyboard shortcuts: 1-4 for page navigation, Escape closes mobile menu, ? toggles help
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -246,13 +247,21 @@ export default function MainPage() {
         e.preventDefault();
         navigate(keyMap[e.key]);
       }
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
+      if (e.key === 'Escape') {
+        if (showKbHelp) {
+          setShowKbHelp(false);
+        } else if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+        }
+      }
+      if (e.key === '?' || e.key === '/') {
+        e.preventDefault();
+        setShowKbHelp((prev) => !prev);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate, mobileMenuOpen]);
+  }, [navigate, mobileMenuOpen, showKbHelp]);
 
   const navLinks: { key: PageType; label: string }[] = [
     { key: 'home', label: 'Home' },
@@ -289,6 +298,14 @@ export default function MainPage() {
           </div>
 
           <div className="toh-nav-actions">
+            <button
+              className="toh-kb-toggle toh-theme-toggle"
+              onClick={() => setShowKbHelp((v) => !v)}
+              aria-label="Toggle keyboard shortcuts help"
+              title="Keyboard Shortcuts (?)"
+            >
+              <Keyboard size={18} />
+            </button>
             <button
               className="toh-theme-toggle"
               onClick={toggleTheme}
@@ -359,6 +376,26 @@ export default function MainPage() {
           </div>
         )}
       </nav>
+
+      {/* Page Title Indicator */}
+      <div className="toh-page-title-bar">
+        <div className="toh-container">
+          <div className="toh-page-title-inner">
+            <span className="toh-page-title-icon">
+              {currentPage === 'home' && '🏠'}
+              {currentPage === 'commands' && '⌨️'}
+              {currentPage === 'race' && '🏁'}
+              {currentPage === 'leaderboard' && '🏆'}
+            </span>
+            <span className="toh-page-title-text">
+              {currentPage === 'home' && 'Home'}
+              {currentPage === 'commands' && 'Commands'}
+              {currentPage === 'race' && 'Race Mode'}
+              {currentPage === 'leaderboard' && 'Leaderboard'}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Page Content with Transitions */}
       <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>
@@ -437,6 +474,52 @@ export default function MainPage() {
           </div>
         </div>
       </footer>
+
+      {/* Keyboard Shortcuts Help Panel */}
+      {showKbHelp && (
+        <div className="toh-kb-overlay" onClick={() => setShowKbHelp(false)}>
+          <div className="toh-kb-card" onClick={(e) => e.stopPropagation()}>
+            <div className="toh-kb-header">
+              <div className="toh-kb-header-icon">
+                <Keyboard size={20} />
+              </div>
+              <h2 className="toh-kb-title">Keyboard Shortcuts</h2>
+              <button className="toh-kb-close" onClick={() => setShowKbHelp(false)} aria-label="Close">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="toh-kb-list">
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">1</kbd></div>
+                <div className="toh-kb-desc">Navigate to Home</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">2</kbd></div>
+                <div className="toh-kb-desc">Navigate to Commands</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">3</kbd></div>
+                <div className="toh-kb-desc">Navigate to Race Mode</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">4</kbd></div>
+                <div className="toh-kb-desc">Navigate to Leaderboard</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">Esc</kbd></div>
+                <div className="toh-kb-desc">Close menu / panel</div>
+              </div>
+              <div className="toh-kb-row">
+                <div className="toh-kb-keys"><kbd className="toh-kb-key">?</kbd></div>
+                <div className="toh-kb-desc">Toggle this panel</div>
+              </div>
+            </div>
+            <div className="toh-kb-footer">
+              Press <kbd className="toh-kb-key toh-kb-key-sm">?</kbd> or <kbd className="toh-kb-key toh-kb-key-sm">Esc</kbd> to close
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scroll to Top */}
       <ScrollToTop />

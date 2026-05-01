@@ -45,28 +45,57 @@ function formatMs(ms: number): string {
 }
 
 export default function RaceModePage() {
-  const [seconds, setSeconds] = useState(227);
-  const [tick, setTick] = useState(0);
   const [phase, setPhase] = useState<RacePhase>('idle');
   const [countdownNum, setCountdownNum] = useState(3);
   const [speedMultiplier, setSpeedMultiplier] = useState<1 | 2 | 3>(1);
   const [racers, setRacers] = useState<RacerState[]>(INITIAL_RACERS);
   const [raceStartTime, setRaceStartTime] = useState<number>(0);
   const [finishedOrder, setFinishedOrder] = useState<string[]>([]);
+  const [raceElapsed, setRaceElapsed] = useState<number>(0);
+  const [onlinePlayers, setOnlinePlayers] = useState(47);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Live timer
+  // Online players — simulated fluctuation
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds((s) => s + 1);
-      setTick((t) => t + 1);
-    }, 1000);
-    return () => clearInterval(interval);
+    const timer = setInterval(() => {
+      setOnlinePlayers((prev) => {
+        const delta = Math.random() > 0.5 ? 1 : -1;
+        return Math.max(30, Math.min(65, prev + delta));
+      });
+    }, 3000);
+    return () => clearInterval(timer);
   }, []);
 
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  const timerDisplay = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  // Timer that only runs during the racing phase
+  useEffect(() => {
+    if (phase === 'racing') {
+      timerRef.current = setInterval(() => {
+        setRaceElapsed(Date.now() - raceStartTime);
+      }, 100);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [phase, raceStartTime]);
+
+  // Compute timer display
+  const timerDisplay = phase === 'idle' || phase === 'countdown'
+    ? '00:00'
+    : (() => {
+        const totalSec = Math.floor(raceElapsed / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      })();
 
   const resetRace = useCallback(() => {
     if (animRef.current) {
@@ -78,6 +107,7 @@ export default function RaceModePage() {
     setRacers(INITIAL_RACERS.map(r => ({ ...r, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 })));
     setFinishedOrder([]);
     setRaceStartTime(0);
+    setRaceElapsed(0);
   }, []);
 
   const startRace = useCallback(() => {
@@ -164,6 +194,7 @@ export default function RaceModePage() {
   useEffect(() => {
     return () => {
       if (animRef.current) clearInterval(animRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
@@ -207,9 +238,16 @@ export default function RaceModePage() {
       <div className="toh-race-glow-1" />
       <div className="toh-race-glow-2" />
       <div className="toh-container" style={{ position: 'relative', zIndex: 1 }}>
-        <div className="toh-live-badge">
-          <span className="toh-live-dot toh-pulse-prominent" />
-          Race Mode Live
+        <div className="toh-race-top-row">
+          <div className="toh-live-badge">
+            <span className="toh-live-dot toh-pulse-prominent" />
+            Race Mode Live
+          </div>
+          <div className="toh-online-players">
+            <span className="toh-online-dot" />
+            <span className="toh-online-count">{onlinePlayers}</span>
+            <span className="toh-online-label">players online</span>
+          </div>
         </div>
         <h1 style={{
           fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
@@ -350,12 +388,12 @@ export default function RaceModePage() {
             Elapsed
           </div>
           <div
-            className={`toh-timer ${tick % 2 === 0 ? 'toh-timer-pulse' : ''}`}
+            className={`toh-timer ${phase === 'racing' ? 'toh-timer-pulse' : ''}`}
             style={{
               fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
               fontSize: 28,
               fontWeight: 600,
-              color: phase === 'racing' ? '#4ade80' : 'var(--indigo)',
+              color: phase === 'racing' ? '#4ade80' : phase === 'finished' ? 'var(--indigo)' : 'var(--dim)',
               letterSpacing: 2,
               transition: 'transform 0.15s ease, color 0.3s ease',
             }}

@@ -348,6 +348,89 @@ html.light .toh-cmd-category-title {
   border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 
+/* Light theme - command enhancement overrides */
+html.light .toh-cmd-summary {
+  color: #6b6b82;
+}
+
+html.light .toh-cmd-summary-num {
+  color: #7c6ed6;
+}
+
+html.light .toh-cmd-tab {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #6b6b82;
+}
+
+html.light .toh-cmd-tab:hover {
+  color: #2d2d3f;
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html.light .toh-cmd-tab-active {
+  color: #2d2d3f;
+  border-color: var(--toh-cat-color, #7c6ed6);
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.06), rgba(255, 255, 255, 0.9));
+  box-shadow: 0 0 12px rgba(139, 124, 246, 0.1);
+}
+
+html.light .toh-cmd-tab-count {
+  background: rgba(0, 0, 0, 0.05);
+  color: #6b6b82;
+}
+
+html.light .toh-cmd-tab-active .toh-cmd-tab-count {
+  background: rgba(139, 124, 246, 0.12);
+  color: #5b4cc4;
+}
+
+html.light .toh-cmd-recent {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-cmd-recent-chip {
+  background: rgba(139, 124, 246, 0.06);
+  border-color: rgba(139, 124, 246, 0.15);
+  color: #7c6ed6;
+}
+
+html.light .toh-cmd-recent-chip:hover {
+  background: rgba(139, 124, 246, 0.12);
+  border-color: rgba(139, 124, 246, 0.3);
+  box-shadow: 0 2px 10px rgba(139, 124, 246, 0.08);
+}
+
+html.light .toh-cmd-copy-btn:hover {
+  background: rgba(139, 124, 246, 0.08);
+  border-color: rgba(139, 124, 246, 0.15);
+  color: #7c6ed6;
+}
+
+html.light .toh-cmd-usage {
+  color: #7c6ed6;
+}
+
+html.light .toh-cmd-toast {
+  background: #ffffff;
+  border-color: rgba(139, 124, 246, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-cmd-empty-text {
+  color: #2d2d3f;
+}
+
+html.light .toh-cmd-category-desc {
+  color: #6b6b82;
+}
+
+html.light .toh-cmd-card-hover:hover {
+  box-shadow: 0 4px 20px rgba(139, 124, 246, 0.08);
+}
+
 /* Light theme search highlight */
 html.light mark.toh-highlight {
   background: rgba(139, 124, 246, 0.2);
@@ -1605,6 +1688,307 @@ button {
   line-height: 1.4;
 }
 
+/* ── Command Count Summary ── */
+.toh-cmd-summary {
+  text-align: center;
+  color: var(--dim);
+  font-size: 14px;
+  margin-bottom: 24px;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+}
+
+.toh-cmd-summary-num {
+  color: var(--violet);
+  font-weight: 700;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+/* ── Category Filter Tabs ── */
+.toh-cmd-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.toh-cmd-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+  color: var(--dim);
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.toh-cmd-tab:hover {
+  color: var(--toh-white);
+  border-color: var(--toh-border2);
+  background: var(--surface2);
+}
+
+.toh-cmd-tab-active {
+  color: var(--toh-white);
+  border-color: var(--toh-cat-color, var(--indigo));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--toh-cat-color, var(--indigo)) 12%, var(--surface)), var(--surface));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--toh-cat-color, var(--indigo)) 18%, transparent);
+}
+
+.toh-cmd-tab-active:hover {
+  border-color: var(--toh-cat-color, var(--indigo));
+}
+
+.toh-cmd-tab-icon {
+  font-size: 12px;
+}
+
+.toh-cmd-tab-count {
+  font-size: 10px;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dim);
+}
+
+.toh-cmd-tab-active .toh-cmd-tab-count {
+  background: color-mix(in srgb, var(--toh-cat-color, var(--indigo)) 25%, transparent);
+  color: var(--toh-white);
+}
+
+/* ── Category Description ── */
+.toh-cmd-category-desc {
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--dim);
+  margin-left: 10px;
+  opacity: 0.7;
+}
+
+/* ── Recently Used Section ── */
+.toh-cmd-recent {
+  margin-bottom: 28px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 14px;
+}
+
+.toh-cmd-recent-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toh-cmd-recent-icon {
+  font-size: 13px;
+}
+
+.toh-cmd-recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toh-cmd-recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--violet);
+  background: rgba(139, 124, 246, 0.08);
+  border: 1px solid rgba(139, 124, 246, 0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toh-cmd-recent-chip:hover {
+  background: rgba(139, 124, 246, 0.16);
+  border-color: rgba(139, 124, 246, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(139, 124, 246, 0.15);
+}
+
+/* ── Command Card Enhanced ── */
+.toh-cmd-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toh-cmd-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.toh-cmd-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.toh-cmd-card:hover .toh-cmd-copy-btn {
+  opacity: 1;
+}
+
+.toh-cmd-copy-btn:hover {
+  color: var(--violet);
+  background: rgba(139, 124, 246, 0.1);
+  border-color: rgba(139, 124, 246, 0.2);
+}
+
+.toh-cmd-copy-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--indigo);
+  outline-offset: 1px;
+}
+
+.toh-cmd-copy-icon-copied {
+  color: var(--toh-green);
+}
+
+.toh-cmd-usage {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--indigo);
+  opacity: 0.65;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toh-cmd-card:hover .toh-cmd-usage {
+  opacity: 1;
+}
+
+/* ── Copy Toast ── */
+.toh-cmd-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--surface2);
+  border: 1px solid var(--toh-border2);
+  border-radius: 12px;
+  color: var(--toh-green);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toh-cmd-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  animation: toh-cmd-toast-in 0.3s ease forwards, toh-cmd-toast-out 0.3s ease 1.5s forwards;
+}
+
+@keyframes toh-cmd-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes toh-cmd-toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+}
+
+/* ── Empty State ── */
+.toh-cmd-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dim);
+}
+
+.toh-cmd-empty-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.toh-cmd-empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--toh-text);
+  margin-bottom: 4px;
+}
+
+.toh-cmd-empty-hint {
+  font-size: 13px;
+  color: var(--dim);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .toh-cmd-tabs {
+    gap: 6px;
+  }
+  .toh-cmd-tab {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .toh-cmd-category-desc {
+    display: none;
+  }
+  .toh-cmd-summary {
+    font-size: 13px;
+  }
+}
+
 /* ════════════════════════════════════════════
    RACE MODE PAGE
 ════════════════════════════════════════════ */
@@ -2448,6 +2832,68 @@ button {
   }
 }
 
+/* Mobile responsive table: hide less important columns on small screens */
+@media (max-width: 640px) {
+  /* Hide Device and Last Updated columns on mobile */
+  .toh-lb-hide-mobile {
+    display: none;
+  }
+
+  /* Ensure table wrap scrolls properly */
+  .toh-lb-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 20px;
+  }
+
+  /* Allow cells to wrap on mobile */
+  .toh-lb-table td,
+  .toh-lb-table th {
+    white-space: nowrap;
+    font-size: 0.82rem;
+  }
+
+  /* More compact padding on small screens */
+  .toh-lb-table td,
+  .toh-lb-table th {
+    padding: 8px 8px;
+  }
+
+  /* Hide level bar on mobile to save space */
+  .toh-lb-level-bar-bg {
+    display: none;
+  }
+
+  /* Make username slightly smaller */
+  .toh-lb-username {
+    font-size: 0.9rem;
+  }
+
+  /* Smaller rank medals */
+  .toh-lb-rank-medal {
+    width: 26px;
+    height: 26px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Very small screens: hide Country column too */
+@media (max-width: 420px) {
+  .toh-lb-hide-xs {
+    display: none;
+  }
+
+  .toh-lb-table td,
+  .toh-lb-table th {
+    padding: 6px 6px;
+    font-size: 0.78rem;
+  }
+
+  .toh-lb-username {
+    font-size: 0.82rem;
+  }
+}
+
 /* Row fade in animation */
 @keyframes toh-row-in {
   from {
@@ -2633,12 +3079,12 @@ mark.toh-highlight {
 }
 
 .toh-cmd-card-hover:hover {
-  border-left-color: var(--indigo);
-  border-color: var(--indigo);
-  border-left-color: var(--indigo);
-  background: linear-gradient(135deg, rgba(139, 124, 246, 0.06), var(--surface2));
+  border-left-color: var(--toh-cat-color, var(--indigo));
+  border-color: var(--toh-cat-color, var(--indigo));
+  border-left-color: var(--toh-cat-color, var(--indigo));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--toh-cat-color, var(--indigo)) 6%, var(--surface2)), var(--surface2));
   transform: translateX(2px);
-  box-shadow: 0 4px 16px rgba(139, 124, 246, 0.1);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--toh-cat-color, var(--indigo)) 15%, transparent);
 }
 
 /* Race mode position badge */
@@ -6859,4 +7305,1052 @@ html.light .toh-footer-bottom {
 
 html.light .toh-footer-copy a:hover {
   color: var(--toh-white);
+}
+
+/* ════════════════════════════════════════════
+   DID YOU KNOW — ROTATING TIPS BANNER
+══════════════════════════════ */
+
+.toh-dyk-section {
+  padding: 48px 0;
+  position: relative;
+}
+
+.toh-dyk-banner {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--toh-border);
+  border-radius: 20px;
+  padding: 28px 32px 24px;
+  overflow: hidden;
+  cursor: default;
+}
+
+.toh-dyk-glow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 120px;
+  background: radial-gradient(ellipse, rgba(139, 124, 246, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.toh-dyk-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toh-dyk-fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toh-dyk-fade-out {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.toh-dyk-emoji {
+  font-size: 36px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.toh-dyk-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.toh-dyk-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--indigo);
+  margin-bottom: 4px;
+}
+
+.toh-dyk-title {
+  font-family: var(--font-space-grotesk), Space Grotesk, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toh-white);
+  margin-bottom: 6px;
+}
+
+.toh-dyk-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+.toh-dyk-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.toh-dyk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.toh-dyk-dot:hover {
+  background: rgba(139, 124, 246, 0.4);
+  transform: scale(1.2);
+}
+
+.toh-dyk-dot.active {
+  background: var(--indigo);
+  box-shadow: 0 0 8px rgba(139, 124, 246, 0.4);
+  transform: scale(1.15);
+}
+
+@media (max-width: 640px) {
+  .toh-dyk-banner {
+    padding: 20px 18px 18px;
+    border-radius: 14px;
+  }
+  .toh-dyk-emoji {
+    font-size: 28px;
+  }
+  .toh-dyk-title {
+    font-size: 16px;
+  }
+  .toh-dyk-desc {
+    font-size: 13px;
+  }
+}
+
+/* Light theme — Did You Know */
+html.light .toh-dyk-banner {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65));
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+html.light .toh-dyk-glow {
+  background: radial-gradient(ellipse, rgba(139, 124, 246, 0.06) 0%, transparent 70%);
+}
+
+html.light .toh-dyk-label {
+  color: var(--indigo);
+}
+
+html.light .toh-dyk-title {
+  color: var(--toh-white);
+}
+
+html.light .toh-dyk-desc {
+  color: #6b6b82;
+}
+
+html.light .toh-dyk-dot {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+html.light .toh-dyk-dot:hover {
+  background: rgba(139, 124, 246, 0.35);
+}
+
+html.light .toh-dyk-dot.active {
+  background: var(--indigo);
+  box-shadow: 0 0 8px rgba(139, 124, 246, 0.3);
+}
+
+/* ════════════════════════════════════════════
+   ONLINE PLAYERS INDICATOR — RACE MODE
+══════════════════════════════ */
+
+.toh-race-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.toh-online-players {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: var(--font-jetbrains), JetBrains Mono, monospace;
+}
+
+.toh-online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  animation: toh-online-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes toh-online-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(74, 222, 128, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.7); transform: scale(1.15); }
+}
+
+.toh-online-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.toh-online-label {
+  font-size: 12px;
+  color: rgba(74, 222, 128, 0.7);
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .toh-race-top-row {
+    gap: 10px;
+  }
+  .toh-online-players {
+    padding: 4px 10px;
+    gap: 6px;
+  }
+  .toh-online-count {
+    font-size: 13px;
+  }
+  .toh-online-label {
+    font-size: 11px;
+  }
+}
+
+/* Light theme — Online Players */
+html.light .toh-online-players {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+html.light .toh-online-count {
+  color: #16a34a;
+}
+
+html.light .toh-online-label {
+  color: rgba(22, 163, 74, 0.7);
+}
+
+/* ════════════════════════════════════════════
+   PAGE TITLE INDICATOR
+══════════════════════════════ */
+
+.toh-page-title-bar {
+  position: relative;
+  z-index: 2;
+  border-bottom: 1px solid var(--toh-border);
+  background: rgba(9, 9, 13, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 0;
+  animation: toh-page-title-in 0.35s ease both;
+}
+
+@keyframes toh-page-title-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toh-page-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toh-page-title-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.toh-page-title-text {
+  font-family: var(--font-space-grotesk), Space Grotesk, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+}
+
+/* Light theme — Page Title */
+html.light .toh-page-title-bar {
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-page-title-text {
+  color: #6b6b82;
+}
+
+/* ════════════════════════════════════════════
+   MICRO-INTERACTIONS, HOVER EFFECTS & POLISH
+════════════════════════════════════════════ */
+
+/* ── 1. Scroll Reveal Animations Enhancement ── */
+
+.toh-reveal {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toh-revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ── 2. Hover Micro-interactions ── */
+
+/* Cards lift on hover */
+.toh-feature-card,
+.toh-stats-card,
+.toh-podium-card,
+.toh-lb-quick-stat {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s, box-shadow 0.3s, background 0.3s;
+}
+
+.toh-feature-card:hover,
+.toh-stats-card:hover,
+.toh-lb-quick-stat:hover {
+  transform: translateY(-4px);
+}
+
+.toh-podium-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Podium card glow — gold / silver / bronze */
+.toh-podium-card:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3),
+              0 0 20px rgba(139, 124, 246, 0.08);
+}
+
+.toh-podium-card.toh-podium-gold:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3),
+              0 0 24px rgba(255, 215, 0, 0.25),
+              0 0 48px rgba(255, 215, 0, 0.1);
+}
+
+.toh-podium-card.toh-podium-silver:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3),
+              0 0 24px rgba(192, 192, 192, 0.25),
+              0 0 48px rgba(192, 192, 192, 0.1);
+}
+
+.toh-podium-card.toh-podium-bronze:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3),
+              0 0 24px rgba(205, 127, 50, 0.25),
+              0 0 48px rgba(205, 127, 50, 0.1);
+}
+
+/* Stat pill pulse on hover */
+.toh-stat-pill {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 250ms ease,
+              border-color 250ms ease;
+}
+
+.toh-stat-pill:hover {
+  transform: scale(1.05);
+  background: rgba(139, 124, 246, 0.12);
+  border-color: rgba(139, 124, 246, 0.3);
+}
+
+/* Chip hover — brighten */
+.toh-chip {
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.toh-chip:hover {
+  background: rgba(139, 124, 246, 0.1);
+  border-color: rgba(139, 124, 246, 0.25);
+  color: var(--violet);
+}
+
+/* Nav link active ripple / press */
+.toh-nav-link:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html.light .toh-nav-link:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Button press — primary */
+.toh-btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 8px 20px rgba(139, 124, 246, 0.2);
+}
+
+/* Ghost button press */
+.toh-btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* Table row left-border color slide on hover */
+.toh-lb-row td {
+  border-left: 2px solid transparent;
+  transition: border-left-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toh-lb-row:hover td {
+  border-left-color: var(--indigo);
+}
+
+/* ── 3. Loading Shimmer Effect ── */
+
+@keyframes toh-shimmer-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.toh-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.toh-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 124, 246, 0.06) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(139, 124, 246, 0.06) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: toh-shimmer-sweep 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+html.light .toh-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 124, 246, 0.06) 25%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(139, 124, 246, 0.06) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── 4. Focus Visible Styles ── */
+
+@keyframes toh-focus-ring-pulse {
+  0% {
+    outline-offset: 2px;
+  }
+  50% {
+    outline-offset: 4px;
+  }
+  100% {
+    outline-offset: 2px;
+  }
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  animation: toh-focus-ring-pulse 1.5s ease-in-out 1;
+}
+
+.toh-btn-primary:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 3px;
+}
+
+.toh-btn-ghost:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 3px;
+}
+
+.toh-nav-link:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* ── 5. Smooth Scrollbar Styling ── */
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 124, 246, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 124, 246, 0.4);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 124, 246, 0.2) transparent;
+}
+
+html.light {
+  scrollbar-color: rgba(139, 124, 246, 0.3) transparent;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(139, 124, 246, 0.3);
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 124, 246, 0.5);
+}
+
+/* ── 6. Selection Styling ── */
+
+::selection {
+  background: rgba(139, 124, 246, 0.3);
+  color: inherit;
+}
+
+::-moz-selection {
+  background: rgba(139, 124, 246, 0.3);
+  color: inherit;
+}
+
+/* ── 7. Page Transition Polish ── */
+
+@keyframes toh-page-fade-in {
+  0% {
+    opacity: 0;
+    mask-image: linear-gradient(180deg, transparent 0%, black 40%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 40%);
+  }
+  100% {
+    opacity: 1;
+    mask-image: linear-gradient(180deg, black 0%, black 100%);
+    -webkit-mask-image: linear-gradient(180deg, black 0%, black 100%);
+  }
+}
+
+.toh-content {
+  animation: toh-page-fade-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── 8. Reduced Motion Support ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep basic opacity transitions for usability */
+  .toh-reveal {
+    opacity: 0;
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+
+  .toh-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  .toh-content {
+    animation: none;
+    opacity: 1;
+  }
+
+  /* Disable hover transforms in reduced motion */
+  .toh-feature-card:hover,
+  .toh-stats-card:hover,
+  .toh-podium-card:hover,
+  .toh-lb-quick-stat:hover {
+    transform: none;
+  }
+
+  .toh-stat-pill:hover {
+    transform: none;
+  }
+
+  .toh-btn-primary:hover,
+  .toh-btn-ghost:hover {
+    transform: none;
+  }
+
+  /* Disable shimmer */
+  .toh-shimmer::after {
+    animation: none;
+  }
+
+  /* Disable focus ring pulse */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    animation: none;
+  }
+}
+
+/* ════════════════════════════════════════════
+   KEYBOARD SHORTCUTS HELP PANEL (toh-kb-*)
+══════════════════════════════ */
+
+.toh-kb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: toh-kb-fade-in 0.2s ease;
+}
+
+@keyframes toh-kb-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.toh-kb-card {
+  background: linear-gradient(180deg, rgba(20, 20, 28, 0.95), rgba(15, 15, 20, 0.98));
+  border: 1px solid rgba(196, 181, 253, 0.18);
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 124, 246, 0.08);
+  animation: toh-kb-slide-up 0.25s ease;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@keyframes toh-kb-slide-up {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toh-kb-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.toh-kb-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.15), rgba(139, 124, 246, 0.06));
+  color: var(--indigo);
+  border: 1px solid rgba(139, 124, 246, 0.2);
+}
+
+.toh-kb-title {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toh-white);
+  flex: 1;
+}
+
+.toh-kb-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--dim);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.toh-kb-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--toh-white);
+}
+
+.toh-kb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toh-kb-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.toh-kb-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.toh-kb-keys {
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toh-kb-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--toh-white);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.06);
+}
+
+.toh-kb-key-sm {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 10px;
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.toh-kb-desc {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.toh-kb-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* Light theme keyboard shortcuts panel */
+html.light .toh-kb-overlay {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+html.light .toh-kb-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.98));
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 40px rgba(139, 124, 246, 0.04);
+}
+
+html.light .toh-kb-header-icon {
+  background: linear-gradient(135deg, rgba(139, 124, 246, 0.1), rgba(139, 124, 246, 0.04));
+  border-color: rgba(139, 124, 246, 0.2);
+}
+
+html.light .toh-kb-close {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .toh-kb-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--toh-white);
+}
+
+html.light .toh-kb-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light .toh-kb-key {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: var(--toh-white);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+html.light .toh-kb-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ════════════════════════════════════════════
+   FAVORITE PLAYERS (toh-fav-*)
+══════════════════════════════ */
+
+.toh-fav-section {
+  margin-bottom: 20px;
+}
+
+.toh-fav-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toh-gold);
+}
+
+.toh-fav-header-icon {
+  font-size: 16px;
+}
+
+.toh-fav-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toh-fav-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 215, 0, 0.06);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.toh-fav-card:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.toh-fav-card-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toh-gold);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.toh-fav-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.toh-fav-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toh-white);
+}
+
+.toh-fav-card-meta {
+  font-size: 11px;
+  color: var(--dim);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-fav-star-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.15s, background 0.15s;
+  flex-shrink: 0;
+  color: var(--dim);
+}
+
+.toh-fav-star-btn:hover {
+  background: rgba(255, 215, 0, 0.08);
+  transform: scale(1.15);
+}
+
+.toh-fav-star-btn.toh-fav-star-active {
+  color: var(--toh-gold);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}
+
+.toh-fav-star-btn.toh-fav-star-active:hover {
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.toh-fav-row {
+  background: rgba(255, 215, 0, 0.04);
+}
+
+.toh-fav-row:hover {
+  background: rgba(255, 215, 0, 0.07) !important;
+}
+
+.toh-fav-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  color: var(--toh-gold);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toh-fav-filter-btn:hover {
+  background: rgba(255, 215, 0, 0.14);
+  border-color: rgba(255, 215, 0, 0.35);
+}
+
+.toh-fav-filter-btn.toh-fav-filter-active {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.1);
+}
+
+.toh-fav-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(255, 215, 0, 0.2);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--toh-gold);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.toh-fav-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+/* Light theme favorites */
+html.light .toh-fav-card {
+  background: rgba(255, 215, 0, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+html.light .toh-fav-card:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.35);
+}
+
+html.light .toh-fav-card-avatar {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.06));
+  border-color: rgba(255, 215, 0, 0.25);
+}
+
+html.light .toh-fav-star-btn:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+html.light .toh-fav-star-btn.toh-fav-star-active:hover {
+  background: rgba(255, 215, 0, 0.15);
+}
+
+html.light .toh-fav-row {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+html.light .toh-fav-row:hover {
+  background: rgba(255, 215, 0, 0.08) !important;
+}
+
+html.light .toh-fav-filter-btn {
+  background: rgba(255, 215, 0, 0.06);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+html.light .toh-fav-filter-btn:hover {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+html.light .toh-fav-filter-btn.toh-fav-filter-active {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.08);
+}
+
+html.light .toh-fav-count-badge {
+  background: rgba(255, 215, 0, 0.15);
+}
+
+@media (max-width: 640px) {
+  .toh-fav-cards {
+    flex-direction: column;
+  }
+  .toh-fav-card {
+    width: 100%;
+  }
 }
