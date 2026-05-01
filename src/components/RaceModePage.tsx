@@ -1,11 +1,61 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+type RacePhase = 'idle' | 'countdown' | 'racing' | 'finished';
+
+interface RacerState {
+  name: string;
+  level: number;
+  progress: number;
+  status: 'waiting' | 'racing' | 'done';
+  time: string;
+  finishMs: number | null;
+  speed: number;
+}
+
+const INITIAL_RACERS: RacerState[] = [
+  { name: 'Skyourain', level: 1341, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
+  { name: 'wilder270522', level: 1067, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
+  { name: 'chatgris31', level: 933, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
+  { name: 'RealMorri', level: 900, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 },
+];
+
+const MOCK_HISTORY = [
+  { date: 'Mar 4, 2026', winner: 'Skyourain', racers: 6, bestTime: '2:14', avatar: 'S' },
+  { date: 'Mar 3, 2026', winner: 'wilder270522', racers: 4, bestTime: '2:38', avatar: 'W' },
+  { date: 'Mar 2, 2026', winner: 'chatgris31', racers: 8, bestTime: '3:01', avatar: 'C' },
+  { date: 'Mar 1, 2026', winner: 'RealMorri', racers: 5, bestTime: '2:52', avatar: 'R' },
+];
+
+const MOCK_STATS = [
+  { icon: '🏁', value: '1,247', label: 'Total Races', className: 'races' },
+  { icon: '⏱️', value: '4:32', label: 'Avg Finish Time', className: 'time' },
+  { icon: '🏆', value: 'Skyourain — 89', label: 'Most Wins', className: 'wins' },
+];
+
+const SPEED_OPTIONS = [1, 2, 3] as const;
+
+function formatMs(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  const frac = Math.floor((ms % 1000) / 100);
+  return `${min}:${String(sec).padStart(2, '0')}.${frac}`;
+}
 
 export default function RaceModePage() {
-  const [seconds, setSeconds] = useState(227); // 3:47 = 227 seconds
+  const [seconds, setSeconds] = useState(227);
   const [tick, setTick] = useState(0);
+  const [phase, setPhase] = useState<RacePhase>('idle');
+  const [countdownNum, setCountdownNum] = useState(3);
+  const [speedMultiplier, setSpeedMultiplier] = useState<1 | 2 | 3>(1);
+  const [racers, setRacers] = useState<RacerState[]>(INITIAL_RACERS);
+  const [raceStartTime, setRaceStartTime] = useState<number>(0);
+  const [finishedOrder, setFinishedOrder] = useState<string[]>([]);
+  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Live timer
   useEffect(() => {
     const interval = setInterval(() => {
       setSeconds((s) => s + 1);
@@ -18,12 +68,104 @@ export default function RaceModePage() {
   const secs = seconds % 60;
   const timerDisplay = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-  const racers = [
-    { name: 'Skyourain', level: 1341, progress: 100, medal: '🥇', status: 'done', time: '2:34', position: 1 },
-    { name: 'wilder270522', level: 1067, progress: 87, medal: '🥈', status: 'racing', time: '-', position: 2 },
-    { name: 'chatgris31', level: 933, progress: 72, medal: '🥉', status: 'racing', time: '-', position: 3 },
-    { name: 'RealMorri', level: 900, progress: 54, medal: '', status: 'racing', time: '-', position: 4 },
-  ];
+  const resetRace = useCallback(() => {
+    if (animRef.current) {
+      clearInterval(animRef.current);
+      animRef.current = null;
+    }
+    setPhase('idle');
+    setCountdownNum(3);
+    setRacers(INITIAL_RACERS.map(r => ({ ...r, progress: 0, status: 'waiting', time: '-', finishMs: null, speed: 0 })));
+    setFinishedOrder([]);
+    setRaceStartTime(0);
+  }, []);
+
+  const startRace = useCallback(() => {
+    resetRace();
+    setPhase('countdown');
+    setCountdownNum(3);
+
+    // Countdown sequence
+    let count = 3;
+    const countInterval = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdownNum(count);
+      } else if (count === 0) {
+        setCountdownNum(0);
+        clearInterval(countInterval);
+
+        // Start the race
+        const startTime = Date.now();
+        setRaceStartTime(startTime);
+        setPhase('racing');
+
+        // Assign random speeds to each racer
+        const newRacers = INITIAL_RACERS.map(r => ({
+          ...r,
+          progress: 0,
+          status: 'racing' as const,
+          time: '-',
+          finishMs: null,
+          speed: 0.3 + Math.random() * 0.7, // base speed between 0.3-1.0 per tick
+        }));
+        setRacers(newRacers);
+        setFinishedOrder([]);
+
+        // Animation loop
+        const intervalMs = 50;
+        const order: string[] = [];
+
+        animRef.current = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+
+          setRacers(prev => {
+            const updated = prev.map(racer => {
+              if (racer.status === 'done') return racer;
+
+              // Randomized pace: base speed + small random jitter each tick
+              const jitter = 0.5 + Math.random() * 1.0;
+              const increment = racer.speed * jitter * speedMultiplier * (intervalMs / 50);
+              const newProgress = Math.min(100, racer.progress + increment);
+
+              if (newProgress >= 100) {
+                order.push(racer.name);
+                return {
+                  ...racer,
+                  progress: 100,
+                  status: 'done' as const,
+                  time: formatMs(elapsed),
+                  finishMs: elapsed,
+                };
+              }
+
+              return { ...racer, progress: newProgress };
+            });
+
+            // Check if all finished
+            if (updated.every(r => r.status === 'done')) {
+              if (animRef.current) {
+                clearInterval(animRef.current);
+                animRef.current = null;
+              }
+              setPhase('finished');
+            }
+
+            return updated;
+          });
+
+          setFinishedOrder([...order]);
+        }, intervalMs);
+      }
+    }, 800);
+  }, [resetRace, speedMultiplier]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animRef.current) clearInterval(animRef.current);
+    };
+  }, []);
 
   const positionColors: Record<number, string> = {
     1: 'rgba(255, 215, 0, 0.2)',
@@ -45,6 +187,20 @@ export default function RaceModePage() {
     3: '3rd',
     4: '4th',
   };
+
+  // Compute position for each racer based on finishedOrder and current progress
+  const getRacerPosition = (name: string): number => {
+    const finishedIdx = finishedOrder.indexOf(name);
+    if (finishedIdx !== -1) return finishedIdx + 1;
+    // For non-finished racers, sort by progress descending
+    const activeRacers = racers
+      .filter(r => r.status !== 'done')
+      .sort((a, b) => b.progress - a.progress);
+    const idx = activeRacers.findIndex(r => r.name === name);
+    return finishedOrder.length + idx + 1;
+  };
+
+  const statusLabel = phase === 'idle' ? 'Ready' : phase === 'countdown' ? 'Countdown...' : phase === 'racing' ? 'Racing!' : 'Race Complete';
 
   return (
     <section className="toh-race-hero">
@@ -122,7 +278,7 @@ export default function RaceModePage() {
           </div>
         </div>
 
-        {/* Demo Race */}
+        {/* Demo Race Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
           <h2 style={{
             fontSize: 26,
@@ -131,12 +287,51 @@ export default function RaceModePage() {
           }}>
             Demo Race
           </h2>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span className="toh-chip live toh-pulse-prominent-wrap">
-              <span className="toh-live-dot toh-pulse-prominent" /> Live
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span className={`toh-race-status ${phase}`}>
+              {phase === 'racing' && <span className="toh-live-dot toh-pulse-prominent" />}
+              {statusLabel}
             </span>
             <span className="toh-chip">4 Racers</span>
-            <span className="toh-chip waiting">Waiting for finish</span>
+            {phase === 'idle' && <span className="toh-chip waiting">Ready to race</span>}
+            {phase === 'racing' && <span className="toh-chip live toh-pulse-prominent-wrap"><span className="toh-live-dot toh-pulse-prominent" /> In Progress</span>}
+            {phase === 'finished' && <span className="toh-chip" style={{ background: 'rgba(139, 124, 246, 0.1)', borderColor: 'rgba(139, 124, 246, 0.25)', color: 'var(--violet)' }}>Complete</span>}
+          </div>
+        </div>
+
+        {/* Race Controls */}
+        <div className="toh-race-controls">
+          <div className="toh-race-controls-left">
+            <span className="toh-race-controls-label">Race Controls</span>
+            <button
+              className="toh-race-btn-start"
+              onClick={startRace}
+              disabled={phase === 'countdown' || phase === 'racing'}
+            >
+              ▶ Start Race
+            </button>
+            <button
+              className="toh-race-btn-reset"
+              onClick={resetRace}
+              disabled={phase === 'idle'}
+            >
+              ↺ Reset
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: 'var(--dim)', fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace' }}>Speed</span>
+            <div className="toh-race-speed-group">
+              {SPEED_OPTIONS.map(s => (
+                <button
+                  key={s}
+                  className={`toh-race-speed-btn ${speedMultiplier === s ? 'active' : ''}`}
+                  onClick={() => setSpeedMultiplier(s)}
+                  disabled={phase === 'racing' || phase === 'countdown'}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -160,9 +355,9 @@ export default function RaceModePage() {
               fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
               fontSize: 28,
               fontWeight: 600,
-              color: 'var(--indigo)',
+              color: phase === 'racing' ? '#4ade80' : 'var(--indigo)',
               letterSpacing: 2,
-              transition: 'transform 0.15s ease',
+              transition: 'transform 0.15s ease, color 0.3s ease',
             }}
           >
             {timerDisplay}
@@ -171,78 +366,181 @@ export default function RaceModePage() {
 
         {/* Racer Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {racers.map((racer, i) => (
-            <div
-              key={racer.name}
-              className="toh-racer-card toh-racer-enter"
-              style={{
-                animationDelay: `${i * 120}ms`,
-                borderColor: positionBorders[racer.position] || undefined,
-                background: i === 0 ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.03), var(--surface))' : undefined,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                <div className="toh-position-badge" style={{
-                  background: positionColors[racer.position],
-                  border: `1px solid ${positionBorders[racer.position]}`,
-                }}>
-                  {positionLabels[racer.position]}
+          {racers.map((racer, i) => {
+            const pos = getRacerPosition(racer.name);
+            return (
+              <div
+                key={racer.name}
+                className="toh-racer-card toh-racer-enter"
+                style={{
+                  animationDelay: `${i * 120}ms`,
+                  borderColor: racer.status === 'done' ? positionBorders[pos] || undefined : undefined,
+                  background: pos === 1 && racer.status === 'done' ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.03), var(--surface))' : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                  <div className="toh-position-badge" style={{
+                    background: racer.status === 'done' ? positionColors[pos] : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${racer.status === 'done' ? (positionBorders[pos] || 'var(--toh-border)') : 'var(--toh-border)'}`,
+                  }}>
+                    {positionLabels[pos] || `${pos}th`}
+                  </div>
+                  <div className="toh-racer-avatar">
+                    {racer.name[0]}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{racer.name}</div>
+                    <div style={{
+                      fontSize: 12,
+                      color: 'var(--dim)',
+                      fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                    }}>
+                      Level {racer.level}
+                    </div>
+                  </div>
+                  {racer.status === 'done' && (
+                    <span className="toh-racer-finished-badge">
+                      ✓ FINISHED ({racer.time})
+                    </span>
+                  )}
+                  {racer.status === 'racing' && (
+                    <span style={{
+                      background: 'rgba(34, 197, 94, 0.1)',
+                      border: '1px solid rgba(34, 197, 94, 0.25)',
+                      borderRadius: 20,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      color: '#4ade80',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Racing...
+                    </span>
+                  )}
+                  {racer.status === 'waiting' && (
+                    <span style={{
+                      background: 'rgba(234, 179, 8, 0.1)',
+                      border: '1px solid rgba(234, 179, 8, 0.25)',
+                      borderRadius: 20,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      color: '#facc15',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Waiting
+                    </span>
+                  )}
                 </div>
-                <div className="toh-racer-avatar">
-                  {racer.name[0]}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{racer.name}</div>
+                <div style={{ marginBottom: 14 }}>
                   <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     fontSize: 12,
                     color: 'var(--dim)',
                     fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                    marginBottom: 6,
                   }}>
-                    Level {racer.level}
+                    <span>Progress</span>
+                    <span style={{ color: '#fff', fontWeight: 600 }}>{Math.round(racer.progress)}%</span>
+                  </div>
+                  <div className="toh-progress-track">
+                    <div
+                      className={`toh-progress-fill ${racer.progress >= 100 ? 'complete' : ''} ${racer.status === 'racing' ? 'racing' : ''}`}
+                      style={{ width: `${racer.progress}%`, transition: racer.status === 'racing' ? 'width 0.05s linear' : 'width 0.7s cubic-bezier(0.34, 1.4, 0.64, 1)' }}
+                    />
                   </div>
                 </div>
-                {racer.status === 'done' && (
-                  <span style={{
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.25)',
-                    borderRadius: 20,
-                    padding: '3px 10px',
-                    fontSize: 11,
-                    color: '#4ade80',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    ✓ Finished ({racer.time})
-                  </span>
-                )}
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 12,
-                  color: 'var(--dim)',
-                  fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
-                  marginBottom: 6,
-                }}>
-                  <span>Progress</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>{racer.progress}%</span>
-                </div>
-                <div className="toh-progress-track">
-                  <div
-                    className={`toh-progress-fill toh-progress-animate ${racer.progress >= 100 ? 'complete' : ''}`}
-                    style={{ width: `${racer.progress}%` }}
-                  />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <span className="toh-stat-pill">Floor <b>{Math.min(12, Math.floor(racer.progress / 100 * 12))}/12</b></span>
+                  <span className="toh-stat-pill">Time <b>{racer.time}</b></span>
+                  <span className="toh-stat-pill">Pos <b>#{pos}</b></span>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <span className="toh-stat-pill">Floor <b>12/12</b></span>
-                <span className="toh-stat-pill">Time <b>{racer.time}</b></span>
-              </div>
+            );
+          })}
+        </div>
+
+        {/* Race Results Summary */}
+        {phase === 'finished' && (
+          <div className="toh-race-results">
+            <div className="toh-race-results-title">
+              🏁 Race Results
             </div>
-          ))}
+            <div className="toh-race-results-grid">
+              {racers
+                .filter(r => r.finishMs !== null)
+                .sort((a, b) => (a.finishMs ?? 0) - (b.finishMs ?? 0))
+                .map((racer, idx) => (
+                  <div key={racer.name} className="toh-race-result-item">
+                    <div className={`toh-race-result-pos ${idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : 'other'}`}>
+                      {idx + 1}
+                    </div>
+                    <div className="toh-race-result-name">{racer.name}</div>
+                    <div className="toh-race-result-time">{racer.time}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Race History */}
+        <div className="toh-race-history">
+          <div className="toh-race-history-title">
+            📜 Race History
+          </div>
+          <div className="toh-race-history-grid">
+            {MOCK_HISTORY.map((race, i) => (
+              <div key={i} className="toh-race-history-card">
+                <div className="toh-race-history-date">{race.date}</div>
+                <div className="toh-race-history-winner">
+                  <div className="toh-race-history-winner-avatar">{race.avatar}</div>
+                  <div className="toh-race-history-winner-name">{race.winner}</div>
+                </div>
+                <div className="toh-race-history-meta">
+                  <span className="toh-race-history-meta-item">Racers: <b>{race.racers}</b></span>
+                  <span className="toh-race-history-meta-item">Best: <b>{race.bestTime}</b></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Race Statistics */}
+        <div className="toh-race-stats">
+          <div className="toh-race-stats-title">
+            📊 Race Statistics
+          </div>
+          <div className="toh-race-stats-grid">
+            {MOCK_STATS.map((stat, i) => (
+              <div key={i} className="toh-race-stat-card">
+                <div className={`toh-race-stat-icon ${stat.className}`}>
+                  {stat.icon}
+                </div>
+                <div>
+                  <div className="toh-race-stat-value">{stat.value}</div>
+                  <div className="toh-race-stat-label">{stat.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Countdown Overlay */}
+      {phase === 'countdown' && (
+        <div className="toh-countdown-overlay">
+          {countdownNum > 0 ? (
+            <div key={countdownNum} className="toh-countdown-number">
+              {countdownNum}
+            </div>
+          ) : (
+            <div key="go" className="toh-countdown-go">
+              GO!
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -69,6 +69,28 @@ function AnimatedStat({ target, duration, suffix, label }: { target: number; dur
   );
 }
 
+/* ════════════════════════════════════════════
+   FAQ Accordion Item
+══════════════════════════════ */
+function FAQItem({ question, answer, delay }: { question: string; answer: string; delay: number }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={`toh-faq-item ${open ? 'open' : ''}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <button className="toh-faq-question" onClick={() => setOpen((v) => !v)}>
+        <span>{question}</span>
+        <span className={`toh-faq-chevron ${open ? 'expanded' : ''}`}>▸</span>
+      </button>
+      <div className={`toh-faq-answer-wrap ${open ? 'expanded' : 'collapsed'}`}>
+        <div className="toh-faq-answer">{answer}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage({ onNavigate }: HomePageProps) {
   const features = [
     {
@@ -207,6 +229,77 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
+      {/* Community Stats Section */}
+      <section className="toh-stats-section">
+        <div className="toh-stats-glow" />
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">By The Numbers</div>
+            <h2 className="toh-section-title">Community Stats</h2>
+            <p className="toh-section-subtitle">
+              Real metrics from our thriving Tower of Hell community — see the scale of the competition.
+            </p>
+          </div>
+
+          {/* Stat Cards Grid */}
+          <div className="toh-stats-grid">
+            {[
+              { icon: '👥', target: 300, duration: 1800, suffix: '', label: 'Total Players', sparkle: true },
+              { icon: '📊', target: 305, duration: 1800, suffix: '', label: 'Average Level', sparkle: true },
+              { icon: '🌍', target: 50, duration: 1500, suffix: '+', label: 'Countries Represented', sparkle: true },
+              { icon: '🏆', target: 1341, duration: 2200, suffix: '', label: 'Top Level', sparkle: true },
+              { icon: '🏁', target: 4, duration: 1200, suffix: '', label: 'Active Racers', sparkle: true },
+            ].map((stat, i) => (
+              <div
+                key={stat.label}
+                className="toh-stats-card toh-stats-card-stagger"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
+                <div className="toh-stats-card-glow" />
+                <div className="toh-stats-icon">{stat.icon}</div>
+                <div className="toh-stats-num">
+                  <AnimatedStat target={stat.target} duration={stat.duration} suffix={stat.suffix} label={stat.label} />
+                </div>
+                <div className="toh-stats-sparkle toh-stats-sparkle-1" />
+                <div className="toh-stats-sparkle toh-stats-sparkle-2" />
+                <div className="toh-stats-sparkle toh-stats-sparkle-3" />
+              </div>
+            ))}
+          </div>
+
+          {/* Level Distribution Chart */}
+          <div className="toh-stats-chart-wrap">
+            <div className="toh-stats-chart-title">Level Distribution</div>
+            <div className="toh-stats-chart-subtitle">How players are distributed across level ranges</div>
+            <div className="toh-stats-chart">
+              {[
+                { range: '0–200', count: 68, pct: 22.7, color: 'var(--indigo)' },
+                { range: '200–400', count: 82, pct: 27.3, color: '#7c6ed6' },
+                { range: '400–600', count: 64, pct: 21.3, color: '#6f63db' },
+                { range: '600–800', count: 42, pct: 14.0, color: 'var(--violet)' },
+                { range: '800–1000', count: 28, pct: 9.3, color: '#a78bfa' },
+                { range: '1000+', count: 16, pct: 5.3, color: '#c4b5fd' },
+              ].map((bar, i) => (
+                <div key={bar.range} className="toh-stats-bar-row">
+                  <div className="toh-stats-bar-label">{bar.range}</div>
+                  <div className="toh-stats-bar-track">
+                    <div
+                      className="toh-stats-bar-fill"
+                      style={{
+                        width: `${bar.pct * 3.3}%`,
+                        background: `linear-gradient(90deg, ${bar.color}, ${bar.color}cc)`,
+                        animationDelay: `${i * 100 + 400}ms`,
+                      }}
+                    />
+                  </div>
+                  <div className="toh-stats-bar-count">{bar.count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section style={{ padding: '80px 0' }}>
         <div className="toh-container">
@@ -240,6 +333,49 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   ))}
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="toh-faq-section">
+        <div className="toh-container">
+          <div className="toh-section-header">
+            <div className="toh-section-eyebrow">FAQ</div>
+            <h2 className="toh-section-title">Common Questions</h2>
+            <p className="toh-section-subtitle">
+              Got questions? Here are the answers to the most common ones about TOH Bot.
+            </p>
+          </div>
+          <div className="toh-faq-list">
+            {[
+              {
+                q: 'How do I add TOH Bot to my server?',
+                a: 'Click the "Add to Server" button above and authorize the bot through Discord. It takes less than 30 seconds — just select your server and approve the permissions.',
+              },
+              {
+                q: 'Is TOH Bot free to use?',
+                a: 'Yes! All core features including XP tracking, leaderboard lookups, and race mode are completely free. Some premium features may be available in the future.',
+              },
+              {
+                q: 'How does the XP system work?',
+                a: 'TOH Bot automatically tracks your XP based on your Tower of Hell activity. Use /level to check your progress, /rank to see your position, and /grind to plan your next level.',
+              },
+              {
+                q: 'What is Race Mode?',
+                a: 'Race Mode lets server members compete in real-time tower climbing challenges. Use /race create to start, /race join to participate, and the bot tracks everything automatically.',
+              },
+              {
+                q: 'How often is the leaderboard updated?',
+                a: 'The leaderboard is synced with official community records and updated regularly. You can always click "Refresh" on the leaderboard page to get the latest data.',
+              },
+              {
+                q: 'Can I compare my stats with other players?',
+                a: 'Absolutely! Use the /compare command in Discord, or click the "Compare" button on the leaderboard page to see a side-by-side comparison of any two players.',
+              },
+            ].map((faq, i) => (
+              <FAQItem key={i} question={faq.q} answer={faq.a} delay={i * 80} />
             ))}
           </div>
         </div>

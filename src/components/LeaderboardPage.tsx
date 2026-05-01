@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, RefreshCw, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Search, RefreshCw, X, Swords } from 'lucide-react';
 
 interface Player {
   rank: number;
@@ -131,6 +131,281 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
 }
 
 /* ════════════════════════════════════════════
+   Player Comparison Modal
+════════════════════════════════════════════ */
+function ComparePlayersModal({
+  players,
+  onClose,
+}: {
+  players: Player[];
+  onClose: () => void;
+}) {
+  const maxLevel = 1341;
+  const [searchA, setSearchA] = useState('');
+  const [searchB, setSearchB] = useState('');
+  const [selectedA, setSelectedA] = useState<Player | null>(null);
+  const [selectedB, setSelectedB] = useState<Player | null>(null);
+  const [dropdownAOpen, setDropdownAOpen] = useState(false);
+  const [dropdownBOpen, setDropdownBOpen] = useState(false);
+  const dropdownARef = useRef<HTMLDivElement>(null);
+  const dropdownBRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownARef.current && !dropdownARef.current.contains(e.target as Node)) {
+        setDropdownAOpen(false);
+      }
+      if (dropdownBRef.current && !dropdownBRef.current.contains(e.target as Node)) {
+        setDropdownBOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredA = useMemo(() => {
+    if (!searchA.trim()) return players.slice(0, 50);
+    const q = searchA.toLowerCase();
+    return players.filter(
+      (p) =>
+        p.username.toLowerCase().includes(q) ||
+        p.country.toLowerCase().includes(q)
+    ).slice(0, 50);
+  }, [players, searchA]);
+
+  const filteredB = useMemo(() => {
+    if (!searchB.trim()) return players.slice(0, 50);
+    const q = searchB.toLowerCase();
+    return players.filter(
+      (p) =>
+        p.username.toLowerCase().includes(q) ||
+        p.country.toLowerCase().includes(q)
+    ).slice(0, 50);
+  }, [players, searchB]);
+
+  const levelDiff = selectedA && selectedB ? selectedA.level - selectedB.level : 0;
+  const rankDiff = selectedA && selectedB ? selectedB.rank - selectedA.rank : 0; // lower rank = better, so invert
+
+  const renderPlayerDropdown = (
+    label: string,
+    search: string,
+    setSearch: (v: string) => void,
+    filtered: Player[],
+    selected: Player | null,
+    setSelected: (p: Player) => void,
+    dropdownOpen: boolean,
+    setDropdownOpen: (v: boolean) => void,
+    dropdownRef: React.RefObject<HTMLDivElement | null>,
+    otherSelected: Player | null,
+  ) => (
+    <div className="toh-compare-player-col" ref={dropdownRef}>
+      <div className="toh-compare-dropdown-label">{label}</div>
+      <div className="toh-compare-dropdown-wrap">
+        <input
+          className="toh-compare-dropdown-input"
+          type="text"
+          placeholder="Search player…"
+          value={dropdownOpen ? search : selected ? selected.username : ''}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setDropdownOpen(true);
+          }}
+          onFocus={() => setDropdownOpen(true)}
+        />
+        {dropdownOpen && (
+          <div className="toh-compare-dropdown-list">
+            {filtered.length === 0 ? (
+              <div className="toh-compare-dropdown-empty">No players found</div>
+            ) : (
+              filtered.map((p) => (
+                <button
+                  key={p.rank}
+                  className={`toh-compare-dropdown-item ${selected?.rank === p.rank ? 'active' : ''} ${otherSelected?.rank === p.rank ? 'disabled' : ''}`}
+                  onClick={() => {
+                    setSelected(p);
+                    setSearch('');
+                    setDropdownOpen(false);
+                  }}
+                  disabled={otherSelected?.rank === p.rank}
+                >
+                  <span className="toh-compare-dropdown-item-avatar">{p.username[0]}</span>
+                  <span className="toh-compare-dropdown-item-name">{p.username}</span>
+                  <span className="toh-compare-dropdown-item-rank">#{p.rank}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderComparisonRow = (
+    label: string,
+    valueA: React.ReactNode,
+    valueB: React.ReactNode,
+    winnerA?: boolean | null,
+    winnerB?: boolean | null,
+  ) => (
+    <div className="toh-compare-row">
+      <div className={`toh-compare-cell ${winnerA ? 'toh-compare-winner' : ''}`}>
+        {valueA}
+      </div>
+      <div className="toh-compare-row-label">{label}</div>
+      <div className={`toh-compare-cell ${winnerB ? 'toh-compare-winner' : ''}`}>
+        {valueB}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="toh-modal-overlay" onClick={onClose}>
+      <div className="toh-compare-content" onClick={(e) => e.stopPropagation()}>
+        <button className="toh-modal-close" onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
+
+        <div className="toh-compare-header">
+          <Swords size={22} className="toh-compare-header-icon" />
+          <h2 className="toh-compare-title">Compare Players</h2>
+        </div>
+
+        {/* Player Selection */}
+        <div className="toh-compare-selection">
+          {renderPlayerDropdown('Player 1', searchA, setSearchA, filteredA, selectedA, setSelectedA, dropdownAOpen, setDropdownAOpen, dropdownARef, selectedB)}
+          <div className="toh-compare-vs-badge">VS</div>
+          {renderPlayerDropdown('Player 2', searchB, setSearchB, filteredB, selectedB, setSelectedB, dropdownBOpen, setDropdownBOpen, dropdownBRef, selectedA)}
+        </div>
+
+        {/* Comparison Table */}
+        {selectedA && selectedB ? (
+          <div className="toh-compare-table">
+            {/* Username Row */}
+            {renderComparisonRow(
+              'Player',
+              <div className="toh-compare-player-info">
+                <div className="toh-compare-avatar">{selectedA.username[0]}</div>
+                <span className="toh-compare-username">{selectedA.username}</span>
+              </div>,
+              <div className="toh-compare-player-info">
+                <div className="toh-compare-avatar">{selectedB.username[0]}</div>
+                <span className="toh-compare-username">{selectedB.username}</span>
+              </div>,
+            )}
+
+            {/* Rank Row */}
+            {renderComparisonRow(
+              'Rank',
+              <div className="toh-compare-rank-cell">
+                {selectedA.rank <= 3 ? (
+                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedA.rank}`}>{selectedA.rank}</span>
+                ) : (
+                  <span>#{selectedA.rank}</span>
+                )}
+              </div>,
+              <div className="toh-compare-rank-cell">
+                {selectedB.rank <= 3 ? (
+                  <span className={`toh-lb-rank-medal toh-lb-rank-${selectedB.rank}`}>{selectedB.rank}</span>
+                ) : (
+                  <span>#{selectedB.rank}</span>
+                )}
+              </div>,
+              selectedA.rank < selectedB.rank,
+              selectedB.rank < selectedA.rank,
+            )}
+
+            {/* Level Row */}
+            {renderComparisonRow(
+              'Level',
+              <div className="toh-compare-level-cell">
+                <div className="toh-compare-level-num">Lv. {selectedA.level.toLocaleString()}</div>
+                <div className="toh-compare-level-bar-bg">
+                  <div
+                    className="toh-compare-level-bar-fill"
+                    style={{ width: `${Math.min(100, (selectedA.level / maxLevel) * 100)}%` }}
+                  />
+                </div>
+              </div>,
+              <div className="toh-compare-level-cell">
+                <div className="toh-compare-level-num">Lv. {selectedB.level.toLocaleString()}</div>
+                <div className="toh-compare-level-bar-bg">
+                  <div
+                    className="toh-compare-level-bar-fill"
+                    style={{ width: `${Math.min(100, (selectedB.level / maxLevel) * 100)}%` }}
+                  />
+                </div>
+              </div>,
+              selectedA.level > selectedB.level,
+              selectedB.level > selectedA.level,
+            )}
+
+            {/* Country Row */}
+            {renderComparisonRow(
+              'Country',
+              <span>{selectedA.country === '-' ? '—' : selectedA.country}</span>,
+              <span>{selectedB.country === '-' ? '—' : selectedB.country}</span>,
+            )}
+
+            {/* Device Row */}
+            {renderComparisonRow(
+              'Device',
+              <span className={`toh-lb-device-badge ${selectedA.device.trim() === 'PC' ? 'toh-lb-device-pc' : selectedA.device.trim() === 'Mobile' ? 'toh-lb-device-mobile' : 'toh-lb-device-other'}`}>
+                {selectedA.device === '-' ? '—' : selectedA.device.trim()}
+              </span>,
+              <span className={`toh-lb-device-badge ${selectedB.device.trim() === 'PC' ? 'toh-lb-device-pc' : selectedB.device.trim() === 'Mobile' ? 'toh-lb-device-mobile' : 'toh-lb-device-other'}`}>
+                {selectedB.device === '-' ? '—' : selectedB.device.trim()}
+              </span>,
+            )}
+
+            {/* Last Updated Row */}
+            {renderComparisonRow(
+              'Last Updated',
+              <span className="toh-lb-date-cell">{selectedA.last_updated === '-' ? '—' : selectedA.last_updated}</span>,
+              <span className="toh-lb-date-cell">{selectedB.last_updated === '-' ? '—' : selectedB.last_updated}</span>,
+            )}
+
+            {/* Difference Summary */}
+            <div className="toh-compare-diff">
+              <div className="toh-compare-diff-row">
+                <span className={`toh-compare-diff-value ${levelDiff > 0 ? 'positive' : levelDiff < 0 ? 'negative' : ''}`}>
+                  {levelDiff > 0 ? `+${levelDiff.toLocaleString()}` : levelDiff < 0 ? levelDiff.toLocaleString() : '0'}
+                </span>
+                <span className="toh-compare-diff-label">Level Gap</span>
+                <span className={`toh-compare-diff-value ${levelDiff < 0 ? 'positive' : levelDiff > 0 ? 'negative' : ''}`}>
+                  {levelDiff < 0 ? `+${Math.abs(levelDiff).toLocaleString()}` : levelDiff > 0 ? `-${levelDiff.toLocaleString()}` : '0'}
+                </span>
+              </div>
+              <div className="toh-compare-diff-row">
+                <span className={`toh-compare-diff-value ${rankDiff > 0 ? 'positive' : rankDiff < 0 ? 'negative' : ''}`}>
+                  {rankDiff > 0 ? `+${rankDiff}` : rankDiff < 0 ? `${rankDiff}` : '0'}
+                </span>
+                <span className="toh-compare-diff-label">Rank Advantage</span>
+                <span className={`toh-compare-diff-value ${rankDiff < 0 ? 'positive' : rankDiff > 0 ? 'negative' : ''}`}>
+                  {rankDiff < 0 ? `+${Math.abs(rankDiff)}` : rankDiff > 0 ? `-${rankDiff}` : '0'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="toh-compare-empty">
+            Select two players above to see the comparison
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
    Leaderboard Page
 ════════════════════════════════════════════ */
 export default function LeaderboardPage() {
@@ -153,6 +428,8 @@ export default function LeaderboardPage() {
   const [bannedPage, setBannedPage] = useState(1);
 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [showCompare, setShowCompare] = useState(false);
+  const [countryExpanded, setCountryExpanded] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -235,6 +512,25 @@ export default function LeaderboardPage() {
 
     return result;
   }, [banned, bannedSearch, banReasonFilter]);
+
+  // Country distribution from active filtered players
+  const countryDistribution = useMemo(() => {
+    const knownCountryPlayers = filteredActive.filter((p) => p.country !== '-');
+    const totalWithCountry = knownCountryPlayers.length;
+    const map = new Map<string, number>();
+    for (const p of knownCountryPlayers) {
+      map.set(p.country, (map.get(p.country) || 0) + 1);
+    }
+    const sorted = Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([country, count]) => ({
+        country,
+        count,
+        percentage: totalWithCountry > 0 ? (count / totalWithCountry) * 100 : 0,
+      }));
+    return { countries: sorted, totalCountries: map.size, totalWithCountry };
+  }, [filteredActive]);
 
   // Pagination
   const activeTotalPages = Math.max(1, Math.ceil(filteredActive.length / pageSize));
@@ -402,6 +698,63 @@ export default function LeaderboardPage() {
           </div>
         )}
 
+        {/* Country Distribution */}
+        {tab === 'active' && countryDistribution.countries.length > 0 && (
+          <div className="toh-country-panel">
+            <button
+              className="toh-country-header"
+              onClick={() => setCountryExpanded((v) => !v)}
+              aria-expanded={countryExpanded}
+              aria-label="Toggle country distribution"
+            >
+              <span className="toh-country-title">
+                <span className="toh-country-title-icon">🌍</span>
+                Country Distribution
+              </span>
+              <span className="toh-country-meta">
+                <span className="toh-country-total-badge">
+                  {countryDistribution.totalCountries} countries
+                </span>
+                <span className={`toh-country-chevron ${countryExpanded ? 'expanded' : ''}`}>▾</span>
+              </span>
+            </button>
+            <div className={`toh-country-body ${countryExpanded ? 'expanded' : 'collapsed'}`}>
+              <div className="toh-country-chart">
+                {countryDistribution.countries.map((item, i) => (
+                  <div className="toh-country-row" key={item.country} style={{ animationDelay: `${i * 60}ms` }}>
+                    <div className="toh-country-row-left">
+                      <span className={`toh-country-rank-badge toh-country-rank-${i + 1}`}>{i + 1}</span>
+                      <span className="toh-country-name">{item.country}</span>
+                    </div>
+                    <div className="toh-country-row-center">
+                      <div className="toh-country-bar-track">
+                        <div
+                          className={`toh-country-bar-fill toh-country-bar-${i + 1}`}
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="toh-country-row-right">
+                      <span className="toh-country-count">{item.count}</span>
+                      <span className="toh-country-pct">{item.percentage.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {countryDistribution.totalCountries > 10 && (
+                <div className="toh-country-footer">
+                  Showing top 10 of {countryDistribution.totalCountries} countries · {countryDistribution.totalWithCountry} players with known country
+                </div>
+              )}
+              {countryDistribution.totalCountries <= 10 && countryDistribution.totalWithCountry > 0 && (
+                <div className="toh-country-footer">
+                  {countryDistribution.totalWithCountry} players with known country
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Status Bar */}
         <div className="toh-lb-status-bar">
           <div className="toh-lb-status-item">
@@ -485,6 +838,13 @@ export default function LeaderboardPage() {
                 <option value="username-asc">Sort: Username A-Z</option>
                 <option value="updated-desc">Sort: Last Updated</option>
               </select>
+              <button
+                className="toh-compare-btn"
+                onClick={() => setShowCompare(true)}
+              >
+                <Swords size={14} />
+                Compare
+              </button>
             </div>
 
             <div className="toh-lb-table-wrap toh-lb-table-mobile">
@@ -696,6 +1056,11 @@ export default function LeaderboardPage() {
       {/* Player Detail Modal */}
       {selectedPlayer && (
         <PlayerModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      )}
+
+      {/* Compare Players Modal */}
+      {showCompare && (
+        <ComparePlayersModal players={players} onClose={() => setShowCompare(false)} />
       )}
     </section>
   );
