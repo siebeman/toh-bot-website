@@ -108,6 +108,7 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
   const { toast } = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const handleShare = () => {
     const url = `https://toh-bot.netlify.app/#leaderboard?player=${encodeURIComponent(player.username)}`;
@@ -134,31 +135,14 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
     async function loadAvatar() {
       try {
         setAvatarUrl(null);
-        const userLookupResponse = await fetch('https://users.roblox.com/v1/usernames/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            usernames: [player.username],
-            excludeBannedUsers: false,
-          }),
-          signal: controller.signal,
-        });
-
-        if (!userLookupResponse.ok) return;
-        const userLookup = await userLookupResponse.json();
-        const userId = userLookup?.data?.[0]?.id;
-        if (!userId) return;
-
-        const thumbnailResponse = await fetch(
-          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`,
+        const avatarResponse = await fetch(
+          `/api/roblox-avatar?username=${encodeURIComponent(player.username)}`,
           { signal: controller.signal },
         );
 
-        if (!thumbnailResponse.ok) return;
-        const thumbnailData = await thumbnailResponse.json();
-        const imageUrl = thumbnailData?.data?.[0]?.imageUrl;
+        if (!avatarResponse.ok) return;
+        const avatarData = await avatarResponse.json();
+        const imageUrl = avatarData?.avatarUrl;
         if (imageUrl) {
           setAvatarUrl(imageUrl);
         }
@@ -174,11 +158,18 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
     return () => controller.abort();
   }, [player.username]);
 
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      modalRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [player.username]);
+
   if (!portalReady) return null;
 
   return createPortal(
     <div className="toh-modal-overlay" onClick={onClose}>
-      <div className="toh-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="toh-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="toh-modal-close" onClick={onClose} aria-label="Close">
           <X size={18} />
         </button>
