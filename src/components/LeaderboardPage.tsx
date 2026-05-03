@@ -69,8 +69,19 @@ interface BannedPlayer {
   device: string;
 }
 
+interface YxlesPlayer {
+  rank: number;
+  username: string;
+  yxles: string;
+  yxles_value: number;
+  country: string;
+  device: string;
+  last_updated: string;
+}
+
 type SortField = 'rank' | 'level' | 'username' | 'updated';
-type TabType = 'active' | 'banned';
+type YxlesSortField = 'rank' | 'yxles' | 'username' | 'updated';
+type TabType = 'active' | 'banned' | 'yxles';
 
 const BAN_REASONS = [
   'Alts Abusement',
@@ -528,6 +539,7 @@ export default function LeaderboardPage() {
   const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
   const [banned, setBanned] = useState<BannedPlayer[]>([]);
+  const [yxlesPlayers, setYxlesPlayers] = useState<YxlesPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [lastFetch, setLastFetch] = useState<string>('');
@@ -541,10 +553,15 @@ export default function LeaderboardPage() {
   const [pageSize, setPageSize] = useState(50);
   const activeSearchRef = useRef<HTMLInputElement>(null);
   const bannedSearchRef = useRef<HTMLInputElement>(null);
+  const yxlesSearchRef = useRef<HTMLInputElement>(null);
 
   const [bannedSearch, setBannedSearch] = useState('');
   const [banReasonFilter, setBanReasonFilter] = useState('');
   const [bannedPage, setBannedPage] = useState(1);
+  const [yxlesSearch, setYxlesSearch] = useState('');
+  const [yxlesSortField, setYxlesSortField] = useState<YxlesSortField>('rank');
+  const [yxlesSortDir, setYxlesSortDir] = useState<'asc' | 'desc'>('asc');
+  const [yxlesPage, setYxlesPage] = useState(1);
 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [showCompare, setShowCompare] = useState(false);
@@ -561,6 +578,8 @@ export default function LeaderboardPage() {
         activeSearchRef.current.focus();
       } else if (tab === 'banned' && bannedSearchRef.current) {
         bannedSearchRef.current.focus();
+      } else if (tab === 'yxles' && yxlesSearchRef.current) {
+        yxlesSearchRef.current.focus();
       }
     };
     window.addEventListener('toh-focus-search', onFocusSearch);
@@ -586,7 +605,8 @@ export default function LeaderboardPage() {
       const data = await res.json();
       setPlayers(data.players || []);
       setBanned(data.banned || []);
-      setLastFetch(new Date().toLocaleTimeString());
+      setYxlesPlayers(data.yxles || []);
+      setLastFetch(new Date(data.fetchedAt || Date.now()).toLocaleTimeString());
     } catch {
       setError(true);
     } finally {
@@ -719,6 +739,51 @@ export default function LeaderboardPage() {
     return result;
   }, [banned, bannedSearch, banReasonFilter]);
 
+  const filteredYxles = useMemo(() => {
+    let result = [...yxlesPlayers];
+
+    if (yxlesSearch.trim()) {
+      const q = yxlesSearch.toLowerCase();
+      result = result.filter(
+        (player) =>
+          player.username.toLowerCase().includes(q) ||
+          player.country.toLowerCase().includes(q),
+      );
+    }
+
+    if (deviceFilter) {
+      result = result.filter((player) => {
+        const device = player.device.trim();
+        if (deviceFilter === 'PC') return device === 'PC';
+        if (deviceFilter === 'Mobile') return device === 'Mobile';
+        if (deviceFilter === 'Controller') return device === 'Controller';
+        return true;
+      });
+    }
+
+    result.sort((left, right) => {
+      let comparison = 0;
+      switch (yxlesSortField) {
+        case 'rank':
+          comparison = left.rank - right.rank;
+          break;
+        case 'yxles':
+          comparison = left.yxles_value - right.yxles_value;
+          break;
+        case 'username':
+          comparison = left.username.localeCompare(right.username);
+          break;
+        case 'updated':
+          comparison = (left.last_updated || '').localeCompare(right.last_updated || '');
+          break;
+      }
+
+      return yxlesSortDir === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [yxlesPlayers, yxlesSearch, deviceFilter, yxlesSortField, yxlesSortDir]);
+
   // Device breakdown from active filtered players
   const deviceBreakdown = useMemo(() => {
     const total = filteredActive.length;
@@ -841,9 +906,13 @@ export default function LeaderboardPage() {
   const bannedTotalPages = Math.max(1, Math.ceil(filteredBanned.length / pageSize));
   const bannedPaged = filteredBanned.slice((bannedPage - 1) * pageSize, bannedPage * pageSize);
 
+  const yxlesTotalPages = Math.max(1, Math.ceil(filteredYxles.length / pageSize));
+  const yxlesPaged = filteredYxles.slice((yxlesPage - 1) * pageSize, yxlesPage * pageSize);
+
   // Reset page when filters change
   useEffect(() => { setActivePage(1); }, [activeSearch, deviceFilter, sortField, sortDir, pageSize, showFavoritesOnly]);
   useEffect(() => { setBannedPage(1); }, [bannedSearch, banReasonFilter]);
+  useEffect(() => { setYxlesPage(1); }, [yxlesSearch, deviceFilter, yxlesSortField, yxlesSortDir, pageSize]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -851,6 +920,15 @@ export default function LeaderboardPage() {
     } else {
       setSortField(field);
       setSortDir(field === 'rank' ? 'asc' : 'desc');
+    }
+  };
+
+  const handleYxlesSort = (field: YxlesSortField) => {
+    if (yxlesSortField === field) {
+      setYxlesSortDir((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setYxlesSortField(field);
+      setYxlesSortDir(field === 'rank' ? 'asc' : 'desc');
     }
   };
 
@@ -872,24 +950,36 @@ export default function LeaderboardPage() {
 
   // CSV export function
   const handleExportCSV = () => {
-    const headers = ['Rank', 'Username', 'Level', 'Country', 'Device', 'Last Updated'];
-    const rows = filteredActive.map((p) => [
-      p.rank,
-      p.username,
-      p.level,
-      p.country === '-' ? '' : p.country,
-      p.device === '-' ? '' : p.device.trim(),
-      p.last_updated === '-' ? '' : p.last_updated,
-    ]);
+    const isYxlesTab = tab === 'yxles';
+    const headers = isYxlesTab
+      ? ['Rank', 'Username', 'Yxles', 'Country', 'Device', 'Last Updated']
+      : ['Rank', 'Username', 'Level', 'Country', 'Device', 'Last Updated'];
+    const rows = isYxlesTab
+      ? filteredYxles.map((player) => [
+          player.rank,
+          player.username,
+          player.yxles,
+          player.country === '-' ? '' : player.country,
+          player.device === '-' ? '' : player.device.trim(),
+          player.last_updated === '-' ? '' : player.last_updated,
+        ])
+      : filteredActive.map((player) => [
+          player.rank,
+          player.username,
+          player.level,
+          player.country === '-' ? '' : player.country,
+          player.device === '-' ? '' : player.device.trim(),
+          player.last_updated === '-' ? '' : player.last_updated,
+        ]);
     const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'toh-leaderboard-export.csv';
+    link.download = isYxlesTab ? 'toh-yxles-leaderboard-export.csv' : 'toh-leaderboard-export.csv';
     link.click();
     URL.revokeObjectURL(url);
-    toast({ title: 'Leaderboard exported successfully!' });
+    toast({ title: isYxlesTab ? 'Yxles leaderboard exported successfully!' : 'Leaderboard exported successfully!' });
   };
 
   // Computed stats for animated counters
@@ -1279,6 +1369,13 @@ export default function LeaderboardPage() {
             Banned Leaderboard
             <span className="toh-lb-tab-count">{banned.length}</span>
           </button>
+          <button
+            className={`toh-lb-tab-btn ${tab === 'yxles' ? 'active' : ''}`}
+            onClick={() => setTab('yxles')}
+          >
+            Yxles Leaderboard
+            <span className="toh-lb-tab-count">{yxlesPlayers.length}</span>
+          </button>
         </div>
 
         {/* Active Players Tab */}
@@ -1565,6 +1662,188 @@ export default function LeaderboardPage() {
               <span className="toh-lb-milestone-legend-item">🔥 Level 1000+</span>
               <span className="toh-lb-milestone-legend-item">⭐ Level 500+</span>
               <span className="toh-lb-milestone-legend-item">✦ Level 100+</span>
+            </div>
+          </div>
+        )}
+
+        {/* Yxles Tab */}
+        {tab === 'yxles' && (
+          <div>
+            <div className="toh-lb-controls">
+              <div className="toh-lb-search-box">
+                <Search size={16} className="toh-lb-search-icon" />
+                <input
+                  ref={yxlesSearchRef}
+                  type="text"
+                  placeholder="Search username or country…"
+                  value={yxlesSearch}
+                  onChange={(e) => setYxlesSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="toh-lb-filter-select"
+                value={deviceFilter}
+                onChange={(e) => setDeviceFilter(e.target.value)}
+              >
+                <option value="">All Devices</option>
+                <option value="PC">PC</option>
+                <option value="Mobile">Mobile</option>
+                <option value="Controller">Controller</option>
+              </select>
+              <select
+                className="toh-lb-filter-select"
+                value={`${yxlesSortField}-${yxlesSortDir}`}
+                onChange={(e) => {
+                  const [field, direction] = e.target.value.split('-') as [YxlesSortField, 'asc' | 'desc'];
+                  setYxlesSortField(field);
+                  setYxlesSortDir(direction);
+                }}
+              >
+                <option value="rank-asc">Sort: Rank ↑</option>
+                <option value="rank-desc">Sort: Rank ↓</option>
+                <option value="yxles-desc">Sort: Yxles ↓</option>
+                <option value="yxles-asc">Sort: Yxles ↑</option>
+                <option value="username-asc">Sort: Username A-Z</option>
+                <option value="updated-desc">Sort: Last Updated</option>
+              </select>
+              <button
+                className="toh-lb-export-btn"
+                onClick={handleExportCSV}
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="toh-lb-table-wrap toh-lb-table-mobile">
+                <div className="toh-skeleton-thead">
+                  <div className="toh-skeleton-th" style={{ width: 60 }} />
+                  <div className="toh-skeleton-th" style={{ width: 120 }} />
+                  <div className="toh-skeleton-th" style={{ width: 140 }} />
+                  <div className="toh-skeleton-th" style={{ width: 80 }} />
+                  <div className="toh-skeleton-th" style={{ width: 80 }} />
+                  <div className="toh-skeleton-th" style={{ width: 100 }} />
+                </div>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div className="toh-skeleton-row" key={i}>
+                    <div className="toh-skeleton-cell" style={{ width: 40 }} />
+                    <div className="toh-skeleton-cell" style={{ width: `${100 + (i % 3) * 20}px` }} />
+                    <div className="toh-skeleton-cell" style={{ width: 100 }} />
+                    <div className="toh-skeleton-cell" style={{ width: 50 }} />
+                    <div className="toh-skeleton-cell" style={{ width: 60 }} />
+                    <div className="toh-skeleton-cell" style={{ width: 90 }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="toh-lb-table-wrap toh-lb-table-mobile">
+                <table className="toh-lb-table">
+                  <thead>
+                    <tr>
+                      <th
+                        className={yxlesSortField === 'rank' ? 'sorted' : ''}
+                        onClick={() => handleYxlesSort('rank')}
+                      >
+                        Rank {yxlesSortField === 'rank' ? (yxlesSortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th
+                        className={yxlesSortField === 'username' ? 'sorted' : ''}
+                        onClick={() => handleYxlesSort('username')}
+                      >
+                        Username {yxlesSortField === 'username' ? (yxlesSortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th
+                        className={yxlesSortField === 'yxles' ? 'sorted' : ''}
+                        onClick={() => handleYxlesSort('yxles')}
+                      >
+                        Yxles {yxlesSortField === 'yxles' ? (yxlesSortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                      <th className="toh-lb-hide-xs">Country</th>
+                      <th className="toh-lb-hide-mobile">Device</th>
+                      <th
+                        className={`${yxlesSortField === 'updated' ? 'sorted' : ''} toh-lb-hide-mobile`}
+                        onClick={() => handleYxlesSort('updated')}
+                      >
+                        Last Updated {yxlesSortField === 'updated' ? (yxlesSortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {yxlesPaged.length === 0 ? (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className="toh-lb-no-results">
+                            No yxles entries found matching your search.
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      yxlesPaged.map((player, i) => (
+                        <tr
+                          key={player.rank}
+                          className={`toh-lb-row toh-lb-row-enhanced ${player.rank <= 3 ? 'top-3' : ''} ${i % 2 === 0 ? 'toh-lb-row-even' : ''}`}
+                          style={{ animationDelay: `${i * 30}ms` }}
+                        >
+                          <td>
+                            {player.rank <= 3 ? (
+                              <span className={`toh-lb-rank-medal toh-lb-rank-${player.rank}`}>
+                                #{player.rank}
+                              </span>
+                            ) : (
+                              <span style={{
+                                fontFamily: 'var(--font-jetbrains), JetBrains Mono, monospace',
+                                fontSize: '0.85rem',
+                                color: 'var(--dim)',
+                              }}>
+                                #{player.rank}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <span className="toh-lb-username">{player.username}</span>
+                          </td>
+                          <td>
+                            <div className="toh-lb-level-num">{player.yxles}</div>
+                          </td>
+                          <td className="toh-lb-hide-xs">
+                            <span className="toh-lb-country-cell">
+                              {player.country === '-' ? '—' : player.country}
+                            </span>
+                          </td>
+                          <td className="toh-lb-hide-mobile">
+                            <span className={`toh-lb-device-badge ${getDeviceClass(player.device)}`}>
+                              {player.device === '-' ? '—' : player.device.trim()}
+                            </span>
+                          </td>
+                          <td className="toh-lb-hide-mobile">
+                            <span className="toh-lb-date-cell">
+                              {player.last_updated === '-' ? '—' : player.last_updated}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="toh-skeleton-pagination">
+                <div className="toh-skeleton-pagination-info" />
+                <div className="toh-skeleton-pagination-btns">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="toh-skeleton-pagination-btn" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              renderPagination(yxlesPage, yxlesTotalPages, setYxlesPage, filteredYxles.length)
+            )}
+
+            <div className="toh-lb-data-source">
+              Data sourced from the official community yxles records
             </div>
           </div>
         )}

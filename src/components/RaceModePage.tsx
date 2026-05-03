@@ -371,22 +371,6 @@ export default function RaceModePage() {
     }
   }, [loadRaces, showError]);
 
-  // ── Disconnect ──────────────────────────────
-  const doDisconnect = useCallback(() => {
-    if (rtRef.current && sb) sb.removeChannel(rtRef.current);
-    stopTimer();
-    setSb(null);
-    setCurrentRace(null);
-    setRacers({});
-    setLogs([]);
-    setStartedAt(null);
-    sessionStorage.removeItem('sb_url');
-    sessionStorage.removeItem('sb_key');
-    setView('creds');
-    setConnStatus('Not connected');
-    setConnLive(false);
-  }, [sb, stopTimer]);
-
   // ── Go Back to Races ────────────────────────
   const goBackToRaces = useCallback(() => {
     if (rtRef.current && sb) sb.removeChannel(rtRef.current);
@@ -481,23 +465,6 @@ export default function RaceModePage() {
               }}
             >
               ← Back
-            </button>
-          )}
-          {view !== 'creds' && view !== 'loading' && (
-            <button
-              onClick={doDisconnect}
-              style={{
-                fontSize: 12,
-                color: 'var(--dim)',
-                padding: '6px 12px',
-                border: '1px solid var(--toh-border)',
-                borderRadius: 8,
-                background: 'transparent',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              Disconnect
             </button>
           )}
         </div>
