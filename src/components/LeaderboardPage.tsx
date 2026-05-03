@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, RefreshCw, X, Swords, Download, Share2, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -105,9 +106,11 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
   const nextMilestone = Math.ceil((player.level + 1) / 100) * 100;
   const milestoneProgress = ((player.level % 100) / 100) * 100;
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
 
   const handleShare = () => {
-    const url = `https://tohbot.com/#leaderboard?player=${encodeURIComponent(player.username)}`;
+    const url = `https://toh-bot.netlify.app/#leaderboard?player=${encodeURIComponent(player.username)}`;
     navigator.clipboard.writeText(url).then(() => {
       toast({ title: 'Profile link copied!' });
     });
@@ -116,10 +119,64 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    setPortalReady(true);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = originalOverflow;
+    };
   }, [onClose]);
 
-  return (
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadAvatar() {
+      try {
+        setAvatarUrl(null);
+        const userLookupResponse = await fetch('https://users.roblox.com/v1/usernames/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            usernames: [player.username],
+            excludeBannedUsers: false,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!userLookupResponse.ok) return;
+        const userLookup = await userLookupResponse.json();
+        const userId = userLookup?.data?.[0]?.id;
+        if (!userId) return;
+
+        const thumbnailResponse = await fetch(
+          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`,
+          { signal: controller.signal },
+        );
+
+        if (!thumbnailResponse.ok) return;
+        const thumbnailData = await thumbnailResponse.json();
+        const imageUrl = thumbnailData?.data?.[0]?.imageUrl;
+        if (imageUrl) {
+          setAvatarUrl(imageUrl);
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          setAvatarUrl(null);
+        }
+      }
+    }
+
+    loadAvatar();
+
+    return () => controller.abort();
+  }, [player.username]);
+
+  if (!portalReady) return null;
+
+  return createPortal(
     <div className="toh-modal-overlay" onClick={onClose}>
       <div className="toh-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="toh-modal-close" onClick={onClose} aria-label="Close">
@@ -127,7 +184,12 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
         </button>
 
         <div className="toh-modal-header">
-          <div className="toh-modal-avatar">{player.username[0]}</div>
+          <div
+            className={`toh-modal-avatar ${avatarUrl ? 'toh-modal-avatar-image' : ''}`}
+            style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
+          >
+            {!avatarUrl && player.username[0]}
+          </div>
           <div>
             <div className="toh-modal-name">{player.username}</div>
             <div className="toh-modal-rank">
@@ -198,7 +260,8 @@ function PlayerModal({ player, onClose }: { player: Player; onClose: () => void 
           Share Profile
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

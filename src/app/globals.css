@@ -3575,6 +3575,13 @@ mark.toh-highlight {
   flex-shrink: 0;
 }
 
+.toh-modal-avatar-image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: transparent;
+}
+
 .toh-modal-name {
   font-weight: 700;
   font-size: 18px;
